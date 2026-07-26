@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>¿Qué es RAG y por qué lo necesitas en producción? — RAG Production</title><meta name="description" content="Lección introductoria: qué es RAG, pipeline de 4 pasos, cuándo usar RAG vs long-context vs fine-tuning, los 4 pilares de producción."><meta name="keywords" content="RAG, Retrieval Augmented Generation, pipeline, long-context, fine-tuning, LLM"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:type" content="article"><meta property="og:title" content="¿Qué es RAG y por qué lo necesitas en producción? — RAG Production"><meta property="og:description" content="Lección introductoria: qué es RAG, pipeline de 4 pasos, cuándo usar RAG vs long-context vs fine-tuning, los 4 pilares de producción."><meta property="og:url" content="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="Fundamentos"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="¿Qué es RAG y por qué lo necesitas en producción? — RAG Production"><meta name="twitter:description" content="Lección introductoria: qué es RAG, pipeline de 4 pasos, cuándo usar RAG vs long-context vs fine-tuning, los 4 pilares de producción."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/rag-lessons/_astro/BaseLayout.CO1NMu_x.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/rag-lessons" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/rag-lessons#pilar-1">Fundamentos</a><a href="/rag-lessons#pilar-2">Ingesta</a><a href="/rag-lessons#pilar-3">Recuperación</a><a href="/rag-lessons#pilar-4">Agentic &amp; GraphRAG</a><a href="/rag-lessons#pilar-5">RAGOps</a><a href="/rag-lessonsreference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
+  (function() {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = stored || (prefersDark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+  })();
+</script><script>
+  document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    html.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script><article id="content"><header><h1>¿Qué es RAG y por qué lo necesitas en producción?</h1><p class="subtitle">Lección 1 — Fundamentos del pipeline RAG</p></header><p>import Callout from ‘../../components/Callout.astro’;
+import Exercise from ‘../../components/Exercise.astro’;</p>
+<h2 id="el-problema-que-rag-resuelve">El problema que RAG resuelve</h2>
+<p>Los LLMs tienen un límite: solo saben lo que vieron durante su entrenamiento. Si necesitas que un chatbot responda sobre tus documentos internos, políticas de la empresa, o conocimiento que cambia constantemente, un LLM solo no puede.</p>
+<p>La solución obvia sería re-entrenar el modelo con tus datos. Pero eso es:</p>
+<ul>
+<li><strong>Caro</strong> — entrenar un modelo cuesta miles de dólares</li>
+<li><strong>Lento</strong> — toma horas o días</li>
+<li><strong>Rígido</strong> — cuando tus documentos cambian, necesitas re-entrenar</li>
+</ul>
+<p>RAG (Retrieval-Augmented Generation) ofrece una alternativa: en lugar de meter el conocimiento en el modelo, le damos acceso a una base de datos externa en tiempo real.</p>
+<Callout type="info" title="Analogía">
+Piensa en un examen. Un LLM sin RAG es como un estudiante que solo puede usar lo que memorizó. RAG es como un estudiante que puede abrir sus apuntes y buscar la respuesta antes de responder.
+</Callout>
+<h2 id="cómo-funciona-rag-pipeline-básico">Cómo funciona RAG (pipeline básico)</h2>
+<p>El flujo tiene dos caminos que se encuentran:</p>
+<h3 id="camino-offline-indexing">Camino offline (Indexing)</h3>
+<ol>
+<li><strong>Parsing:</strong> Extraer texto de documentos (PDFs, Word, HTML)</li>
+<li><strong>Chunking:</strong> Dividir el texto en fragmentos manejables</li>
+<li><strong>Embedding:</strong> Convertir cada chunk en un vector numérico</li>
+<li><strong>Almacenamiento:</strong> Guardar los vectores en una base de datos vectorial</li>
+</ol>
+<h3 id="camino-online-query">Camino online (Query)</h3>
+<ol>
+<li><strong>Query embedding:</strong> Convertir la pregunta del usuario en un vector</li>
+<li><strong>Retrieval:</strong> Buscar los chunks más similares en la base de datos</li>
+<li><strong>Generation:</strong> Enviar los chunks recuperados + la pregunta al LLM</li>
+</ol>
+<Callout type="warning" title="Diferencia clave con producción">
+Un demo para aquí. Un sistema en producción agrega: re-ranking de resultados, guardrails de entrada/salida, evaluación continua, monitoreo, y manejo de fallos.
+</Callout>
+<h2 id="los-4-pilares-de-rag-en-producción">Los 4 pilares de RAG en producción</h2>
+<p>Tu repositorio <code>hands-on-rag</code> organiza exactamente estos pilares en sus capítulos:</p>
+<table>
+<thead>
+<tr>
+<th>Pilar</th>
+<th>Capítulo</th>
+<th>Pregunta clave</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Ingesta y Segmentación</strong></td>
+<td>2-3</td>
+<td>¿Cómo divido mis documentos sin perder información?</td>
+</tr>
+<tr>
+<td><strong>2. Recuperación Avanzada</strong></td>
+<td>3-4</td>
+<td>¿Cómo encuentro los chunks correctos de forma precisa?</td>
+</tr>
+<tr>
+<td><strong>3. Agentic RAG y GraphRAG</strong></td>
+<td>7-9</td>
+<td>¿Cuándo debe el sistema buscar vs. responder directamente?</td>
+</tr>
+<tr>
+<td><strong>4. RAGOps y Evaluación</strong></td>
+<td>6</td>
+<td>¿Cómo sé si mi sistema funciona bien?</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rag-vs-long-context-vs-fine-tuning">RAG vs. Long Context vs. Fine-tuning</h2>
+<p>RAG no es la única solución. En 2026, existen tres opciones principales:</p>
+<table>
+<thead>
+<tr>
+<th>Enfoque</th>
+<th>Cuándo usarlo</th>
+<th>Cuándo NO usarlo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Long Context</strong></td>
+<td>Corpus &lt; 200k tokens, no cambia mucho</td>
+<td>Corpus grande, necesita citas verificables</td>
+</tr>
+<tr>
+<td><strong>RAG</strong></td>
+<td>Corpus &gt; 1M tokens, cambia frecuentemente, necesita citations</td>
+<td>Preguntas sobre conocimiento general</td>
+</tr>
+<tr>
+<td><strong>Fine-tuning</strong></td>
+<td>Necesitas un estilo/formato específico, comportamiento consistente</td>
+<td>Hechos que cambian, datos actuales</td>
+</tr>
+</tbody>
+</table>
+<Callout type="success" title="Regla práctica 2026">
+Si tu corpus cabe en 200k tokens (unas 500 páginas), probablemente no necesitas RAG. Prueba primero con long context + prompt caching. RAG gana cuando: el corpus es grande, cambia frecuentemente, o necesitas citas verificables.
+</Callout>
+<h2 id="práctica">Práctica</h2>
+<Exercise title="Ejercicio 1">
+Abre el repositorio `hands-on-rag` y navega al capítulo 1. Ejecuta el notebook `sample-rag.ipynb`. ¿Qué componentes del pipeline identificas?
+<p><strong>Pistas:</strong> Busca las funciones de LangChain que se usan (load, split, embed, store, query).
+</Exercise></p>
+<Exercise title="Ejercicio 2">
+Responde estas preguntas sobre el notebook del Capítulo 1:
+<ul>
+<li>¿Qué modelo de embedding se usa?</li>
+<li>¿Qué base de datos vectorial?</li>
+<li>¿Qué tamaño de chunk se configuró?</li>
+<li>¿Qué LLM genera la respuesta final?</li>
+</ul>
+</Exercise>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="quiz1" data-quiz><p class="quiz-question">¿Cuál es el problema principal que RAG resuelve?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Los LLMs son demasiado lentos para responder preguntas</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Los LLMs no tienen acceso a conocimiento privado o actualizado</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Los LLMs alucinan demasiado sin contexto externo</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Los LLMs no pueden procesar documentos largos</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="quiz2" data-quiz><p class="quiz-question">¿Qué camino del pipeline RAG ocurre ANTES de que el usuario haga una pregunta?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Query → Embedding → Retrieval → Generation</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Parsing → Chunking → Embedding → Storage</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Generation → Citation → Validation → Response</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Retrieval → Reranking → Context Assembly → Generation</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="quiz3" data-quiz><p class="quiz-question">Según la regla práctica de 2026, ¿cuándo SÍ necesitas RAG?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, es mejor que long context</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando tu corpus tiene menos de 100 páginas</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando tu corpus &gt; 1M tokens, cambia frecuentemente, o necesitas citas</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo cuando usas modelos open-source</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/rag-lessonslessons/chunking-strategies">Estrategias de Chunking: El cuello de botella silencioso →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+  (function() {
+    const btn = document.querySelector('.back-to-top');
+    if (!btn) return;
+    window.addEventListener('scroll', function() {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+    btn.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+</script></body></html>

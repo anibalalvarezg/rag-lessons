@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://anibalalvarezg.github.io/rag-lessons/sitemap-index.xml

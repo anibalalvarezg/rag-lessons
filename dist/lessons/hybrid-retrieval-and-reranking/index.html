@@ -1,0 +1,215 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hybrid Retrieval y Reranking: La capa que separa un demo de produccion — RAG Production</title><meta name="description" content="Two-stage retrieve+rerank, Cohere/BGE/Jina rerankers, HyDE, Multi-Query, pipeline completo con LangChain."><meta name="keywords" content="hybrid retrieval, reranking, Cohere, BGE, Jina, HyDE, multi-query"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:type" content="article"><meta property="og:title" content="Hybrid Retrieval y Reranking: La capa que separa un demo de produccion — RAG Production"><meta property="og:description" content="Two-stage retrieve+rerank, Cohere/BGE/Jina rerankers, HyDE, Multi-Query, pipeline completo con LangChain."><meta property="og:url" content="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="Recuperación"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Hybrid Retrieval y Reranking: La capa que separa un demo de produccion — RAG Production"><meta name="twitter:description" content="Two-stage retrieve+rerank, Cohere/BGE/Jina rerankers, HyDE, Multi-Query, pipeline completo con LangChain."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/rag-lessons/_astro/BaseLayout.CO1NMu_x.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/rag-lessons" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/rag-lessons#pilar-1">Fundamentos</a><a href="/rag-lessons#pilar-2">Ingesta</a><a href="/rag-lessons#pilar-3">Recuperación</a><a href="/rag-lessons#pilar-4">Agentic &amp; GraphRAG</a><a href="/rag-lessons#pilar-5">RAGOps</a><a href="/rag-lessonsreference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
+  (function() {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = stored || (prefersDark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+  })();
+</script><script>
+  document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    html.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script><article id="content"><header><h1>Hybrid Retrieval y Reranking: La capa que separa un demo de produccion</h1><p class="subtitle">Lección 4 — Pilar 2: Recuperacion Avanzada</p></header><p>import Callout from ‘../../components/Callout.astro’;
+import Exercise from ‘../../components/Exercise.astro’;</p>
+<h2 id="el-patron-de-dos-etapas">El patron de dos etapas</h2>
+<p>En produccion, la recuperacion nunca es un solo paso. Es un funnel:</p>
+<ol>
+<li><strong>Stage 1 - Retrieval rapido:</strong> Busca 50-100 candidatos usando hybrid search (dense + BM25). Rapido pero impreciso.</li>
+<li><strong>Stage 2 - Reranking preciso:</strong> Un cross-encoder re-scorea cada candidato leyendo query + chunk juntos. Lento pero muy preciso. Conserva top 3-5.</li>
+</ol>
+<Callout type="info" title="Por que dos etapas?">
+Un bi-encoder (embedding) compara query y documento por separado: es rapido pero approximate. Un cross-encoder (reranker) los lee juntos con atencion completa: es lento pero preciso. La combinacion maximiza calidad con latencia controlada.
+</Callout>
+<h2 id="rerankers-los-mejores-modelos-de-2026">Rerankers: Los mejores modelos de 2026</h2>
+<h3 id="hosted-api">Hosted (API)</h3>
+<p><small>Fuente de scores ELO: Cohere Rerank Blog y Ranker Arena (2026)</small></p>
+<table>
+<thead>
+<tr>
+<th>Modelo</th>
+<th>ELO</th>
+<th>Latencia</th>
+<th>Costo</th>
+<th>Mejor para</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cohere Rerank 3.5</strong></td>
+<td>1629</td>
+<td>~600ms</td>
+<td>$2.00/1k busquedas</td>
+<td>Default sin ops, 100+ idiomas</td>
+</tr>
+<tr>
+<td><strong>Voyage Rerank 2.5</strong></td>
+<td>1544</td>
+<td>~613ms</td>
+<td>$0.05/M tokens</td>
+<td>Variantes dominio (codigo, legal)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="self-hosted-open-source">Self-hosted (open source)</h3>
+<table>
+<thead>
+<tr>
+<th>Modelo</th>
+<th>Parametros</th>
+<th>Latencia (GPU)</th>
+<th>Recall@5 lift</th>
+<th>Mejor para</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BGE Reranker v2-M3</strong></td>
+<td>568M</td>
+<td>~84ms</td>
+<td>+18.4%</td>
+<td>Multilingue, bajo costo, rapido</td>
+</tr>
+<tr>
+<td><strong>Qwen3 Reranker 4B</strong></td>
+<td>4B</td>
+<td>~312ms</td>
+<td>+27.1%</td>
+<td>Calidad maxima local</td>
+</tr>
+<tr>
+<td><strong>Jina Reranker v3</strong></td>
+<td>600M</td>
+<td>~188ms</td>
+<td>81.3% Hit@1</td>
+<td>Sub-200ms, documentos largos (131k ctx)</td>
+</tr>
+</tbody>
+</table>
+<Callout type="success" title="El lever mas barato en RAG">
+El reranker es "the cheapest large win left in RAG". No necesitas re-embedder ni reconstruir el indice. Solo insertas un paso de re-scoring entre retrieval y LLM. En benchmarks de Azure, hybrid + reranker da +37% NDCG vs vector-only.
+<small>Fuente: Microsoft Azure AI Blog — Hybrid Search + Reranking benchmarks</small>
+</Callout>
+<h2 id="implementacion-con-langchain">Implementacion con LangChain</h2>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain.retrievers </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ContextualCompressionRetriever</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_cohere </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> CohereRerank</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Reranker hosted</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">reranker </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> CohereRerank(</span><span style="color:#E36209;--shiki-dark:#FFAB70">model</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"rerank-v3.5"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#E36209;--shiki-dark:#FFAB70">top_n</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">5</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Envolver el retriever base</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">compression_retriever </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ContextualCompressionRetriever(</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    base_compressor</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">reranker,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    base_retriever</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">base_retriever  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># tu hybrid retriever</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Ahora retrieval + reranking en un solo paso</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">results </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> compression_retriever.invoke(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"pregunta del usuario"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
+<h2 id="query-transformation-arreglar-la-pregunta-no-el-indice">Query Transformation: Arreglar la pregunta, no el indice</h2>
+<p>Muchas veces el retrieval falla no por el indice, sino por la pregunta del usuario. Las queries son cortas, ambiguas, o usan vocabulario diferente al del corpus.</p>
+<h3 id="1-hyde-hypothetical-document-embeddings">1. HyDE (Hypothetical Document Embeddings)</h3>
+<p>Pide al LLM que escriba una respuesta hipotetica, embebe esa respuesta, y busca con ella. La intuicion: una respuesta real y una hipotetica viven en la misma region del espacio de embeddings; la pregunta vive en otra.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo HyDE</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Usuario pregunta: "Como configurar el timeout?"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. LLM genera respuesta hipotetica:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    "El timeout se configura en settings.yaml bajo</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#     network.timeout. El valor por defecto es 30 segundos..."</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Embeber esa respuesta hipotetica</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Buscar documentos similares al embedding hipotetico</span></span></code></pre>
+<ul>
+<li><strong>Cuando usarlo:</strong> Gap de vocabulario entre preguntas y documentos, queries genericas</li>
+<li><strong>Riesgo:</strong> En dominios niche donde el LLM no sabe, la hipotesis puede ser incorrecta y empeorar retrieval</li>
+<li><strong>Costo:</strong> +1 LLM call (~200-500ms)</li>
+</ul>
+<h3 id="2-multi-query--rag-fusion">2. Multi-Query / RAG-Fusion</h3>
+<p>Genera N parrafasis de la query, busca con cada una, fusiona resultados con Reciprocal Rank Fusion.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo Multi-Query</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Query original: "cancelar suscripcion"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Parrafasis generadas:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   - "terminar plan de servicio"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   - "darse de baja del servicio"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   - "cerrar cuenta activa"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Cada una recupera top-k, se fusionan con RRF</span></span></code></pre>
+<ul>
+<li><strong>Cuando usarlo:</strong> Queries ambiguas, vocabulario del usuario lejos del corpus</li>
+<li><strong>Ganancia tipica:</strong> +8-10% accuracy, +30-40% comprehensiveness</li>
+<li><strong>Costo:</strong> Nx retrieval (N=3 es comun)</li>
+</ul>
+<h3 id="3-query-decomposition">3. Query Decomposition</h3>
+<p>Preguntas multi-hop se dividen en sub-preguntas atomicas, cada una busca por separado.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Query: "Cual es la politica de reembolsos para clientes EU vs US?"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Decomposicion:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   1. "Politica de reembolsos clientes EU"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   2. "Politica de reembolsos clientes US"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Cada sub-query busca documentos independientes</span></span></code></pre>
+<ul>
+<li><strong>Cuando usarlo:</strong> Preguntas que requieren informacion de multiples documentos</li>
+<li><strong>Riesgo:</strong> Over-decomposition (dividir preguntas simples en sub-preguntas innecesarias)</li>
+</ul>
+<h2 id="el-pipeline-completo-de-produccion">El pipeline completo de produccion</h2>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Pipeline tipico 2026</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">query </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> usuario.pregunta</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Query Transformation (opcional, selectivo)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> es_ambigua(query):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    queries </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> multi_query_rewrite(query)  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># 3 parrafasis</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">elif</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> es_multi_hop(query):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    queries </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> decompose(query)  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># sub-queries</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">else</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    queries </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [query]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Hybrid Retrieval (dense + BM25 + RRF)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">candidates </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> []</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> q </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> queries:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    dense_results </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> vector_store.similarity_search(q, </span><span style="color:#E36209;--shiki-dark:#FFAB70">k</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">50</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    sparse_results </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> bm25_search(q, </span><span style="color:#E36209;--shiki-dark:#FFAB70">k</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">50</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    candidates.extend(rrf_fusion(dense_results, sparse_results))</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Reranking (cross-encoder)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">reranked </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> reranker.rerank(query, candidates[:</span><span style="color:#005CC5;--shiki-dark:#79B8FF">100</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], </span><span style="color:#E36209;--shiki-dark:#FFAB70">top_n</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">5</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Generation con citations</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">answer </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.generate(</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    context</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">reranked,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    prompt</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"Responde usando SOLO el contexto proporcionado. Cita fuentes."</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
+<Callout type="warning" title="Regla de oro: orden correcto">
+**Transform -> Retrieve -> Rerank -> Generate**. La transformacion amplia el recall, el reranker mejora la precision. Son complementarios, no competidores.
+</Callout>
+<h2 id="practica">Practica</h2>
+<Exercise title="Ejercicio 1: Agrega un reranker">
+Usando el pipeline del Capitulo 1 como base, agrega un reranker Cohere o BGE:
+<ul>
+<li>Recupera top-50 candidatos</li>
+<li>Rerankea a top-5</li>
+<li>Compara la calidad de la respuesta con y sin reranker
+</Exercise>
+</li>
+</ul>
+<Exercise title="Ejercicio 2: Implementa Multi-Query">
+Usa `MultiQueryRetriever` de LangChain:
+<ul>
+<li>Genera 3 parrafasis de una pregunta ambigua</li>
+<li>Recupera con cada parrafasis</li>
+<li>Fusiona resultados con RRF</li>
+<li>Mide: ¿mejora el Recall@5?
+</Exercise>
+</li>
+</ul>
+<Exercise title="Ejercicio 3: Cadena completa">
+Construye el pipeline completo: Query Rewrite -> Hybrid Search -> Rerank -> Generate. Mide latencia por etapa.
+</Exercise>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Por qué un reranker es más preciso que un bi-encoder?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque es un modelo más grande</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque lee query y documento juntos con atencion completa</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque usa BM25 en lugar de embeddings</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque opera sobre todo el corpus</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Qué arregla HyDE?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Chunks mal divididos</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Gap de vocabulario entre la pregunta y los documentos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Embeddings de baja calidad</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El LLM alucina informacion</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Cuál es el orden correcto del pipeline de produccion?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Retrieve -&gt; Transform -&gt; Rerank -&gt; Generate</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Transform -&gt; Retrieve -&gt; Rerank -&gt; Generate</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Rerank -&gt; Retrieve -&gt; Transform -&gt; Generate</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Transform -&gt; Rerank -&gt; Retrieve -&gt; Generate</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">¿Cuándo usar Query Decomposition?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, mejora todo tipo de queries</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo con queries ambiguas</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando la pregunta requiere informacion de multiples documentos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando el corpus es muy grande</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/rag-lessonslessons/embeddings-and-vector-stores">← Embeddings y Vector Stores: La capa que determina tu calidad</a><a href="/rag-lessonslessons/guardrails-and-hallucinations">Guardrails y Hallucinations: Cuando confiar y cuando abstenerse →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+  (function() {
+    const btn = document.querySelector('.back-to-top');
+    if (!btn) return;
+    window.addEventListener('scroll', function() {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+    btn.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+</script></body></html>

@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
+  <a href="#content" class="skip-link">Saltar al contenido</a>
   <header class="site-header">
     <a href="../index.html" class="masthead">RAG Production</a>
     <nav aria-label="Navegación principal">
@@ -28,7 +29,8 @@
       <a href="../reference/rag-glossary.html">Glosario</a>
     </nav>
   </header>
-  <article>
+  <main>
+  <article id="content">
     <header>
       <h1>Embeddings y Vector Stores: La capa que determina tu calidad</h1>
       <p class="subtitle">Leccion 3 — Pilar 1: Ingesta y Segmentacion (parte 2)</p>
@@ -377,6 +379,7 @@ results = vectorstore.similarity_search(
       </p>
     </footer>
   </article>
+  </main>
 
   <script>
   function checkAnswer(el, correct) {
@@ -408,6 +411,13 @@ results = vectorstore.similarity_search(
       feedback.style.color = '#991b1b';
     }
   }
+  </script>
+  <button class="back-to-top" aria-label="Volver arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+  <script>
+    const btn = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
   </script>
 </body>
 </html>

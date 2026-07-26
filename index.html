@@ -53,6 +53,7 @@
   <link rel="stylesheet" href="assets/lesson.css">
 </head>
 <body>
+  <a href="#content" class="skip-link">Saltar al contenido</a>
   <header class="site-header">
     <a href="index.html" class="masthead">RAG Production</a>
     <nav aria-label="Navegación principal">
@@ -65,7 +66,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="content">
     <div class="hero">
       <div class="hero-eyebrow">Curso de producción · 2026</div>
       <h1>De la teoría a la implementación</h1>
@@ -198,5 +199,13 @@
     <span>RAG Production · v1.0.0</span>
     <span>Generado con <a href="https://opencode.ai">OpenCode</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span>
   </footer>
+
+  <button class="back-to-top" aria-label="Volver arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+  <script>
+    const btn = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+  </script>
 </body>
 </html>

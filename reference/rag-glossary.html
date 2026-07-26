@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
+  <a href="#content" class="skip-link">Saltar al contenido</a>
   <header class="site-header">
     <a href="../index.html" class="masthead">RAG Production</a>
     <nav aria-label="Navegación principal">
@@ -25,7 +26,8 @@
       <a href="../reference/rag-glossary.html" aria-current="page">Glosario</a>
     </nav>
   </header>
-  <article>
+  <main>
+  <article id="content">
     <header>
       <h1>Glosario RAG Production</h1>
       <p class="subtitle">Referencia — Términos clave del curso</p>
@@ -113,5 +115,13 @@
       </p>
     </footer>
   </article>
+  </main>
+  <button class="back-to-top" aria-label="Volver arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+  <script>
+    const btn = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+  </script>
 </body>
 </html>

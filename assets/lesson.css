@@ -81,12 +81,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* --- SKIP LINK (a11y) --- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--anchor-dark);
+  color: var(--bg);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+  transition: top 150ms ease-out;
+}
+.skip-link:focus { top: 0; }
+
 /* --- LAYOUT: asymmetric, left-biased --- */
 .site-header {
   max-width: var(--wide-width);
   margin: 0 auto;
   padding: var(--sp-6) var(--sp-6) var(--sp-4);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: oklch(from var(--bg) l c h / 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
 }
 
 .site-header .masthead {
@@ -261,8 +285,8 @@ main {
   line-height: 1.55;
 }
 
-.resource-item a { color: var(--anchor-dark); text-decoration: underline; text-underline-offset: 2px; }
-.resource-item a:hover { color: var(--anchor); }
+.resource-item a { color: var(--anchor-dark); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+.resource-item a:hover { color: var(--anchor); text-decoration-thickness: 2px; }
 
 /* --- FOOTER --- */
 .site-footer {
@@ -279,8 +303,8 @@ main {
   gap: var(--sp-4);
 }
 
-.site-footer a { color: var(--text-secondary); text-decoration: none; }
-.site-footer a:hover { color: var(--anchor); }
+.site-footer a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; text-decoration-color: oklch(from var(--text-secondary) l c h / 0.3); }
+.site-footer a:hover { color: var(--anchor); text-decoration-color: var(--anchor); }
 
 /* ============================================================ */
 /* LESSON PAGE STYLES                                           */
@@ -535,10 +559,102 @@ article footer a:hover { text-decoration: underline; }
   .resources-grid { grid-template-columns: 1fr; }
 }
 
+article p a, .lesson-desc a, .lead a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: oklch(from var(--anchor-dark) l c h / 0.4);
+  transition: text-decoration-color 150ms ease-out;
+}
+
+article p a:hover, .lesson-desc a:hover, .lead a:hover {
+  text-decoration-color: var(--anchor-dark);
+}
+
+/* --- ENTRANCE ANIMATIONS --- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero, .section-heading, .lesson-item, .resource-item {
+  animation: fadeUp 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lesson-item:nth-child(1) { animation-delay: 50ms; }
+.lesson-item:nth-child(2) { animation-delay: 100ms; }
+.lesson-item:nth-child(3) { animation-delay: 150ms; }
+
+/* --- IMPROVED HOVER STATES --- */
+.lesson-item a {
+  display: block;
+  padding: var(--sp-3);
+  margin: calc(-1 * var(--sp-3));
+  border-radius: 6px;
+  transition: background 150ms ease-out;
+}
+
+.lesson-item a:hover {
+  background: var(--bg-warm);
+}
+
+.lesson-title {
+  transition: color 150ms ease-out;
+}
+
+.lesson-item a:hover .lesson-title {
+  color: var(--anchor-dark);
+}
+
+/* --- FOCUS VISIBLE (a11y) --- */
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--anchor);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* --- BACK TO TOP --- */
+.back-to-top {
+  position: fixed;
+  bottom: var(--sp-6);
+  right: var(--sp-6);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--anchor-dark);
+  color: var(--bg);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  box-shadow: 0 2px 8px oklch(0 0 0 / 0.15);
+  z-index: 50;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.back-to-top:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px oklch(0 0 0 / 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .back-to-top { box-shadow: 0 2px 8px oklch(0 0 0 / 0.4); }
+  .back-to-top:hover { box-shadow: 0 4px 12px oklch(0 0 0 / 0.5); }
+}
+
 /* --- PRINT --- */
 @media print {
   body { font-size: 11pt; }
-  .site-header, .site-footer { display: none; }
+  .site-header, .site-footer, .back-to-top, .skip-link { display: none; }
   article { max-width: 100%; padding: 0; }
   .callout, .practice { background: #f5f5f5; }
   .quiz { border-color: #999; }

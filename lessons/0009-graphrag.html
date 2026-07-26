@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
+  <a href="#content" class="skip-link">Saltar al contenido</a>
   <header class="site-header">
     <a href="../index.html" class="masthead">RAG Production</a>
     <nav aria-label="Navegación principal">
@@ -28,7 +29,8 @@
       <a href="../reference/rag-glossary.html">Glosario</a>
     </nav>
   </header>
-  <article>
+  <main>
+  <article id="content">
     <header>
       <h1>GraphRAG: Knowledge Graphs + RAG para razonamiento complejo</h1>
       <p class="subtitle">Leccion 9 (Final) — Pilar 3: Agentic RAG y GraphRAG</p>
@@ -407,6 +409,7 @@ chain = (
       </p>
     </footer>
   </article>
+  </main>
 
   <script>
   function checkAnswer(el, correct) {
@@ -429,6 +432,13 @@ chain = (
       feedback.style.color = '#991b1b';
     }
   }
+  </script>
+  <button class="back-to-top" aria-label="Volver arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+  <script>
+    const btn = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
   </script>
 </body>
 </html>

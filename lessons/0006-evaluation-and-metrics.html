@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
+  <a href="#content" class="skip-link">Saltar al contenido</a>
   <header class="site-header">
     <a href="../index.html" class="masthead">RAG Production</a>
     <nav aria-label="Navegación principal">
@@ -28,7 +29,8 @@
       <a href="../reference/rag-glossary.html">Glosario</a>
     </nav>
   </header>
-  <article>
+  <main>
+  <article id="content">
     <header>
       <h1>Evaluacion y Metricas: Como saber si tu RAG realmente funciona</h1>
       <p class="subtitle">Leccion 6 — Pilar 4: RAGOps</p>
@@ -430,6 +432,7 @@ if results["answer_relevancy"] < 0.75:
       </p>
     </footer>
   </article>
+  </main>
 
   <script>
   function checkAnswer(el, correct) {
@@ -452,6 +455,13 @@ if results["answer_relevancy"] < 0.75:
       feedback.style.color = '#991b1b';
     }
   }
+  </script>
+  <button class="back-to-top" aria-label="Volver arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+  <script>
+    const btn = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
   </script>
 </body>
 </html>

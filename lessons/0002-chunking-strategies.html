@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
+  <a href="#content" class="skip-link">Saltar al contenido</a>
   <header class="site-header">
     <a href="../index.html" class="masthead">RAG Production</a>
     <nav aria-label="Navegación principal">
@@ -28,7 +29,8 @@
       <a href="../reference/rag-glossary.html">Glosario</a>
     </nav>
   </header>
-  <article>
+  <main>
+  <article id="content">
     <header>
       <h1>Estrategias de Chunking: El cuello de botella silencioso</h1>
       <p class="subtitle">Lección 2 — Pilar 1: Ingesta y Segmentación</p>
@@ -320,6 +322,7 @@ chunk_with_context = f"{context}\n\n{chunk}"</code></pre>
       </p>
     </footer>
   </article>
+  </main>
 
   <script>
   function checkAnswer(el, correct) {
@@ -351,6 +354,13 @@ chunk_with_context = f"{context}\n\n{chunk}"</code></pre>
       feedback.style.color = '#991b1b';
     }
   }
+  </script>
+  <button class="back-to-top" aria-label="Volver arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+  <script>
+    const btn = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
   </script>
 </body>
 </html>

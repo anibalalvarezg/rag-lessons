@@ -1,0 +1,58 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import LessonNav from '../components/LessonNav.astro';
+import Quiz from '../components/Quiz.astro';
+import Callout from '../components/Callout.astro';
+import Exercise from '../components/Exercise.astro';
+
+interface QuizData {
+  id: string;
+  question: string;
+  options: { text: string; correct: boolean }[];
+}
+
+interface Props {
+  title: string;
+  subtitle: string;
+  description: string;
+  keywords: string;
+  ogSection: string;
+  pubDate: string;
+  lessonNum: number;
+  quizzes: QuizData[];
+  prev?: { slug: string; title: string } | null;
+  next?: { slug: string; title: string } | null;
+}
+
+const { title, subtitle, description, keywords, ogSection, pubDate, lessonNum, quizzes, prev, next } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const canonical = `https://anibalalvarezg.github.io${base}lessons/${prev && next ? '' : ''}`;
+---
+<BaseLayout
+  title={title}
+  description={description}
+  keywords={keywords}
+  ogType="article"
+  articleSection={ogSection}
+  pubDate={pubDate}
+>
+  <article id="content">
+    <header>
+      <h1>{title}</h1>
+      <p class="subtitle">{subtitle}</p>
+    </header>
+
+    <slot />
+
+    {quizzes.length > 0 && (
+      <section class="check">
+        <h2>Verifica tu comprensión</h2>
+        {quizzes.map((q) => (
+          <Quiz id={q.id} question={q.question} options={q.options} />
+        ))}
+      </section>
+    )}
+
+    <LessonNav prev={prev} next={next} />
+  </article>
+</BaseLayout>

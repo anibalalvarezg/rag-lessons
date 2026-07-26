@@ -1,0 +1,42 @@
+---
+const pathname = Astro.url.pathname;
+const base = import.meta.env.BASE_URL;
+
+const pillars = [
+  { label: 'Fundamentos', href: `${base}#pilar-1` },
+  { label: 'Ingesta', href: `${base}#pilar-2` },
+  { label: 'Recuperación', href: `${base}#pilar-3` },
+  { label: 'Agentic & GraphRAG', href: `${base}#pilar-4` },
+  { label: 'RAGOps', href: `${base}#pilar-5` },
+  { label: 'Glosario', href: `${base}reference/glossary` },
+];
+---
+<header class="site-header">
+  <a href={base} class="masthead">RAG Production</a>
+  <nav aria-label="Navegación principal">
+    {pillars.map(p => (
+      <a href={p.href}>{p.label}</a>
+    ))}
+    <button class="theme-toggle" aria-label="Cambiar tema" type="button">
+      <span class="icon-sun" aria-hidden="true">☀</span>
+      <span class="icon-moon" aria-hidden="true">☾</span>
+    </button>
+  </nav>
+</header>
+
+<script is:inline>
+  (function() {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = stored || (prefersDark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+  })();
+</script>
+<script is:inline>
+  document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    html.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script>

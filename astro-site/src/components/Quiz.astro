@@ -1,0 +1,64 @@
+---
+interface QuizOption {
+  text: string;
+  correct: boolean;
+}
+
+interface Props {
+  id: string;
+  question: string;
+  options: QuizOption[];
+}
+
+const { id, question, options } = Astro.props;
+---
+<div class="quiz" id={id} data-quiz>
+  <p class="quiz-question">{question}</p>
+  <div class="quiz-options">
+    {options.map((opt, i) => (
+      <button
+        class="quiz-option"
+        data-correct={opt.correct ? 'true' : 'false'}
+        data-quiz-option
+        type="button"
+      >
+        {opt.text}
+      </button>
+    ))}
+  </div>
+  <div class="quiz-feedback" data-quiz-feedback></div>
+</div>
+
+<script>
+  document.querySelectorAll('[data-quiz]').forEach((quiz) => {
+    const feedback = quiz.querySelector('[data-quiz-feedback]');
+    const options = quiz.querySelectorAll('[data-quiz-option]');
+    let answered = false;
+
+    options.forEach((opt) => {
+      opt.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+
+        const isCorrect = opt.getAttribute('data-correct') === 'true';
+
+        options.forEach((o) => {
+          (o as HTMLElement).style.pointerEvents = 'none';
+          if (o.getAttribute('data-correct') === 'true') {
+            o.classList.add('correct');
+          }
+        });
+
+        if (isCorrect) {
+          opt.classList.add('correct');
+          feedback.textContent = 'Correcto.';
+          feedback.className = 'quiz-feedback correct-fb';
+        } else {
+          opt.classList.add('incorrect');
+          feedback.textContent = 'Incorrecto. La respuesta correcta está resaltada en verde.';
+          feedback.className = 'quiz-feedback incorrect-fb';
+        }
+      });
+    });
+  });
+</script>

@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { lessons } from '../data/lessons';
+
+const base = import.meta.env.BASE_URL;
+
+const pillars = [
+  { id: 'pilar-1', title: 'Fundamentos', filter: 'pilar-1' },
+  { id: 'pilar-2', title: 'Ingesta y Segmentación', filter: 'pilar-2' },
+  { id: 'pilar-3', title: 'Agentic RAG y GraphRAG', filter: 'pilar-3' },
+  { id: 'pilar-4', title: 'RAGOps y Evaluación', filter: 'pilar-4' },
+];
+---
+<BaseLayout
+  title="RAG Production"
+  description="Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG."
+  keywords="RAG, Retrieval Augmented Generation, LLM, producción, chunking, embeddings, vector store, reranking, GraphRAG, agentic RAG, evaluación RAG"
+>
+  <main id="content">
+    <div class="hero">
+      <div class="hero-eyebrow">Curso de producción · 2026</div>
+      <h1>De la teoría a la implementación</h1>
+      <p class="lead">9 lecciones, 4 pilares, 1 objetivo: sistemas RAG que funcionan en producción. No demos — sistemas reales con métricas reales.</p>
+      <div class="meta">
+        <span>9 lecciones</span>
+        <span>4 pilares</span>
+        <span>19 términos</span>
+        <span>15+ fuentes</span>
+      </div>
+    </div>
+
+    {pillars.map((pillar) => (
+      <div id={pillar.id}>
+        <h2 class="section-heading">{pillar.title}</h2>
+        <hr class="section-rule">
+        <ul class="lesson-list">
+          {lessons
+            .filter(l => l.pillar === pillar.id)
+            .map((lesson) => (
+              <li class="lesson-item">
+                <a href={`${base}lessons/${lesson.slug}`}>
+                  <span class="lesson-num">{String(lesson.lessonNum).padStart(2, '0')}</span>
+                  <div class="lesson-title">{lesson.title}</div>
+                  <p class="lesson-desc">{lesson.desc}</p>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    ))}
+
+    <div class="resources">
+      <h2 class="section-heading">Recursos</h2>
+      <hr class="section-rule">
+      <div class="resources-grid">
+        <div class="resource-item">
+          <h3>Glosario</h3>
+          <p><a href={`${base}reference/glossary`}>19 términos clave</a> del curso, de chunking a GraphRAG.</p>
+        </div>
+        <div class="resource-item">
+          <h3>Repositorio</h3>
+          <p><a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a> — Laboratorio principal con 9 capítulos.</p>
+        </div>
+        <div class="resource-item">
+          <h3>Código fuente</h3>
+          <p><a href="https://github.com/anibalalvarezg/rag-lessons">rag-lessons</a> — Lecciones HTML de este curso.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

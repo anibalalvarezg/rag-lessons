@@ -1,0 +1,90 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import BackToTop from '../components/BackToTop.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogType?: string;
+  articleSection?: string;
+  pubDate?: string;
+  keywords?: string;
+}
+
+const {
+  title,
+  description,
+  canonical = 'https://anibalalvarezg.github.io/rag-lessons/',
+  ogType = 'website',
+  articleSection,
+  pubDate,
+  keywords,
+} = Astro.props;
+
+const siteTitle = 'RAG Production';
+const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{fullTitle}</title>
+  <meta name="description" content={description}>
+  {keywords && <meta name="keywords" content={keywords}>}
+  <meta name="author" content="Aníbal Álvarez">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href={canonical}>
+
+  <meta property="og:type" content={ogType}>
+  <meta property="og:title" content={fullTitle}>
+  <meta property="og:description" content={description}>
+  <meta property="og:url" content={canonical}>
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:site_name" content={siteTitle}>
+  {articleSection && <meta property="article:section" content={articleSection}>}
+  {pubDate && <meta property="article:published_time" content={pubDate}>}
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content={fullTitle}>
+  <meta name="twitter:description" content={description}>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "name": "RAG Production",
+    "description": "Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.",
+    "provider": {
+      "@type": "Person",
+      "name": "Aníbal Álvarez"
+    },
+    "inLanguage": "es",
+    "educationalLevel": "advanced",
+    "hasCourseInstance": {
+      "@type": "CourseInstance",
+      "courseMode": "online",
+      "courseWorkload": "PT9H"
+    },
+    "about": [
+      {"@type": "Thing", "name": "Retrieval Augmented Generation"},
+      {"@type": "Thing", "name": "Large Language Models"},
+      {"@type": "Thing", "name": "Vector Databases"},
+      {"@type": "Thing", "name": "GraphRAG"}
+    ]
+  })} />
+</head>
+<body>
+  <a href="#content" class="skip-link">Saltar al contenido</a>
+  <Header />
+  <slot />
+  <Footer />
+  <BackToTop />
+</body>
+</html>

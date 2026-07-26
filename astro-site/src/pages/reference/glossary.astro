@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { glossaryTerms } from '../../data/lessons';
+
+const base = import.meta.env.BASE_URL;
+---
+<BaseLayout
+  title="Glosario RAG"
+  description="19 términos clave de RAG en producción: chunking, embeddings, hybrid retrieval, reranking, grounding, SGI, RAGAS, ReAct, GraphRAG y más."
+  keywords="glosario RAG, terminología RAG, chunking, embeddings, vector store, reranking, GraphRAG"
+>
+  <article id="content">
+    <header>
+      <h1>Glosario RAG</h1>
+      <p class="subtitle">19 términos clave del curso</p>
+    </header>
+
+    <section>
+      <p>Referencia rápida de los términos técnicos utilizados en las 9 lecciones del curso.</p>
+
+      <dl style="margin-top: var(--sp-8);">
+        {glossaryTerms.map((item) => (
+          <div style="margin-bottom: var(--sp-6); padding-bottom: var(--sp-6); border-bottom: 1px solid var(--border);">
+            <dt style="font-family: var(--font-display); font-size: 1.15rem; color: var(--anchor-dark); margin-bottom: var(--sp-1);">{item.term}</dt>
+            <dd style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">{item.def}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <footer class="lesson-footer">
+      <nav>
+        <a href={`${base}lessons/graphrag`}>← Lección 9: GraphRAG</a>
+        <a href={base}>Inicio →</a>
+      </nav>
+    </footer>
+  </article>
+</BaseLayout>

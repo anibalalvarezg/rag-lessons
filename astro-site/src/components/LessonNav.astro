@@ -1,0 +1,17 @@
+---
+interface Props {
+  prev?: { slug: string; title: string } | null;
+  next?: { slug: string; title: string } | null;
+}
+const { prev, next } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+<footer class="lesson-footer">
+  <nav>
+    {prev && <a href={`${base}lessons/${prev.slug}`}>← {prev.title}</a>}
+    {next && <a href={`${base}lessons/${next.slug}`}>{next.title} →</a>}
+  </nav>
+  <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+    RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a>
+  </p>
+</footer>

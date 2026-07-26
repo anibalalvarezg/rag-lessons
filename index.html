@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAG Production: De la teoría a la implementación</title>
+  <link rel="stylesheet" href="assets/lesson.css">
+  <style>
+    .hero { text-align: center; padding: 2rem 0; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .hero p { font-size: 1.1rem; color: #666; }
+    .pillar-section { margin-bottom: 2.5rem; }
+    .pillar-section h2 { font-size: 1.4rem; color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.3rem; }
+    .lesson-list { list-style: none; padding: 0; }
+    .lesson-list li { padding: 0.8rem 1rem; margin: 0.5rem 0; background: #f8fafc; border-left: 4px solid var(--accent); border-radius: 4px; transition: all 0.2s; }
+    .lesson-list li:hover { background: #f1f5f9; border-left-color: #1e293b; transform: translateX(4px); }
+    .lesson-list a { text-decoration: none; color: inherit; display: block; }
+    .lesson-num { font-weight: 700; color: var(--accent); margin-right: 0.5rem; }
+    .lesson-desc { display: block; font-size: 0.9rem; color: #666; margin-top: 0.3rem; }
+    .resources-section { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .resources-section h2 { font-size: 1.4rem; }
+    .resources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .resource-card { padding: 1rem; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border-color); }
+    .resource-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .resource-card p { font-size: 0.9rem; color: #666; }
+    .stats { display: flex; gap: 2rem; justify-content: center; margin: 2rem 0; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 0.85rem; color: #666; }
+  </style>
+</head>
+<body>
+  <article>
+    <div class="hero">
+      <h1>RAG Production</h1>
+      <p>De la teoria a la implementacion — 9 lecciones, 4 pilares, 1 objetivo: sistemas RAG que funcionan en produccion.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-num">9</div><div class="stat-label">Lecciones</div></div>
+      <div class="stat"><div class="stat-num">4</div><div class="stat-label">Pilares</div></div>
+      <div class="stat"><div class="stat-num">19</div><div class="stat-label">Terminos clave</div></div>
+      <div class="stat"><div class="stat-num">15+</div><div class="stat-label">Fuentes</div></div>
+    </div>
+
+    <div class="pillar-section">
+      <h2>Pilar 1: Fundamentos</h2>
+      <ul class="lesson-list">
+        <li>
+          <a href="lessons/0001-what-is-rag.html">
+            <span class="lesson-num">0001</span> Que es RAG: Fundamentos y Pipeline Basico
+            <span class="lesson-desc">Que es RAG, pipeline de 4 pasos, cuando usar RAG vs long-context vs fine-tuning.</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="pillar-section">
+      <h2>Pilar 2: Ingesta y Segmentacion</h2>
+      <ul class="lesson-list">
+        <li>
+          <a href="lessons/0002-chunking-strategies.html">
+            <span class="lesson-num">0002</span> Estrategias de Chunking
+            <span class="lesson-desc">Dilema chunk-size, 4 estrategias, contextual retrieval, arbol de decision.</span>
+          </a>
+        </li>
+        <li>
+          <a href="lessons/0003-embeddings-and-vector-stores.html">
+            <span class="lesson-num">0003</span> Embeddings y Vector Stores
+            <span class="lesson-desc">Modelos de embedding 2026, Matryoshka, hybrid retrieval, LangChain.</span>
+          </a>
+        </li>
+        <li>
+          <a href="lessons/0004-hybrid-retrieval-and-reranking.html">
+            <span class="lesson-num">0004</span> Hybrid Retrieval y Reranking
+            <span class="lesson-desc">Retrieve + rerank, Cohere/BGE/Jina, query transformation (HyDE, Multi-Query), pipeline completo.</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="pillar-section">
+      <h2>Pilar 3: Agentic RAG y GraphRAG</h2>
+      <ul class="lesson-list">
+        <li>
+          <a href="lessons/0007-agentic-rag.html">
+            <span class="lesson-num">0007</span> Agentic RAG
+            <span class="lesson-desc">Patron ReAct, Self-Corrective RAG, 5-agentes Google (+34% factuality), MA-RAG, 8 patrones de arquitectura.</span>
+          </a>
+        </li>
+        <li>
+          <a href="lessons/0008-multimodal-rag.html">
+            <span class="lesson-num">0008</span> Multimodal RAG
+            <span class="lesson-desc">SigLIP, ColPali, extraccion de tablas, 3 arquitecturas, UniversalRAG routing.</span>
+          </a>
+        </li>
+        <li>
+          <a href="lessons/0009-graphrag.html">
+            <span class="lesson-num">0009</span> GraphRAG
+            <span class="lesson-desc">Microsoft GraphRAG, Neo4j, 4 estrategias de busqueda, Dynamic Community Selection (-77% costo).</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="pillar-section">
+      <h2>Pilar 4: RAGOps y Evaluacion</h2>
+      <ul class="lesson-list">
+        <li>
+          <a href="lessons/0005-guardrails-and-hallucinations.html">
+            <span class="lesson-num">0005</span> Guardrails y Deteccion de Alucinaciones
+            <span class="lesson-desc">Taxonomia de alucinaciones (3 tipos), 4 senales de deteccion, 5 estrategias de respuesta, HALO.</span>
+          </a>
+        </li>
+        <li>
+          <a href="lessons/0006-evaluation-and-metrics.html">
+            <span class="lesson-num">0006</span> Evaluacion y Metricas
+            <span class="lesson-desc">RAG Triad, metricas de retrieval, LLM-as-Judge, RAGAS, 8 metricas enterprise, CI/CD.</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="resources-section">
+      <h2>Recursos</h2>
+      <div class="resources-grid">
+        <div class="resource-card">
+          <h3>Referencia</h3>
+          <p><a href="reference/rag-glossary.html">Glosario de terminos RAG</a> — 19 terminos clave del curso.</p>
+        </div>
+        <div class="resource-card">
+          <h3>Repositorio</h3>
+          <p><a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a> — Laboratorio principal con 9 capítulos.</p>
+        </div>
+        <div class="resource-card">
+          <h3>Documento fuente</h3>
+          <p><a href="https://docs.google.com/document/d/1KJkEprUuUcY7Zs-429tIbQ0u1sR2b9d3/edit?usp=sharing&ouid=11028328949292342696">Notas de estudio</a> — Documento compartido con el estudiante.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: #999;">
+      <p>RAG Production — Curso de aprendizaje con OpenCode</p>
+      <p>Lecciones generadas a partir de hands-on-rag + investigacion de 2026</p>
+    </footer>
+  </article>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>¿Qué es RAG y por qué lo necesitas en producción?</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <article>
+    <header>
+      <h1>¿Qué es RAG y por qué lo necesitas en producción?</h1>
+      <p class="subtitle">Lección 1 — Fundamentos del pipeline RAG</p>
+    </header>
+
+    <section class="objective">
+      <h2>Objetivo</h2>
+      <p>Al finalizar esta lección, podrás explicar qué es RAG, por qué es necesario, y cuáles son los 4 pilares que separan un demo de un sistema en producción.</p>
+    </section>
+
+    <section class="knowledge">
+      <h2>El problema que RAG resuelve</h2>
+      <p>Los LLMs tienen un límite: solo saben lo que vieron durante su entrenamiento. Si necesitas que un chatbot responda sobre tus documentos internos, políticas de la empresa, o conocimiento que cambia constantemente, un LLM solo no puede.</p>
+
+      <p>La solución obvia sería re-entrenar el modelo con tus datos. Pero eso es:</p>
+      <ul>
+        <li><strong>Caro</strong> — entrenar un modelo cuesta miles de dólares</li>
+        <li><strong>Lento</strong> — toma horas o días</li>
+        <li><strong>Rígido</strong> — cuando tus documentos cambian, necesitas re-entrenar</li>
+      </ul>
+
+      <p>RAG (Retrieval-Augmented Generation) ofrece una alternativa: en lugar de meter el conocimiento en el modelo, le damos acceso a una base de datos externa en tiempo real.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Analogía</div>
+        <p>Piensa en un examen. Un LLM sin RAG es como un estudiante que solo puede usar lo que memorizó. RAG es como un estudiante que puede abrir sus apuntes y buscar la respuesta antes de responder.</p>
+      </div>
+
+      <h2>Cómo funciona RAG (pipeline básico)</h2>
+      <p>El flujo tiene dos caminos que se encuentran:</p>
+
+      <h3>Camino offline (Indexing)</h3>
+      <ol>
+        <li><strong>Parsing:</strong> Extraer texto de documentos (PDFs, Word, HTML)</li>
+        <li><strong>Chunking:</strong> Dividir el texto en fragmentos manejables</li>
+        <li><strong>Embedding:</strong> Convertir cada chunk en un vector numérico</li>
+        <li><strong>Almacenamiento:</strong> Guardar los vectores en una base de datos vectorial</li>
+      </ol>
+
+      <h3>Camino online (Query)</h3>
+      <ol>
+        <li><strong>Query embedding:</strong> Convertir la pregunta del usuario en un vector</li>
+        <li><strong>Retrieval:</strong> Buscar los chunks más similares en la base de datos</li>
+        <li><strong>Generation:</strong> Enviar los chunks recuperados + la pregunta al LLM</li>
+      </ol>
+
+      <div class="callout warning">
+        <div class="callout-title">Diferencia clave con producción</div>
+        <p>Un demo para aquí. Un sistema en producción agrega: re-ranking de resultados, guardrails de entrada/salida, evaluación continua, monitoreo, y manejo de fallos.</p>
+      </div>
+
+      <h2>Los 4 pilares de RAG en producción</h2>
+      <p>Tu repositorio <code>hands-on-rag</code> organiza exactamente estos pilares en sus capítulos:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Pilar</th>
+            <th>Capítulo</th>
+            <th>Pregunta clave</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Ingesta y Segmentación</strong></td>
+            <td>2-3</td>
+            <td>¿Cómo divido mis documentos sin perder información?</td>
+          </tr>
+          <tr>
+            <td><strong>2. Recuperación Avanzada</strong></td>
+            <td>3-4</td>
+            <td>¿Cómo encuentro los chunks correctos de forma precisa?</td>
+          </tr>
+          <tr>
+            <td><strong>3. Agentic RAG y GraphRAG</strong></td>
+            <td>7-9</td>
+            <td>¿Cuándo debe el sistema buscar vs. responder directamente?</td>
+          </tr>
+          <tr>
+            <td><strong>4. RAGOps y Evaluación</strong></td>
+            <td>6</td>
+            <td>¿Cómo sé si mi sistema funciona bien?</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>RAG vs. Long Context vs. Fine-tuning</h2>
+      <p>RAG no es la única solución. En 2026, existen tres opciones principales:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Enfoque</th>
+            <th>Cuándo usarlo</th>
+            <th>Cuándo NO usarlo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Long Context</strong></td>
+            <td>Corpus &lt; 200k tokens, no cambia mucho</td>
+            <td>Corpus grande, necesita citas verificables</td>
+          </tr>
+          <tr>
+            <td><strong>RAG</strong></td>
+            <td>Corpus &gt; 1M tokens, cambia frecuentemente, necesita citations</td>
+            <td>Preguntas sobre conocimiento general</td>
+          </tr>
+          <tr>
+            <td><strong>Fine-tuning</strong></td>
+            <td>Necesitas un estilo/formato específico, comportamiento consistente</td>
+            <td>Hechos que cambian, datos actuales</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout success">
+        <div class="callout-title">Regla práctica 2026</div>
+        <p>Si tu corpus cabe en 200k tokens (unas 500 páginas), probablemente no necesitas RAG. Prueba primero con long context + prompt caching. RAG gana cuando: el corpus es grande, cambia frecuentemente, o necesitas citas verificables.</p>
+      </div>
+    </section>
+
+    <section class="practice">
+      <h2>Práctica</h2>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 1</div>
+        <p>Abre el repositorio <code>hands-on-rag</code> y navega al capítulo 1. Ejecuta el notebook <code>sample-rag.ipynb</code>. ¿Qué componentes del pipeline identificas?</p>
+        <p><strong>Pistas:</strong> Busca las funciones de LangChain que se usan (load, split, embed, store, query).</p>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 2</div>
+        <p>Responde estas preguntas sobre el notebook del Capítulo 1:</p>
+        <ul>
+          <li>¿Qué modelo de embedding se usa?</li>
+          <li>¿Qué base de datos vectorial?</li>
+          <li>¿Qué tamaño de chunk se configuró?</li>
+          <li>¿Qué LLM genera la respuesta final?</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="check">
+      <h2>Verifica tu comprensión</h2>
+
+      <div class="quiz" id="quiz1">
+        <p class="quiz-question">1. ¿Cuál es el problema principal que RAG resuelve?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Los LLMs son demasiado lentos para responder preguntas</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Los LLMs no tienen acceso a conocimiento privado o actualizado</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Los LLMs alucinan demasiado sin contexto externo</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Los LLMs no pueden procesar documentos largos</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="quiz2">
+        <p class="quiz-question">2. ¿Qué camino del pipeline RAG ocurre ANTES de que el usuario haga una pregunta?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Query → Embedding → Retrieval → Generation</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Parsing → Chunking → Embedding → Storage</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Generation → Citation → Validation → Response</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Retrieval → Reranking → Context Assembly → Generation</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="quiz3">
+        <p class="quiz-question">3. Según la regla práctica de 2026, ¿cuándo SÍ necesitas RAG?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Siempre, es mejor que long context</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Cuando tu corpus tiene menos de 100 páginas</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Cuando tu corpus &gt; 1M tokens, cambia frecuentemente, o necesitas citas</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Solo cuando usas modelos open-source</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </section>
+
+    <footer>
+      <nav>
+        <p></p>
+        <p><a href="0002-chunking-strategies.html">Siguiente: Estrategias de Chunking →</a></p>
+      </nav>
+      <p>¿Preguntas? Pregúntale a tu profesor — este agente es tu guía.</p>
+      <p>Fuente principal: <a href="https://github.com/ofermend/hands-on-rag">Hands-on RAG for Production</a></p>
+    </footer>
+  </article>
+
+  <script>
+  function checkAnswer(el, correct) {
+    const quiz = el.closest('.quiz');
+    const feedback = quiz.querySelector('.quiz-feedback');
+    const options = quiz.querySelectorAll('.quiz-option');
+
+    options.forEach(opt => {
+      opt.style.pointerEvents = 'none';
+      opt.classList.remove('correct', 'incorrect');
+    });
+
+    if (correct) {
+      el.classList.add('correct');
+      feedback.textContent = correct ? 'Correcto.' : '';
+      feedback.style.display = 'block';
+      feedback.style.background = '#ecfdf5';
+      feedback.style.color = '#065f46';
+    } else {
+      el.classList.add('incorrect');
+      // Find and highlight the correct answer
+      options.forEach(opt => {
+        if (opt.onclick.toString().includes('true')) {
+          opt.classList.add('correct');
+        }
+      });
+      feedback.textContent = 'Incorrecto. La respuesta correcta está resaltada en verde.';
+      feedback.style.display = 'block';
+      feedback.style.background = '#fef2f2';
+      feedback.style.color = '#991b1b';
+    }
+  }
+  </script>
+</body>
+</html>

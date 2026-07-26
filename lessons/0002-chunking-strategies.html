@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estrategias de Chunking: El cuello de botella silencioso</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <article>
+    <header>
+      <h1>Estrategias de Chunking: El cuello de botella silencioso</h1>
+      <p class="subtitle">Lección 2 — Pilar 1: Ingesta y Segmentación</p>
+    </header>
+
+    <section class="objective">
+      <h2>Objetivo</h2>
+      <p>Al finalizar esta lección, podrás elegir la estrategia de chunking correcta para tu corpus, implementar parent-child chunking, y justificar cada decisión de tamaño de chunk con datos.</p>
+    </section>
+
+    <section class="knowledge">
+      <h2>El dilema del tamaño de chunk</h2>
+      <p>Todo sistema RAG enfrenta la misma tensión:</p>
+      <ul>
+        <li><strong>Chunks pequeños (100-300 tokens):</strong> Embeddings precisos, retrieval preciso. Pero el LLM no tiene contexto suficiente para generar una respuesta completa.</li>
+        <li><strong>Chunks grandes (1000-2000 tokens):</strong> Contexto rico para generación. Pero el embedding se promedia sobre demasiados conceptos, y la señal de retrieval se diluye.</li>
+      </ul>
+
+      <div class="callout info">
+        <div class="callout-title">Dato clave de producción</div>
+        <p>El tamaño de chunk mueve las métricas más que la elección del algoritmo. En benchmarks de 2026, la diferencia entre 256 y 512 tokens fue mayor que la diferencia entre recursive y semantic chunking.<br>
+        <small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — 7 estrategias, 50 papers academicos</a></small></p>
+      </div>
+
+      <h2>Las estrategias principales</h2>
+
+      <h3>1. Fixed-size (Tamaño fijo)</h3>
+      <p>Corta cada N tokens, opcionalmente con overlap. Es rápido, predecible, y "tonto".</p>
+      <ul>
+        <li><strong>Cuándo usarlo:</strong> FAQs, catálogos de productos, contenido uniforme y corto</li>
+        <li><strong>Cuándo NO:</strong> Documentos con estructura, código, tablas, contenido mixto</li>
+        <li><strong>Configuración típica:</strong> 512 tokens, overlap 50-64 tokens (10-15%)</li>
+      </ul>
+
+      <h3>2. Recursive character splitting (El default recomendado)</h3>
+      <p>Intenta dividir en la frontera más grande disponible (párrafos), y si el chunk sigue siendo muy grande, recursa a oraciones, luego palabras. Respeta la estructura cuando puede.</p>
+
+      <div class="callout success">
+        <div class="callout-title">El default de producción 2026</div>
+        <p><code>chunk_size=512</code>, <code>chunk_overlap=64</code>, separadores en orden: párrafo → línea → oración → palabra. En benchmarks de 50 papers académicos, recursive 512 obtuvo 69% de accuracy vs 54% de semantic chunking.<br>
+        <small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — Recursive 512: 69% accuracy, Semantic: 54% accuracy</a></small></p>
+      </div>
+
+      <p>Configuración de LangChain:</p>
+      <pre><code>from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=512,
+    chunk_overlap=64,
+    separators=["\n\n", "\n", ". ", " ", ""]
+)</code></pre>
+
+      <h3>3. Semantic chunking (División semántica)</h3>
+      <p>Embedda cada oración, mide similitud coseno entre oraciones adyacentes, y crea un boundary cuando la similitud cae por debajo de un threshold. Respeta cambios de tema, no estructura.</p>
+      <ul>
+        <li><strong>Cuándo usarlo:</strong> Prosa larga sin headers claros, transcripciones, documentos donde el formato no refleja la estructura semántica</li>
+        <li><strong>Cuándo NO:</strong> Documentos bien estructurados (Markdown, HTML), cuando el presupuesto de embedding es limitado</li>
+        <li><strong>Costo:</strong> ~4x más embedding que recursive (una llamada por oración)</li>
+      </ul>
+
+      <p>Implementación conceptual:</p>
+      <pre><code>def semantic_chunk(text, threshold_percentile=95):
+    sentences = split_into_sentences(text)
+    embeddings = [embed(s) for s in sentences]
+    
+    chunks = []
+    current = [sentences[0]]
+    
+    for i in range(1, len(sentences)):
+        sim = cosine_sim(embeddings[i-1], embeddings[i])
+        distances.append(1 - sim)
+    
+    threshold = percentile(distances, threshold_percentile)
+    
+    for i in range(1, len(sentences)):
+        dist = 1 - cosine_sim(embeddings[i-1], embeddings[i])
+        if dist > threshold:
+            chunks.append(" ".join(current))
+            current = [sentences[i]]
+        else:
+            current.append(sentences[i])
+    
+    chunks.append(" ".join(current))
+    return chunks</code></pre>
+
+      <div class="callout warning">
+        <div class="callout-title">Problema conocido con defaults</div>
+        <p>LangChain's <code>SemanticChunker</code> con threshold al percentil 95 produce chunks de solo 43 tokens en promedio en textos académicos. Casi siempre necesitas subir el threshold a 99 o ajustar el <code>min_chunk_size</code>.</p>
+      </div>
+
+      <h3>4. Parent-child chunking (El patrón de producción)</h3>
+      <p>Resuelve el dilema del tamaño desacoplando retrieval de generación:</p>
+      <ul>
+        <li><strong>Child chunks (100-300 tokens):</strong> Se embeben y buscan. Son precisos y topicamente enfocados.</li>
+        <li><strong>Parent chunks (1000-2000 tokens):</strong> Se leen por el LLM. Dan contexto rico.</li>
+      </ul>
+
+      <p><strong>El flujo:</strong></p>
+      <ol>
+        <li>Usuario hace una pregunta</li>
+        <li>Se busca en los child chunks (preciso)</li>
+        <li>Se recupera el parent chunk del child ganador (contexto rico)</li>
+        <li>Se deduplican parents (varios children pueden apuntar al mismo parent)</li>
+        <li>El LLM recibe los parents, no los children</li>
+      </ol>
+
+      <pre><code># LangChain ParentDocumentRetriever
+# Nota: en LangChain v1+, ParentDocumentRetriever se migro a langchain-classic
+# pip install langchain-classic
+from langchain_classic.retrievers import ParentDocumentRetriever
+from langchain_classic.storage import InMemoryStore
+
+child_splitter = RecursiveCharacterTextSplitter(chunk_size=250)
+parent_splitter = RecursiveCharacterTextSplitter(chunk_size=1500)
+
+retriever = ParentDocumentRetriever(
+    vectorstore=vectorstore,      # children embeddings
+    docstore=InMemoryStore(),      # parent texts
+    child_splitter=child_splitter,
+    parent_splitter=parent_splitter,
+)</code></pre>
+
+      <div class="callout success">
+        <div class="callout-title">Impacto medido</div>
+        <p>Parent-child retrieval mejora típicamente: +10-20% en faithfulness, +5-15% en answer relevance. La ganancia en faithfulness es la más grande porque el LLM no necesita "adivinar" el contexto faltante.</p>
+      </div>
+
+      <h2>¿Y las tablas?</h2>
+      <p>Las tablas necesitan tratamiento especial. El chunking de texto plano las destruye. Estrategia recomendada:</p>
+      <ol>
+        <li>Extraer tablas por separado</li>
+        <li>Generar un resumen en lenguaje natural de cada tabla (usando un LLM local)</li>
+        <li>Embeber tanto los datos crudos de la tabla como el resumen</li>
+      </ol>
+
+      <h2>Contextual Retrieval (Anthropic)</h2>
+      <p>Antes de embeber cada chunk, prepender un resumen generado por LLM:</p>
+      <pre><code># Prompt para contextual retrieval
+context_prompt = f"""
+Here is the full document:
+{full_document}
+
+Here is one chunk:
+{chunk}
+
+Write a 50-100 token context that situates this chunk in the document.
+"""
+context = llm.generate(context_prompt)
+chunk_with_context = f"{context}\n\n{chunk}"</code></pre>
+
+      <p><strong>Resultados reportados:</strong></p>
+        <ul>
+          <li>49% reducción en fallos de retrieval (solo contextual embedding)</li>
+          <li>67% con reranker encima</li>
+          <li>Costo: ~$1.02 por millón de tokens de documentos fuente</li>
+        </ul>
+        <p><small>Fuente: <a href="https://www.anthropic.com/engineering/contextual-retrieval">Anthropic Engineering Blog — Contextual Retrieval (Sep 2024)</a></small></p>
+
+      <h2>Matriz de decisión</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tu situación</th>
+            <th>Estrategia</th>
+            <th>Por qué</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FAQs, catálogos, contenido uniforme</td>
+            <td>Fixed 256-512</td>
+            <td>Rápido, simple, suficiente</td>
+          </tr>
+          <tr>
+            <td>Documentación Markdown/HTML</td>
+            <td>Recursive 512 + overlap 64</td>
+            <td>Respeta headings, buen default</td>
+          </tr>
+          <tr>
+            <td>Prosa larga sin formato</td>
+            <td>Semantic (tuneado a 99%)</td>
+            <td>Detecta boundaries semánticos</td>
+          </tr>
+          <tr>
+            <td>Documentos densos (legal, técnico)</td>
+            <td>Parent-child (250/1500)</td>
+            <td>Precisión + contexto completo</td>
+          </tr>
+          <tr>
+            <td>Transcripciones, chat logs</td>
+            <td>Semantic o parent-child</td>
+            <td>Los boundaries no son estructurales</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="practice">
+      <h2>Práctica</h2>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 1: Analiza el chunking del repo</div>
+        <p>Abre <code>chapter2/parse-pdf.ipynb</code> del repositorio hands-on-rag. Identifica:</p>
+        <ul>
+          <li>¿Qué tamaño de chunk se usa?</li>
+          <li>¿Qué estrategia de división?</li>
+          <li>¿Qué overlap se configuró?</li>
+        </ul>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 2: Implementa parent-child</div>
+        <p>Usando el código del Capítulo 2 como base, modifica el pipeline para usar parent-child chunking:</p>
+        <ul>
+          <li>Child chunks: 250 tokens</li>
+          <li>Parent chunks: 1500 tokens</li>
+          <li>Embedda solo los children</li>
+          <li>Al recuperar, retorna el parent</li>
+        </ul>
+        <p><strong>Pista:</strong> Mira <code>ParentDocumentRetriever</code> de LangChain.</p>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 3: Compara estrategias</div>
+        <p>Crea un mini-eval con 5 preguntas sobre el documento del Capítulo 1 (Alice in Wonderland). Ejecuta el pipeline 3 veces:</p>
+        <ul>
+          <li>Recursive 512 sin overlap</li>
+          <li>Recursive 512 con overlap 64</li>
+          <li>Semantic chunking (percentil 95)</li>
+        </ul>
+        <p>Compara: ¿cuántos de los top-3 chunks contienen la respuesta correcta?</p>
+      </div>
+    </section>
+
+    <section class="check">
+      <h2>Verifica tu comprensión</h2>
+
+      <div class="quiz" id="q1">
+        <p class="quiz-question">1. ¿Por qué el tamaño de chunk importa más que el algoritmo?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Porque el algoritmo es siempre el mismo</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Porque un chunk de 256 vs 512 tokens cambia la señal del embedding más que recursive vs semantic</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Porque los LLMs solo funcionan con ciertos tamaños</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">No importa, ambos factores son igual de relevantes</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="q2">
+        <p class="quiz-question">2. ¿Cuál es el patrón de parent-child chunking?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Embeddar ambos parents y children, buscar en ambos</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Buscar en children pequeños, retornar parents grandes al LLM</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Embeber parents grandes, buscar en ellos, retornar children</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Un solo tamaño de chunk que sirve para todo</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="q3">
+        <p class="quiz-question">3. ¿Cuándo SÍ vale la pena semantic chunking?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Siempre, es mejor que recursive</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Solo con documentos Markdown bien formateados</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Prosa larga sin formato, transcripciones, cuando los boundaries semánticos no coinciden con la estructura</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Cuando el presupuesto de embedding es muy bajo</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="q4">
+        <p class="quiz-question">4. ¿Qué reduce más los fallos de retrieval según Anthropic?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Cambiar el embedding model</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Aumentar el chunk size a 2048</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Contextual Retrieval: prepender un resumen del documento antes de embeber cada chunk</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Usar semantic chunking en lugar de recursive</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </section>
+
+    <footer>
+      <nav>
+        <p><a href="0001-what-is-rag.html">← Lección 1: ¿Qué es RAG?</a></p>
+        <p><a href="0003-embeddings-and-vector-stores.html">Lección 3: Embeddings y Vector Stores →</a></p>
+      </nav>
+      <p>¿Preguntas? Pregúntale a tu profesor — este agente es tu guía.</p>
+      <p>Fuente principal: <a href="https://github.com/ofermend/hands-on-rag/tree/main/chapter2">Chapter 2: The Base RAG Stack</a></p>
+    </footer>
+  </article>
+
+  <script>
+  function checkAnswer(el, correct) {
+    const quiz = el.closest('.quiz');
+    const feedback = quiz.querySelector('.quiz-feedback');
+    const options = quiz.querySelectorAll('.quiz-option');
+
+    options.forEach(opt => {
+      opt.style.pointerEvents = 'none';
+      opt.classList.remove('correct', 'incorrect');
+    });
+
+    if (correct) {
+      el.classList.add('correct');
+      feedback.textContent = 'Correcto.';
+      feedback.style.display = 'block';
+      feedback.style.background = '#ecfdf5';
+      feedback.style.color = '#065f46';
+    } else {
+      el.classList.add('incorrect');
+      options.forEach(opt => {
+        if (opt.onclick.toString().includes('true')) {
+          opt.classList.add('correct');
+        }
+      });
+      feedback.textContent = 'Incorrecto. La respuesta correcta está resaltada en verde.';
+      feedback.style.display = 'block';
+      feedback.style.background = '#fef2f2';
+      feedback.style.color = '#991b1b';
+    }
+  }
+  </script>
+</body>
+</html>

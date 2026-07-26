@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glosario RAG Production</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <article>
+    <header>
+      <h1>Glosario RAG Production</h1>
+      <p class="subtitle">Referencia — Términos clave del curso</p>
+    </header>
+
+    <section class="knowledge">
+      <h2>A</h2>
+
+      <h3>Agentic RAG</h3>
+      <p>Arquitectura donde el LLM decide autónomamente si debe recuperar documentos o responder directamente. A diferencia de RAG estándar (siempre recupera), Agentic RAG tiene acceso a herramientas y puede: recuperar, recuperar de nuevo con query reformulada, o responder del conocimiento base del modelo.</p>
+
+      <h2>B</h2>
+
+      <h3>BM25</h3>
+      <p>Algoritmo de recuperación por palabras clave (sparse retrieval). Mide relevancia por frecuencia de términos y frecuencia inversa de documentos. No entiende semántica, pero es excelente para búsquedas exactas (SKUs, nombres propios, siglas).</p>
+
+      <h2>C</h2>
+
+      <h3>Chunking</h3>
+      <p>Proceso de dividir documentos largos en fragmentos más pequeños para indexación. Estrategias principales: fixed-size, recursive character, semantic, structure-aware, parent-child. El chunking determina la calidad del retrieval más que cualquier otro componente.</p>
+
+      <h3>Contextual Retrieval</h3>
+      <p>Técnica de Anthropic (Sept 2024): antes de embeber cada chunk, prepender un resumen generado por LLM de "de dónde viene este chunk". Reduce fallos de retrieval en 49% (solo) y 67% (con reranker).</p>
+
+      <h3>Cross-encoder (Reranker)</h3>
+      <p>Modelo que evalúa la relevancia de un query-documento juntos, con atención completa entre ambos. Más lento que bi-encoders pero mucho más preciso. Se usa en el segundo stage de retrieval para filtrar los top-100 a top-5.</p>
+
+      <h2>E</h2>
+
+      <h3>Embedding</h3>
+      <p>Conversión de texto a un vector numérico de alta dimensión (típicamente 768-3072 dimensiones). Textos semánticamente similares quedan cerca en el espacio vectorial. Los embeddings permiten la búsqueda por similitud de coseno.</p>
+
+      <h3>Evaluation Harness</h3>
+      <p>Framework automatizado para medir la calidad de un sistema RAG. Incluye un dataset de queries con respuestas ground truth, ejecuta el pipeline completo, y calcula métricas como faithfulness, context precision, y answer relevance.</p>
+
+      <h2>F</h2>
+
+      <h3>Faithfulness</h3>
+      <p>Métrica que mide si la respuesta generada está respaldada por los chunks recuperados. Un score bajo indica alucinación: el modelo generó información que no está en las fuentes. Threshold mínimo en producción: 0.9.</p>
+
+      <h2>H</h2>
+
+      <h3>Hybrid Retrieval</h3>
+      <p>Combinación de búsqueda densa (vectorial/semántica) con búsqueda sparse (BM25/palabras clave). Se fusionan con Reciprocal Rank Fusion (RRF). Es el estándar de producción en 2026 porque captura tanto coincidencias semánticas como exactas.</p>
+
+      <h3>Hallucination</h3>
+      <p>Cuando el LLM genera información que no está en el contexto recuperado. En RAG, la mayoría de alucinaciones son síntomas de mala recuperación (chunks irrelevantes o insuficientes), no de mala generación.</p>
+
+      <h2>L</h2>
+
+      <h3>Long Context</h3>
+      <p>Alternativa a RAG: pasar todo el corpus directamente en el contexto del LLM. En 2026, Claude maneja 200k tokens y Gemini hasta 1M. Más simple que RAG para corpus pequeños. La decisión clave: si tu corpus cabe en contexto, prueba long context primero.</p>
+
+      <h2>M</h2>
+
+      <h3>MRR (Mean Reciprocal Rank)</h3>
+      <p>Métrica de ranking: si la respuesta correcta está en posición r, el score es 1/r. MRR promedia esto sobre todas las queries. MRR = 1.0 significa que siempre está en primera posición.</p>
+
+      <h2>R</h2>
+
+      <h3>Recall@K</h3>
+      <p>Porcentaje de chunks relevantes que aparecen en los top-K resultados. Recall@5 = 0.8 significa que el 80% de las veces, el chunk correcto está en los primeros 5 resultados.</p>
+
+      <h3>Reciprocal Rank Fusion (RRF)</h3>
+      <p>Método para combinar rankings de diferentes fuentes (BM25 + vectorial). Fórmula: score = Σ 1/(k + rank_i). No requiere normalización de scores entre sistemas diferentes.</p>
+
+      <h3>Retrieval</h3>
+      <p>Proceso de encontrar los chunks más relevantes para una query dada. En producción, típicamente retrieval = hybrid search → top-100 → reranker → top-5.</p>
+
+      <h2>S</h2>
+
+      <h3>Semantic Chunking</h3>
+      <p>Estrategia de chunking que divide texto basándose en cambios de significado, no en caracteres o tokens. Embedda cada oración, mide similitud entre adyacentes, y crea un boundary cuando la similitud cae. Más costoso pero preserva coherencia semántica.</p>
+
+      <h2>V</h2>
+
+      <h3>Vector Database</h3>
+      <p>Base de datos optimizada para almacenar y buscar vectores de alta dimensión. Opciones principales 2026: pgvector (startups), Pinecone (managed), Qdrant/Weaviate (self-hosted). La decisión es la menos importante del stack — todas funcionan bien.</p>
+    </section>
+
+    <footer>
+      <p>Este glosario se actualizará a medida que avancemos en el curso.</p>
+    </footer>
+  </article>
+</body>
+</html>

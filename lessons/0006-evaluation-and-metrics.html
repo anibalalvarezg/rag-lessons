@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluacion y Metricas: Como saber si tu RAG realmente funciona</title>
+  <link rel="stylesheet" href="../assets/lesson.css">
+</head>
+<body>
+  <article>
+    <header>
+      <h1>Evaluacion y Metricas: Como saber si tu RAG realmente funciona</h1>
+      <p class="subtitle">Leccion 6 — Pilar 4: RAGOps</p>
+    </header>
+
+    <section class="objective">
+      <h2>Objetivo</h2>
+      <p>Al finalizar, sabras medir la calidad de un sistema RAG usando el RAG Triad, implementar evaluacion con LLM-as-a-judge, configurar RAGAS, y construir un pipeline de evaluacion continua para CI/CD.</p>
+    </section>
+
+    <section class="knowledge">
+      <h2>El RAG Triad: 3 relaciones, 3 metricas</h2>
+      <p>El framework diagnostico mas util para RAG mide 3 relaciones entre los componentes del sistema:<br>
+      <small>Fuente: <a href="https://arxiv.org/abs/2309.15217">arXiv:2309.15217 — RAGAS: Automated Evaluation of Retrieval Augmented Generation</a></small></p>
+
+      <div class="callout info">
+        <div class="callout-title">Las 3 relaciones criticas</div>
+        <p><strong>1. Context Relevance</strong> (query -> contexto): El retriever encontro chunks relevantes?<br>
+        <strong>2. Faithfulness</strong> (contexto -> respuesta): La respuesta esta soportada por los chunks?<br>
+        <strong>3. Answer Relevance</strong> (query -> respuesta): La respuesta realmente responde la pregunta?</p>
+      </div>
+
+      <h3>Metrica 1: Faithfulness (la mas critica)</h3>
+      <p>Mide que proporcion de afirmaciones de la respuesta estan soportadas por el contexto recuperado. Es tu herramienta principal contra hallucinations.</p>
+
+      <pre><code># Formula de Faithfulness (RAGAS)
+faithfulness = claims_supported / total_claims
+
+# Ejemplo:
+# Contexto: "Einstein nacio el 14 de marzo de 1879 en Alemania"
+# Respuesta: "Einstein nacio en Alemania el 20 de marzo de 1879"
+#
+# Afirmaciones extraidas:
+#   1. "Einstein nacio en Alemania" -> SUPPORTED
+#   2. "Einstein nacio el 20 de marzo de 1879" -> NOT SUPPORTED
+# Faithfulness = 1/2 = 0.5</code></pre>
+
+      <ul>
+        <li><strong>Rango:</strong> 0.0 (nada soportado) a 1.0 (todo soportado)</li>
+        <li><strong>Umbral tipico:</strong> >= 0.85 para production</li>
+        <li><strong>Interpretacion:</strong> 0.95 = 95% de las afirmaciones trazan al contexto recuperado. 0.6 = 40% viene de memoria parametrica o fabricacion</li>
+      </ul>
+
+      <h3>Metrica 2: Context Relevance (Precision del retriever)</h3>
+      <p>Mide que proporcion del contexto recuperado es realmente util para responder la pregunta. Penaliza informacion redundante o irrelevante.</p>
+
+      <pre><code># Formula de Context Relevance (RAGAS)
+# LLM extrae oraciones "cruciales" del contexto
+context_relevance = |extracted_sentences| / |total_sentences|
+
+# Si recuperaste 10 oraciones pero solo 3 son utiles:
+# Context Relevance = 3/10 = 0.3 -> PROBLEMA en el retriever</code></pre>
+
+      <ul>
+        <li><strong>Baja context relevance</strong> = chunks demasiado grandes, o embeddings mal alineados</li>
+        <li><strong>Accion:</strong> Reducir chunk size, mejorar reranking, agregar metadata filters</li>
+      </ul>
+
+      <h3>Metrica 3: Answer Relevance</h3>
+      <p>Mide si la respuesta realmente responde la pregunta. Penaliza respuestas incompletas, redundantes o tangenciales.</p>
+
+      <pre><code># Metodo de RAGAS: ingenieria inversa de preguntas
+# 1. Dada la respuesta, generar N preguntas que podria responder
+generated_questions = llm.generate_questions(answer, n=3)
+# ["En que pais nacio Einstein?", "Cual es la nacionalidad de Einstein?", ...]
+
+# 2. Calcular similaridad coseno promedio con la pregunta original
+answer_relevance = mean(cosine_sim(q_original, q_generated))</code></pre>
+
+      <h2>Metricas de Retrieval (para afinar el retriever)</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Metrica</th>
+            <th>Que mide</th>
+            <th>Cuando usarla</th>
+            <th>Ejemplo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Recall@K</strong></td>
+            <td>Proporcion de docs relevantes que aparecen en top-K</td>
+            <td>Dominios donde missing un doc = respuesta incompleta (legal, medico)</td>
+            <td>5 docs relevantes, 3 en top-10 = Recall@10 = 0.6</td>
+          </tr>
+          <tr>
+            <td><strong>Precision@K</strong></td>
+            <td>Proporcion de top-K que son realmente relevantes</td>
+            <td>Cuando el contexto window es limitado (costo tokens)</td>
+            <td>10 docs, 3 utiles = Precision@10 = 0.3</td>
+          </tr>
+          <tr>
+            <td><strong>MRR</strong></td>
+            <td>Rango del primer doc relevante</td>
+            <td>Single-answer lookup (FAQ, entity search)</td>
+            <td>Mejor doc siempre 1ro = MRR = 1.0</td>
+          </tr>
+          <tr>
+            <td><strong>NDCG</strong></td>
+            <td>Relevancia gradiente (no binaria)</td>
+            <td>Queries complejas donde distintos docs contribuyen diferente</td>
+            <td>Pondera posicion con discount logaritmico</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>LLM-as-a-Judge: El paradigma dominante</h2>
+      <p>Los metricos BLEU y ROUGE miden overlap de tokens — no capturan equivalencia semantica. El paradigma actual usa un LLM como juez para evaluar calidad semantica.</p>
+
+      <h3>Como funciona</h3>
+      <pre><code># Patron basico de LLM-as-Judge
+judge_prompt = f"""
+Evalua si la respuesta esta soportada por el contexto.
+
+Contexto: {retrieved_context}
+Respuesta: {generated_answer}
+
+Para cada afirmacion en la respuesta, indica si es:
+- supported: inferida del contexto
+- unsupported: no se puede inferir
+- contradicted: contradice el contexto
+
+Output: JSON con lista de veredictos y score de faithfulness.
+"""</code></pre>
+
+      <h3>Frameworks de evaluacion</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Framework</th>
+            <th>Metodo</th>
+            <th>CI/CD</th>
+            <th>Mejor para</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>RAGAS</strong></td>
+            <td>Reference-free, 4 metricas core</td>
+            <td>Moderado</td>
+            <td>Eval rapida de RAG, sin ground truth</td>
+          </tr>
+          <tr>
+            <td><strong>DeepEval</strong></td>
+            <td>LLM-as-judge + custom metrics</td>
+            <td><span class="tag">Fuerte</span></td>
+            <td>CI/CD pipelines, pytest integration</td>
+          </tr>
+          <tr>
+            <td><strong>TruLens</strong></td>
+            <td>Feedback functions + tracing</td>
+            <td>Moderado</td>
+            <td>Debugging con visibilidad de traces</td>
+          </tr>
+          <tr>
+            <td><strong>LangSmith</strong></td>
+            <td>Offline + online eval</td>
+            <td>Moderado</td>
+            <td>Equipos usando LangChain</td>
+          </tr>
+          <tr>
+            <td><strong>Opik</strong></td>
+            <td>G-Eval + LiteLLM</td>
+            <td>Moderado</td>
+            <td>Judge flexible (cualquier LLM)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Implementacion con RAGAS</h3>
+
+      <pre><code>from ragas import evaluate
+from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+from datasets import Dataset
+
+# Preparar dataset de evaluacion
+eval_data = Dataset.from_dict({
+    "question": ["Cual es el timeout default?"],
+    "answer": ["El timeout default es 30 segundos"],
+    "contexts": [["El timeout se configura en settings.yaml. Default: 30s"]],
+    "ground_truth": ["30 segundos"]
+})
+
+# Ejecutar evaluacion
+results = evaluate(
+    eval_data,
+    metrics=[faithfulness, answer_relevancy, context_precision, context_recall]
+)
+
+# Resultados
+print(results)
+# {'faithfulness': 0.95, 'answer_relevancy': 0.88,
+#  'context_precision': 0.82, 'context_recall': 0.91}</code></pre>
+
+      <h2>Alinear el juez: El paso que la mayoria olvida</h2>
+      <p>Un juez desalineado es como una brujula apuntando al norte incorrecto. La alineacion del juez contra juicio humano experto es el fundamento de evaluacion confiable.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">El problema comun</div>
+        <p>Un juez baseline tiene ~75.6% de alineacion con expertos. Todos los falsos positivos son el juez siendo "too lenient" — deja pasar respuestas que omiten conceptos criticos. La solucion: refinar el prompt del juez con criteria especificos y reglas criticas.<br>
+        <small>Fuente: <a href="https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/faithfulness/">RAGAS Docs — Judge Alignment Process</a></small></p>
+      </div>
+
+      <pre><code># Proceso de alineacion (de Ragas docs)
+# 1. Recopilar 100-200 ejemplos con juicio humano experto
+# 2. Evaluar juez baseline -> medir alineacion
+alignment = judge.evaluate(dataset, human_labels)
+# baseline: 75.6% alignment
+
+# 3. Analizar errores (que tipo de falsos positivos?)
+#    - El juez no detecta conceptos omitidos
+#    - El juez es too permisivo con parciales
+
+# 4. Refinar prompt con reglas especificas
+enhanced_prompt = """
+Evalua si la respuesta cubre TODOS los conceptos clave.
+- Acepta equivalentes semanticos
+- Cuenta conceptos ausentes
+- 0 conceptos faltantes = PASS
+- 1+ conceptos faltantes = FAIL
+...
+"""
+
+# 5. Re-evaluar -> medir mejora
+# enhanced: 86.9% alignment (+11.3% improvement)</code></pre>
+
+      <h2>Metricas enterprise: Mas alla del RAG Triad</h2>
+      <p>Para sistemas enterprise multi-turn, 8 metricas operacionales (de arxiv:2602.20379):<br>
+      <small>Fuente: <a href="https://arxiv.org/abs/2602.20379">arXiv:2602.20379 — Case-Aware Evaluation for Enterprise RAG</a></small></p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Metrica</th>
+            <th>Que evalua</th>
+            <th>Peso</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Hallucination / Grounding Fidelity</strong></td><td>Afirmaciones soportadas por el contexto</td><td>0.20</td></tr>
+          <tr><td><strong>Retrieval Correctness</strong></td><td>Version, entorno, doc correcto</td><td>0.15</td></tr>
+          <tr><td><strong>Answer Helpfulness</strong></td><td>Accionalidad y claridad</td><td>0.15</td></tr>
+          <tr><td><strong>Context Sufficiency</strong></td><td>Contexto cubre todo lo necesario</td><td>0.10</td></tr>
+          <tr><td><strong>Answer Type Fit</strong></td><td>Tipo de respuesta adecuado (diagnostico vs instruccion)</td><td>0.10</td></tr>
+          <tr><td><strong>Identifier Integrity</strong></td><td>Error codes, IDs, paths preservados correctamente</td><td>0.10</td></tr>
+          <tr><td><strong>Case Issue Identification</strong></td><td>Identifica correctamente el problema del caso</td><td>0.10</td></tr>
+          <tr><td><strong>Resolution Alignment</strong></td><td>Pasos satisfacen restricciones del workflow</td><td>0.10</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <div class="callout-title">Por que las metricas genericas no bastan</div>
+        <p>En un benchmark enterprise, Llama tenia mejor faithfulness (0.84) que GPT-oss (0.58), pero GPT-oss tenia mejor Answer Type Fit y Resolution Alignment. Las metricas genericas sugirian que Llama es mejor, pero GPT-oss resolvia mejor los casos de uso reales.</p>
+      </div>
+
+      <h2>Evaluacion continua: Pre, en, y post-production</h2>
+
+      <pre><code># Pipeline de evaluacion continua
+
+# 1. PRE-PRODUCTION: Eval offline con dataset curado
+eval_dataset = load_eval_set("golden_100.json")
+results = evaluate(eval_dataset, metrics=[faithfulness, ...])
+
+# 2. CI/CD: Gating en pipeline de deploy
+if results["faithfulness"] < 0.85:
+    raise ValueError("Faithfulness regression detected")
+if results["answer_relevancy"] < 0.75:
+    raise ValueError("Answer relevance regression detected")
+
+# 3. PRODUCTION: Sampling continuo
+# - Evaluar 5-10% de trafico real
+# - Monitor drift semanal
+# - Alertas cuando metricas caen
+
+# 4. POST-INCIDENT: Debugging con traces
+# LangSmith/TruLens: ver retrieved chunks + prompt + respuesta
+# para cada request con score bajo</code></pre>
+
+      <h2>El ciego: Context Trustworthiness</h2>
+      <p>Las 4 metricas core asumen que el indice es confiable. Ninguna mide si el contenido recuperado es correcto en sentido business.</p>
+
+      <ul>
+        <li><strong>Freshness:</strong> Cuando fue la ultima vez que se verifico este contenido?</li>
+        <li><strong>Ownership:</strong> Hay un dueno responsable de mantenerlo exacto?</li>
+        <li><strong>Lineage integrity:</strong> Se puede trazar a la fuente canonica?</li>
+        <li><strong>Canonical alignment:</strong> Es consistente con la definicion canonica de la organizacion?</li>
+      </ul>
+
+      <div class="callout success">
+        <div class="callout-title">La paradoja de faithfulness alta + respuesta incorrecta</div>
+        <p>Un sistema puede tener faithfulness 0.95 (la respuesta refleja fielmente lo recuperado) y aun asi estar equivocado porque el contenido recuperado esta obsoleto, inconsistente con la fuente canonica, o no alineado con definiciones organizacionales. La confianza del indice es la dimension oculta.</p>
+      </div>
+    </section>
+
+    <section class="practice">
+      <h2>Practica</h2>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 1: Evalua tu pipeline</div>
+        <p>Usando RAGAS, evalua el pipeline del Capitulo 1 con las 4 metricas core:</p>
+        <ul>
+          <li>Crea un dataset de 20 preguntas con ground truth</li>
+          <li>Ejecuta faithfulness, answer_relevancy, context_precision, context_recall</li>
+          <li>Identifica: ¿el problema esta en el retriever o en el generator?</li>
+        </ul>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 2: Alinea tu juez</div>
+        <p>Selecciona 50 respuestas, evaluadas por un experto humano (pass/fail):</p>
+        <ul>
+          <li>Mide alineacion del juez LLM vs humano</li>
+          <li>Analiza falsos positivos (juez dice pass, humano dice fail)</li>
+          <li>Refina el prompt del juez y re-mide</li>
+          <li>Objetivo: >85% alineacion</li>
+        </ul>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-title">Ejercicio 3: CI gate</div>
+        <p>Integra RAGAS en un script de testing:</p>
+        <ul>
+          <li>Define umbrales: faithfulness >= 0.85, answer_relevancy >= 0.75</li>
+          <li>Ejecuta contra tu dataset de eval</li>
+          <li>Retorna exit code != 0 si cualquier metrica falla</li>
+          <li>Wire it a tu pipeline de deploy</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="check">
+      <h2>Verifica tu comprension</h2>
+
+      <div class="quiz" id="q1">
+        <p class="quiz-question">1. Cual es la metrica mas critica para detectar hallucinations en RAG?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Answer Relevance</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Faithfulness</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Context Precision</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">MRR</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="q2">
+        <p class="quiz-question">2. Baja context precision indica un problema con...</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">El LLM generator</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">El retriever (chunks irrelevantes o demasiado grandes)</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">La pregunta del usuario</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">El embedding model</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="q3">
+        <p class="quiz-question">3. Como mide RAGAS Answer Relevance sin ground truth?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Compara con la respuesta de referencia</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Genera N preguntas desde la respuesta y mide similaridad con la pregunta original</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Usa cosine similarity entre respuesta y contexto</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Pide al LLM que de un score del 1 al 10</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="q4">
+        <p class="quiz-question">4. Un sistema con faithfulness 0.95 puede dar respuestas incorrectas. Por que?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Porque faithfulness no es una metrica confiable</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">Porque el contexto recuperado puede estar obsoleto o ser incorrecto business-mente</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Porque el LLM hallucina de todas formas</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">Porque faithfulness solo mide longitud de la respuesta</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz" id="q5">
+        <p class="quiz-question">5. Que porcentaje de alineacion con juicio humano deberia tener un juez LLM?</p>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkAnswer(this, false)">50% (azar)</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">70% (aceptable)</div>
+          <div class="quiz-option" onclick="checkAnswer(this, true)">&gt;85% (produccion)</div>
+          <div class="quiz-option" onclick="checkAnswer(this, false)">100% (necesario)</div>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </section>
+
+    <footer>
+      <nav>
+        <p><a href="0005-guardrails-and-hallucinations.html">&lt;- Leccion 5: Guardrails y Hallucinations</a></p>
+        <p><a href="0007-agentic-rag.html">Leccion 7: Agentic RAG -&gt;</a></p>
+      </nav>
+      <p>Fuentes: <a href="https://github.com/ofermend/hands-on-rag/tree/main/chapter6">Chapter 6: Evaluation</a> | <a href="https://arxiv.org/abs/2309.15217">RAGAS Paper</a> | <a href="https://arxiv.org/abs/2602.20379">Case-Aware Eval</a> | <a href="https://docs.ragas.io">RAGAS Docs</a></p>
+    </footer>
+  </article>
+
+  <script>
+  function checkAnswer(el, correct) {
+    const quiz = el.closest('.quiz');
+    const feedback = quiz.querySelector('.quiz-feedback');
+    const options = quiz.querySelectorAll('.quiz-option');
+    options.forEach(opt => { opt.style.pointerEvents = 'none'; opt.classList.remove('correct', 'incorrect'); });
+    if (correct) {
+      el.classList.add('correct');
+      feedback.textContent = 'Correcto.';
+      feedback.style.display = 'block';
+      feedback.style.background = '#ecfdf5';
+      feedback.style.color = '#065f46';
+    } else {
+      el.classList.add('incorrect');
+      options.forEach(opt => { if (opt.onclick.toString().includes('true')) opt.classList.add('correct'); });
+      feedback.textContent = 'Incorrecto. La respuesta correcta esta resaltada en verde.';
+      feedback.style.display = 'block';
+      feedback.style.background = '#fef2f2';
+      feedback.style.color = '#991b1b';
+    }
+  }
+  </script>
+</body>
+</html>

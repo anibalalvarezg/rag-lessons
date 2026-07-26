@@ -232,24 +232,22 @@
       opt.classList.remove('correct', 'incorrect');
     });
 
+    feedback.classList.remove('correct-fb', 'incorrect-fb');
+    feedback.textContent = '';
+
     if (correct) {
       el.classList.add('correct');
-      feedback.textContent = correct ? 'Correcto.' : '';
-      feedback.style.display = 'block';
-      feedback.style.background = '#ecfdf5';
-      feedback.style.color = '#065f46';
+      feedback.textContent = 'Correcto.';
+      feedback.classList.add('correct-fb');
     } else {
       el.classList.add('incorrect');
-      // Find and highlight the correct answer
       options.forEach(opt => {
         if (opt.onclick.toString().includes('true')) {
           opt.classList.add('correct');
         }
       });
       feedback.textContent = 'Incorrecto. La respuesta correcta está resaltada en verde.';
-      feedback.style.display = 'block';
-      feedback.style.background = '#fef2f2';
-      feedback.style.color = '#991b1b';
+      feedback.classList.add('incorrect-fb');
     }
   }
   </script>

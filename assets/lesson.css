@@ -502,12 +502,14 @@ tr:hover td { background: var(--bg-warm); }
 .quiz-question {
   font-weight: 700;
   margin-bottom: var(--sp-4);
+  font-size: 1rem;
+  color: var(--text);
 }
 
 .quiz-options {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
 }
 
 .quiz-option {
@@ -517,11 +519,21 @@ tr:hover td { background: var(--bg-warm); }
   cursor: pointer;
   transition: all 150ms ease-out;
   font-size: 0.95rem;
+  color: var(--text);
+  background: var(--bg-warm);
+  line-height: 1.5;
 }
 
-.quiz-option:hover { border-color: var(--anchor); background: var(--bg-warm); }
-.quiz-option.correct { border-color: var(--success); background: oklch(0.96 0.04 155); }
-.quiz-option.incorrect { border-color: var(--error); background: oklch(0.96 0.04 25); }
+.quiz-option:hover { border-color: var(--anchor); background: oklch(from var(--anchor) l c h / 0.08); }
+.quiz-option.correct { border-color: var(--success); background: oklch(0.96 0.04 155); color: oklch(0.30 0.10 155); }
+.quiz-option.incorrect { border-color: var(--error); background: oklch(0.96 0.04 25); color: oklch(0.35 0.12 25); }
+
+@media (prefers-color-scheme: dark) {
+  .quiz-option { background: var(--bg-warm); }
+  .quiz-option:hover { background: oklch(from var(--anchor) l c h / 0.12); }
+  .quiz-option.correct { background: oklch(0.25 0.06 155); color: oklch(0.85 0.10 155); }
+  .quiz-option.incorrect { background: oklch(0.25 0.06 25); color: oklch(0.85 0.10 25); }
+}
 
 .quiz-feedback {
   margin-top: var(--sp-4);
@@ -529,6 +541,26 @@ tr:hover td { background: var(--bg-warm); }
   border-radius: 4px;
   font-size: 0.95rem;
   display: none;
+  line-height: 1.5;
+}
+
+.quiz-feedback.correct-fb {
+  display: block;
+  background: oklch(0.96 0.04 155);
+  color: oklch(0.30 0.10 155);
+  border-left: 3px solid var(--success);
+}
+
+.quiz-feedback.incorrect-fb {
+  display: block;
+  background: oklch(0.96 0.04 25);
+  color: oklch(0.30 0.12 25);
+  border-left: 3px solid var(--error);
+}
+
+@media (prefers-color-scheme: dark) {
+  .quiz-feedback.correct-fb { background: oklch(0.25 0.06 155); color: oklch(0.85 0.10 155); }
+  .quiz-feedback.incorrect-fb { background: oklch(0.25 0.06 25); color: oklch(0.85 0.10 25); }
 }
 
 /* Article footer navigation */

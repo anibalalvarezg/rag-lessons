@@ -392,12 +392,13 @@ results = vectorstore.similarity_search(
       opt.classList.remove('correct', 'incorrect');
     });
 
+    feedback.classList.remove('correct-fb', 'incorrect-fb');
+    feedback.textContent = '';
+
     if (correct) {
       el.classList.add('correct');
       feedback.textContent = 'Correcto.';
-      feedback.style.display = 'block';
-      feedback.style.background = '#ecfdf5';
-      feedback.style.color = '#065f46';
+      feedback.classList.add('correct-fb');
     } else {
       el.classList.add('incorrect');
       options.forEach(opt => {
@@ -406,9 +407,7 @@ results = vectorstore.similarity_search(
         }
       });
       feedback.textContent = 'Incorrecto. La respuesta correcta esta resaltada en verde.';
-      feedback.style.display = 'block';
-      feedback.style.background = '#fef2f2';
-      feedback.style.color = '#991b1b';
+      feedback.classList.add('incorrect-fb');
     }
   }
   </script>

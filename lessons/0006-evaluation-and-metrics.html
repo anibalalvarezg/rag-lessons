@@ -439,20 +439,28 @@ if results["answer_relevancy"] < 0.75:
     const quiz = el.closest('.quiz');
     const feedback = quiz.querySelector('.quiz-feedback');
     const options = quiz.querySelectorAll('.quiz-option');
-    options.forEach(opt => { opt.style.pointerEvents = 'none'; opt.classList.remove('correct', 'incorrect'); });
+
+    options.forEach(opt => {
+      opt.style.pointerEvents = 'none';
+      opt.classList.remove('correct', 'incorrect');
+    });
+
+    feedback.classList.remove('correct-fb', 'incorrect-fb');
+    feedback.textContent = '';
+
     if (correct) {
       el.classList.add('correct');
       feedback.textContent = 'Correcto.';
-      feedback.style.display = 'block';
-      feedback.style.background = '#ecfdf5';
-      feedback.style.color = '#065f46';
+      feedback.classList.add('correct-fb');
     } else {
       el.classList.add('incorrect');
-      options.forEach(opt => { if (opt.onclick.toString().includes('true')) opt.classList.add('correct'); });
+      options.forEach(opt => {
+        if (opt.onclick.toString().includes('true')) {
+          opt.classList.add('correct');
+        }
+      });
       feedback.textContent = 'Incorrecto. La respuesta correcta esta resaltada en verde.';
-      feedback.style.display = 'block';
-      feedback.style.background = '#fef2f2';
-      feedback.style.color = '#991b1b';
+      feedback.classList.add('incorrect-fb');
     }
   }
   </script>

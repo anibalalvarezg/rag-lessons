@@ -3,10 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guardrails y Hallucinations: Cuando confiar y cuando abstenerse</title>
+  <title>Guardrails y Detección de Alucinaciones</title>
+  <meta name="description" content="Taxonomía de alucinaciones (3 tipos: Type I, II, III), 4 señales de detección, HALO, 41.77% fallas de agentes.">
+  <meta name="keywords" content="guardrails, alucinaciones, hallucination detection, HALO, MAST, RAG safety">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://anibalalvarezg.github.io/rag-lessons/lessons/0005-guardrails-and-hallucinations.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Guardrails y Detección de Alucinaciones">
+  <meta property="og:description" content="Taxonomía de alucinaciones (3 tipos: Type I, II, III), 4 señales de detección, HALO, 41.77% fallas de agentes.">
+  <meta property="og:url" content="https://anibalalvarezg.github.io/rag-lessons/lessons/0005-guardrails-and-hallucinations.html">
+  <meta property="og:locale" content="es_AR">
+  <meta property="article:section" content="RAGOps">
+  <meta property="article:published_time" content="2026-07-24">
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
+  <header class="site-header">
+    <a href="../index.html" class="masthead">RAG Production</a>
+    <nav aria-label="Navegación principal">
+      <a href="../index.html#pilar-1">Fundamentos</a>
+      <a href="../index.html#pilar-2">Ingesta</a>
+      <a href="../index.html#pilar-3">Recuperación</a>
+      <a href="../index.html#pilar-4">RAGOps</a>
+      <a href="../reference/rag-glossary.html">Glosario</a>
+    </nav>
+  </header>
   <article>
     <header>
       <h1>Guardrails y Hallucinations: Cuando confiar y cuando abstenerse</h1>
@@ -411,13 +432,14 @@ class RAGGuardrails:
         <div class="quiz-feedback"></div>
       </div>
     </section>
-
     <footer>
       <nav>
-        <p><a href="0004-hybrid-retrieval-and-reranking.html">&lt;- Leccion 4: Hybrid Retrieval y Reranking</a></p>
-        <p><a href="0006-evaluation-and-metrics.html">Leccion 6: Evaluacion y Metricas -&gt;</a></p>
+        <a href="0004-hybrid-retrieval-and-reranking.html">← Retrieval</a>
+        <a href="0006-evaluation-and-metrics.html">Siguiente: Evaluación →</a>
       </nav>
-      <p>Fuentes: <a href="https://github.com/ofermend/hands-on-rag/tree/main/chapter3">Chapter 3: guardrails.ipynb + hallucinations.ipynb</a> | <a href="https://arxiv.org/abs/2602.13224">Marin (2026) Taxonomy</a> | <a href="https://arxiv.org/abs/2512.13771">SGI Paper</a> | <a href="https://arxiv.org/abs/2607.17883v1">HALO Architecture</a></p>
+      <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+        RAG Production · v1.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a>
+      </p>
     </footer>
   </article>
 

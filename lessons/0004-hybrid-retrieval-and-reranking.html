@@ -3,10 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hybrid Retrieval y Reranking: La capa que separa un demo de produccion</title>
+  <title>Hybrid Retrieval y Reranking</title>
+  <meta name="description" content="Two-stage retrieve+rerank, Cohere/BGE/Jina rerankers, HyDE, Multi-Query, pipeline completo con LangChain.">
+  <meta name="keywords" content="hybrid retrieval, reranking, Cohere, BGE, Jina, HyDE, multi-query">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://anibalalvarezg.github.io/rag-lessons/lessons/0004-hybrid-retrieval-and-reranking.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Hybrid Retrieval y Reranking">
+  <meta property="og:description" content="Two-stage retrieve+rerank, Cohere/BGE/Jina rerankers, HyDE, Multi-Query, pipeline completo con LangChain.">
+  <meta property="og:url" content="https://anibalalvarezg.github.io/rag-lessons/lessons/0004-hybrid-retrieval-and-reranking.html">
+  <meta property="og:locale" content="es_AR">
+  <meta property="article:section" content="Recuperación">
+  <meta property="article:published_time" content="2026-07-24">
   <link rel="stylesheet" href="../assets/lesson.css">
 </head>
 <body>
+  <header class="site-header">
+    <a href="../index.html" class="masthead">RAG Production</a>
+    <nav aria-label="Navegación principal">
+      <a href="../index.html#pilar-1">Fundamentos</a>
+      <a href="../index.html#pilar-2">Ingesta</a>
+      <a href="../index.html#pilar-3">Recuperación</a>
+      <a href="../index.html#pilar-4">RAGOps</a>
+      <a href="../reference/rag-glossary.html">Glosario</a>
+    </nav>
+  </header>
   <article>
     <header>
       <h1>Hybrid Retrieval y Reranking: La capa que separa un demo de produccion</h1>
@@ -280,13 +301,14 @@ answer = llm.generate(
         <div class="quiz-feedback"></div>
       </div>
     </section>
-
     <footer>
       <nav>
-        <p><a href="0003-embeddings-and-vector-stores.html">&lt;- Leccion 3: Embeddings y Vector Stores</a></p>
-        <p><a href="0005-guardrails-and-hallucinations.html">Leccion 5: Guardrails y Hallucinations -&gt;</a></p>
+        <a href="0003-embeddings-and-vector-stores.html">← Embeddings</a>
+        <a href="0005-guardrails-and-hallucinations.html">Siguiente: Guardrails →</a>
       </nav>
-      <p>Fuente principal: <a href="https://github.com/ofermend/hands-on-rag/tree/main/chapter3">Chapter 3: Scaling RAG</a></p>
+      <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+        RAG Production · v1.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a>
+      </p>
     </footer>
   </article>
 

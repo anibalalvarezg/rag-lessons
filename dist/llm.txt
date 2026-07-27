@@ -1,0 +1,40 @@
+# Guía de RAG
+
+Guía práctica para construir sistemas RAG (Retrieval-Augmented Generation) en producción.
+
+## Descripción
+
+9 lecciones que cubren chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG. De la teoría a la implementación con fuentes académicas y benchmarks reales.
+
+## Estructura
+
+### Pilares
+1. **Fundamentos** - Qué es RAG, pipeline de 4 pasos, cuándo usar RAG vs long-context vs fine-tuning
+2. **Ingesta y Segmentación** - Chunking strategies, embeddings, vector stores, hybrid retrieval, reranking
+3. **Agentic RAG y GraphRAG** - ReAct, Self-Corrective RAG, Multi-agent, GraphRAG, Neo4j
+4. **RAGOps y Evaluación** - Guardrails, detección de alucinaciones, RAGAS, métricas enterprise
+
+### Lecciones
+1. Qué es RAG y por qué lo necesitas
+2. Estrategias de Chunking
+3. Embeddings y Vector Stores
+4. Hybrid Retrieval y Reranking
+5. Guardrails y Detección de Alucinaciones
+6. Evaluación y Métricas
+7. Agentic RAG
+8. Multimodal RAG
+9. GraphRAG
+
+## Fuentes Principales
+- Microsoft GraphRAG (arxiv:2602.14922)
+- Marin Hallucination Taxonomy (arxiv:2602.13224)
+- Semantic Grounding Index (arxiv:2512.13771)
+- HALO Architecture (arxiv:2607.17883)
+- RAGAS Evaluation Framework
+- Vecta Chunking Benchmark (Feb 2026)
+
+## Autor
+Aníbal Álvarez - https://github.com/anibalalvarezg
+
+## Repositorio
+https://github.com/anibalalvarezg/rag-lessons

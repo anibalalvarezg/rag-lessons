@@ -24,7 +24,7 @@ const {
   keywords,
 } = Astro.props;
 
-const siteTitle = 'RAG Production';
+const siteTitle = 'Guía de RAG';
 const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
 ---
 <!DOCTYPE html>
@@ -59,8 +59,8 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "Course",
-    "name": "RAG Production",
-    "description": "Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.",
+    "name": "Guía de RAG",
+    "description": "Guía práctica para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.",
     "provider": {
       "@type": "Person",
       "name": "Aníbal Álvarez"

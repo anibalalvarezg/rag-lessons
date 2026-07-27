@@ -74,7 +74,7 @@ Todo sistema RAG enfrenta la misma tensión:
 <div class="callout-title">Dato clave de producción</div>
 <p>El tamaño de chunk mueve las métricas más que la elección del algoritmo. En benchmarks de 2026, la diferencia entre 256 y 512 tokens fue mayor que la diferencia entre recursive y semantic chunking.
 
-<small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — 7 estrategias, 50 papers academicos</a></small></p>
+<small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — 7 estrategias, 50 papers académicos</a></small></p>
 </div>
 
 ## Las estrategias principales
@@ -88,6 +88,29 @@ Corta cada N tokens, opcionalmente con overlap. Es rápido, predecible, y "tonto
 - **Cuándo NO:** Documentos con estructura, código, tablas, contenido mixto
 
 - **Configuración típica:** 512 tokens, overlap 50-64 tokens (10-15%)
+
+### Parsing de documentos: antes del chunking
+
+Antes de dividir en chunks, necesitas extraer texto del documento fuente. Para PDFs, `PyMuPDF` (`fitz`) es rápido y preserva estructura básica:
+
+```
+import fitz  # PyMuPDF
+
+def extraer_texto_pdf(path: str) -> list[str]:
+    """Extrae el texto de cada página de un PDF."""
+    doc = fitz.open(path)
+    paginas = []
+    for pagina in doc:
+        paginas.append(pagina.get_text("text"))
+    doc.close()
+    return paginas
+
+# Uso
+texto = extraer_texto_pdf("politicas.pdf")
+# texto es una lista: una string por página del PDF
+```
+
+Este es el código al que se refiere el Ejercicio 1 de práctica. Úsalo como punto de partida para inspeccionar el tamaño y la estrategia de división.
 
 ### 2. Recursive character splitting (El default recomendado)
 
@@ -159,7 +182,7 @@ return chunks
 
 Resuelve el dilema del tamaño desacoplando retrieval de generación:
 
-- **Child chunks (100-300 tokens):** Se embeben y buscan. Son precisos y topicamente enfocados.
+- **Child chunks (100-300 tokens):** Se embeben y buscan. Son precisos y tópicamente enfocados.
 
 - **Parent chunks (1000-2000 tokens):** Se leen por el LLM. Dan contexto rico.
 
@@ -177,7 +200,7 @@ Resuelve el dilema del tamaño desacoplando retrieval de generación:
 
 ```
 # LangChain ParentDocumentRetriever
-# Nota: en LangChain v1+, ParentDocumentRetriever se migro a langchain-classic
+# Nota: en LangChain v1+, ParentDocumentRetriever se migró a langchain-classic
 # pip install langchain-classic
 from langchain_classic.retrievers import ParentDocumentRetriever
 from langchain_classic.storage import InMemoryStore
@@ -250,8 +273,8 @@ chunk_with_context = f"{context}\n\n{chunk}"
 
 
 <div class="exercise">
-<div class="exercise-title">Ejercicio 1: Analiza el chunking del repo</div>
-<p>Abre <code>chapter2/parse-pdf.ipynb</code> del repositorio hands-on-rag. Identifica:</p>
+<div class="exercise-title">Ejercicio 1: Analiza el chunking</div>
+<p>Revisa el código de PyMuPDF de arriba. Identifica:</p>
 <ul>
 <li>¿Qué tamaño de chunk se usa?</li>
 <li>¿Qué estrategia de división?</li>
@@ -262,20 +285,19 @@ chunk_with_context = f"{context}\n\n{chunk}"
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 2: Implementa parent-child</div>
-<p>Usando el código del Capítulo 2 como base, modifica el pipeline para usar parent-child chunking:</p>
+<p>Usa el código de ParentDocumentRetriever de arriba como base y modifícalo para:</p>
 <ul>
 <li>Child chunks: 250 tokens</li>
 <li>Parent chunks: 1500 tokens</li>
 <li>Embedda solo los children</li>
 <li>Al recuperar, retorna el parent</li>
 </ul>
-<p><strong>Pista:</strong> Mira <code>ParentDocumentRetriever</code> de LangChain.</p>
 </div>
 
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Compara estrategias</div>
-<p>Crea un mini-eval con 5 preguntas sobre el documento del Capítulo 1 (Alice in Wonderland). Ejecuta el pipeline 3 veces:</p>
+<p>Crea un mini-eval con 5 preguntas sobre un documento PDF. Ejecuta el pipeline 3 veces:</p>
 <ul>
 <li>Recursive 512 sin overlap</li>
 <li>Recursive 512 con overlap 64</li>

@@ -25,9 +25,9 @@
     }, { passive: true });
   })();
 </script><main id="content"><article><header><h1>Agentic RAG</h1><p class="subtitle">Lección 7 — Agentic RAG y GraphRAG</p></header><h2 id="objetivo">Objetivo</h2>
-<p>Al finalizar, entenderas los patrones de agentes RAG (ReAct, self-corrective, multi-agent), sabras cuando escalar de un solo agente a multiples, y conoceras los frameworks de produccion (LangGraph, LlamaIndex, CrewAI).</p>
+<p>Al finalizar, entenderás los patrones de agentes RAG (ReAct, self-corrective, multi-agent), sabrás cuándo escalar de un solo agente a múltiples, y conocerás los frameworks de producción (LangGraph, LlamaIndex, CrewAI).</p>
 <h2 id="de-rag-vanilla-a-agentic-rag">De RAG vanilla a Agentic RAG</h2>
-<p>RAG vanilla es un pipeline lineal: retrieve -&gt; generate. Agentic RAG agrega razonamiento iterativo: el sistema decide <em>cuando</em> buscar, <em>como</em> reformular, y <em>cuando</em> dejar de buscar.</p>
+<p>RAG vanilla es un pipeline lineal: retrieve → generate. Agentic RAG agrega razonamiento iterativo: el sistema decide <em>cuándo</em> buscar, <em>cómo</em> reformular, y <em>cuándo</em> dejar de buscar.</p>
 <table>
 <thead>
 <tr>
@@ -40,17 +40,17 @@
 <tr>
 <td>Flujo</td>
 <td>Lineal (una pasada)</td>
-<td>Ciclico (loops de razonamiento)</td>
+<td>Cíclico (loops de razonamiento)</td>
 </tr>
 <tr>
 <td>Decisiones</td>
 <td>Ninguna</td>
-<td>Cuando buscar, que reformular, cuando parar</td>
+<td>Cuándo buscar, qué reformular, cuándo parar</td>
 </tr>
 <tr>
 <td>Self-correction</td>
 <td>No</td>
-<td>Si — re-escribe queries, recalifica docs</td>
+<td>Sí — re-escribe queries, recalifica docs</td>
 </tr>
 <tr>
 <td>Fuentes</td>
@@ -60,36 +60,36 @@
 <tr>
 <td>Complejidad</td>
 <td>Baja</td>
-<td>Alta — mas puntos de fallo, mas debugging</td>
+<td>Alta — más puntos de fallo, más debugging</td>
 </tr>
 </tbody>
 </table>
-<h2 id="el-patron-react-think---act---observe">El patron ReAct: Think -&gt; Act -&gt; Observe</h2>
-<p>El patron fundamental de agentes. El LLM alterna entre razonamiento (thought), accion (action), y observacion (observation) en un loop hasta completar la tarea.</p>
+<h2 id="el-patrón-react-think--act--observe">El patrón ReAct: Think → Act → Observe</h2>
+<p>El patrón fundamental de agentes. El LLM alterna entre razonamiento (thought), acción (action), y observación (observation) en un loop hasta completar la tarea.</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># El loop ReAct</span></span>
 <span class="line"><span>while not task_complete:</span></span>
-<span class="line"><span># THINK: Razona sobre el estado actual</span></span>
-<span class="line"><span>thought = llm.reason(</span></span>
-<span class="line"><span>question=query,</span></span>
-<span class="line"><span>context=current_context,</span></span>
-<span class="line"><span>history=previous_steps</span></span>
-<span class="line"><span>)</span></span>
-<span class="line"><span># "Necesito buscar informacion sobre X antes de responder"</span></span>
+<span class="line"><span>    # THINK: Razona sobre el estado actual</span></span>
+<span class="line"><span>    thought = llm.reason(</span></span>
+<span class="line"><span>        question=query,</span></span>
+<span class="line"><span>        context=current_context,</span></span>
+<span class="line"><span>        history=previous_steps</span></span>
+<span class="line"><span>    )</span></span>
+<span class="line"><span>    # "Necesito buscar información sobre X antes de responder"</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span># ACT: Ejecuta una tool call</span></span>
-<span class="line"><span>observation = tool.execute(thought.action)</span></span>
-<span class="line"><span># Retrieval de docs, web search, API call, etc.</span></span>
+<span class="line"><span>    # ACT: Ejecuta una tool call</span></span>
+<span class="line"><span>    observation = tool.execute(thought.action)</span></span>
+<span class="line"><span>    # Retrieval de docs, web search, API call, etc.</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span># OBSERVE: Procesa el resultado</span></span>
-<span class="line"><span>current_context.append(observation)</span></span>
-<span class="line"><span># Si la respuesta es suficiente -&gt; termina</span></span>
-<span class="line"><span># Si no -&gt; repite el ciclo</span></span></code></pre>
+<span class="line"><span>    # OBSERVE: Procesa el resultado</span></span>
+<span class="line"><span>    current_context.append(observation)</span></span>
+<span class="line"><span>    # Si la respuesta es suficiente -&gt; termina</span></span>
+<span class="line"><span>    # Si no -&gt; repite el ciclo</span></span></code></pre>
 <div class="callout info">
-<div class="callout-title">Por que ReAct funciona</div>
-<p>Interleaving reasoning con action mantiene al agente grounded. Un approach solo de razonamiento puede derivar en conocimiento interno. Un approach solo de accion carece de sintesis. ReAct combina ambos.</p>
+<div class="callout-title">Por qué ReAct funciona</div>
+<p>Interleaving reasoning con action mantiene al agente grounded. Un approach solo de razonamiento puede derivar en conocimiento interno. Un approach solo de acción carece de síntesis. ReAct combina ambos.</p>
 </div>
 <h2 id="self-corrective-rag-el-pipeline-que-se-arregla-solo">Self-Corrective RAG: El pipeline que se arregla solo</h2>
-<p>El patron mas importante en Agentic RAG. Agrega nodos de verificacion que permiten al sistema re-intentar cuando la calidad es baja.</p>
+<p>El patrón más importante en Agentic RAG. Agrega nodos de verificación que permiten al sistema re-intentar cuando la calidad es baja.</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo de Self-Corrective RAG (LangGraph)</span></span>
 <span class="line"><span>#</span></span>
 <span class="line"><span># [Start] -&gt; [Retrieve] -&gt; [Grade Documents]</span></span>
@@ -112,7 +112,7 @@
 <thead>
 <tr>
 <th>Nodo</th>
-<th>Que hace</th>
+<th>Qué hace</th>
 <th>Herramienta</th>
 </tr>
 </thead>
@@ -139,7 +139,7 @@
 </tr>
 <tr>
 <td><strong>Web Search</strong></td>
-<td>Suplementa con busqueda web (CRAG)</td>
+<td>Suplementa con búsqueda web (CRAG)</td>
 <td>Tavily/SerpAPI</td>
 </tr>
 </tbody>
@@ -148,45 +148,45 @@
 <p>Un router clasifica la query y la dirige al retriever apropiado. Evita buscar en vector store cuando la query requiere datos en tiempo real, o viceversa.</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Router pattern</span></span>
 <span class="line"><span>class RouteQuery(BaseModel):</span></span>
-<span class="line"><span>datasource: Literal["vectorstore", "web_search", "direct_response"]</span></span>
-<span class="line"><span>reasoning: str</span></span>
+<span class="line"><span>    datasource: Literal["vectorstore", "web_search", "direct_response"]</span></span>
+<span class="line"><span>    reasoning: str</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span># Clasificacion</span></span>
+<span class="line"><span># Clasificación</span></span>
 <span class="line"><span>router = llm.with_structured_output(RouteQuery)</span></span>
 <span class="line"><span>result = router.invoke([</span></span>
-<span class="line"><span>{"role": "system", "content": """Clasifica la query:</span></span>
-<span class="line"><span>- vectorstore: preguntas sobre documentos internos</span></span>
-<span class="line"><span>- web_search: eventos actuales, datos en tiempo real</span></span>
-<span class="line"><span>- direct_response: conocimiento general"""},</span></span>
-<span class="line"><span>{"role": "user", "content": query}</span></span>
+<span class="line"><span>    {"role": "system", "content": """Clasifica la query:</span></span>
+<span class="line"><span>    - vectorstore: preguntas sobre documentos internos</span></span>
+<span class="line"><span>    - web_search: eventos actuales, datos en tiempo real</span></span>
+<span class="line"><span>    - direct_response: conocimiento general"""},</span></span>
+<span class="line"><span>    {"role": "user", "content": query}</span></span>
 <span class="line"><span>])</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># Fan-out paralelo (multi-source)</span></span>
 <span class="line"><span>if result.datasource == "vectorstore":</span></span>
-<span class="line"><span>docs = vector_retriever.invoke(query)</span></span>
+<span class="line"><span>    docs = vector_retriever.invoke(query)</span></span>
 <span class="line"><span>elif result.datasource == "web_search":</span></span>
-<span class="line"><span>docs = web_search.invoke(query)</span></span></code></pre>
-<h2 id="multi-agent-rag-especializacion-y-coordinacion">Multi-Agent RAG: Especializacion y coordinacion</h2>
+<span class="line"><span>    docs = web_search.invoke(query)</span></span></code></pre>
+<h2 id="multi-agent-rag-especialización-y-coordinación">Multi-Agent RAG: Especialización y coordinación</h2>
 <p>Cuando un solo agente no puede manejar la complejidad, se decomponen roles en agentes especializados que colaboran.</p>
-<h3 id="arquitectura-tipica-de-google-agentic-rag">Arquitectura tipica de Google Agentic RAG</h3>
+<h3 id="arquitectura-típica-de-google-agentic-rag">Arquitectura típica de Google Agentic RAG</h3>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 5 agentes especializados (Google Enterprise Agent Platform)</span></span>
 <span class="line"><span>#</span></span>
-<span class="line"><span># 1. Orchestrator: Evalua la complejidad, delega</span></span>
-<span class="line"><span># 2. Planner: Mapea rutas de informacion</span></span>
+<span class="line"><span># 1. Orchestrator: Evalúa la complejidad, delega</span></span>
+<span class="line"><span># 2. Planner: Mapea rutas de información</span></span>
 <span class="line"><span>#    "Pregunta sobre budget AND timeline -&gt;</span></span>
 <span class="line"><span>#     primero finance DB, luego project management logs"</span></span>
 <span class="line"><span># 3. Query Rewriter: Transforma la query en sub-queries</span></span>
-<span class="line"><span>#    "Que pasa con Project X?" -&gt;</span></span>
+<span class="line"><span>#    "¿Qué pasa con Project X?" -&gt;</span></span>
 <span class="line"><span>#    ["Status report Project X Q3", "Key blockers Project X"]</span></span>
-<span class="line"><span># 4. Search Fanout: Busca en paralelo en multiples fuentes</span></span>
+<span class="line"><span># 4. Search Fanout: Busca en paralelo en múltiples fuentes</span></span>
 <span class="line"><span># 5. Sufficient Context Agent: VERIFICADOR DE CALIDAD</span></span>
 <span class="line"><span>#    - Examina los chunks recuperados</span></span>
 <span class="line"><span>#    - Revisa un draft intermedio</span></span>
-<span class="line"><span>#    - Identifica EXACTAMENTE que falta</span></span>
-<span class="line"><span>#    - Si falta info -&gt; feedback especifico -&gt; re-search</span></span></code></pre>
+<span class="line"><span>#    - Identifica EXACTAMENTE qué falta</span></span>
+<span class="line"><span>#    - Si falta info -&gt; feedback específico -&gt; re-search</span></span></code></pre>
 <div class="callout success">
-<div class="callout-title">El Sufficient Context Agent (innovacion clave)</div>
-<p>No solo dice "no tengo suficiente info". Genera feedback especifico: "Encontraste meds y diet, pero falta allergies. Busca por 'rashes' o 'adverse events'". Esto permite al sistema recuperar la informacion faltante en vez de abstenerse prematuramente. +34% en factuality vs vanilla RAG.
+<div class="callout-title">El Sufficient Context Agent (innovación clave)</div>
+<p>No solo dice "no tengo suficiente info". Genera feedback específico: "Encontraste meds y diet, pero falta allergies. Busca por 'rashes' o 'adverse events'". Esto permite al sistema recuperar la información faltante en vez de abstenerse prematuramente. +34% en factuality vs vanilla RAG.
 <p><small>Fuente: <a href="https://research.google/blog/unlocking-dependable-responses-with-gemini-enterprise-agent-platforms-agentic-rag/">Google Research Blog — Agentic RAG with Sufficient Context Agent (Jun 2026)</a></small></p></p>
 </div>
 <h3 id="ma-rag-4-agentes-colaborativos">MA-RAG: 4 agentes colaborativos</h3>
@@ -217,15 +217,15 @@
 </tbody>
 </table>
 <h2 id="8-patrones-de-arquitectura-de-agentes">8 patrones de arquitectura de agentes</h2>
-<p>La taxonomy de 2026 organiza los patrones en 4 cuadrantes:</p>
+<p>La taxonomía de 2026 organiza los patrones en 4 cuadrantes:</p>
 <p><small>Fuente: <a href="https://www.digitalapplied.com/blog/agent-architecture-patterns-taxonomy-2026">8 Agent Architecture Patterns Taxonomy (Digital Applied, 2026)</a></small></p>
 <table>
 <thead>
 <tr>
 <th>#</th>
-<th>Patron</th>
-<th>Cuando usar</th>
-<th>Produccion?</th>
+<th>Patrón</th>
+<th>Cuándo usar</th>
+<th>Producción?</th>
 </tr>
 </thead>
 <tbody>
@@ -233,43 +233,43 @@
 <td>1</td>
 <td><strong>ReAct</strong></td>
 <td>Default general-purpose, &lt;30 steps</td>
-<td>Si</td>
+<td>Sí</td>
 </tr>
 <tr>
 <td>2</td>
-<td><strong>Reflexion</strong></td>
+<td><strong>Reflexión</strong></td>
 <td>Failure modes repetidos (+30% latencia, +10-30% quality)</td>
-<td>Si</td>
+<td>Sí</td>
 </tr>
 <tr>
 <td>3</td>
 <td><strong>Plan-and-Execute</strong></td>
 <td>Planning es bottleneck, tareas pre-decomponibles</td>
-<td>Si</td>
+<td>Sí</td>
 </tr>
 <tr>
 <td>4</td>
 <td><strong>Supervisor-Worker</strong></td>
-<td>Decomposicion clara de tareas, roles especializados</td>
-<td>Si</td>
+<td>Descomposición clara de tareas, roles especializados</td>
+<td>Sí</td>
 </tr>
 <tr>
 <td>5</td>
 <td><strong>Multi-Agent Debate</strong></td>
-<td>Perspectivas multiples, stress-testing adversarial</td>
+<td>Perspectivas múltiples, stress-testing adversarial</td>
 <td>Moderado</td>
 </tr>
 <tr>
 <td>6</td>
 <td><strong>Verifier-Critic</strong></td>
-<td>Output quality critico (legal, medico, code)</td>
-<td>Si</td>
+<td>Output quality crítico (legal, médico, code)</td>
+<td>Sí</td>
 </tr>
 <tr>
 <td>7</td>
 <td><strong>Graph Orchestration</strong></td>
 <td>Control flow condicional, observabilidad</td>
-<td>Si</td>
+<td>Sí</td>
 </tr>
 <tr>
 <td>8</td>
@@ -281,23 +281,23 @@
 </table>
 <div class="callout warning">
 <div class="callout-title">La regla de oro: empieza simple</div>
-<p><strong>Empieza con ReAct (single-agent). Escala a multi-agent solo cuando midas un failure mode que un solo agente no pueda resolver.</strong> El 41.77% de los fallos en agentes vienen de problemas de especificacion y diseno de sistema, no de limitaciones del modelo. Multi-agent agrega 2-5x de overhead de coordinacion.
+<p><strong>Empieza con ReAct (single-agent). Escala a multi-agent solo cuando midas un failure mode que un solo agente no pueda resolver.</strong> El 41.77% de los fallos en agentes vienen de problemas de especificación y diseño de sistema, no de limitaciones del modelo. Multi-agent agrega 2-5x de overhead de coordinación.
 <p><small>Fuente: <a href="https://arxiv.org/abs/2503.13657">arXiv:2503.13657 — MAST: Multi-Agent System Failure Taxonomy (Cemri et al., 2025)</a></small></p></p>
 </div>
-<h2 id="por-que-los-agentes-fallan-en-produccion">Por que los agentes fallan en produccion</h2>
+<h2 id="por-qué-los-agentes-fallan-en-producción">Por qué los agentes fallan en producción</h2>
 <table>
 <thead>
 <tr>
 <th>Failure Mode</th>
-<th>Que pasa</th>
-<th>Solucion</th>
+<th>Qué pasa</th>
+<th>Solución</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Context Poisoning</strong></td>
 <td>Un error entra al contexto y se referencian repetidamente</td>
-<td>Validacion de outputs, grounding checks</td>
+<td>Validación de outputs, grounding checks</td>
 </tr>
 <tr>
 <td><strong>Context Distraction</strong></td>
@@ -312,7 +312,7 @@
 <tr>
 <td><strong>Context Clash</strong></td>
 <td>Nueva info contradice info existente</td>
-<td>Deduplicacion, conflict resolution</td>
+<td>Deduplicación, conflict resolution</td>
 </tr>
 <tr>
 <td><strong>Runaway Loops</strong></td>
@@ -321,7 +321,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="frameworks-de-produccion">Frameworks de produccion</h2>
+<h2 id="frameworks-de-producción">Frameworks de producción</h2>
 <table>
 <thead>
 <tr>
@@ -358,33 +358,33 @@
 </tr>
 </tbody>
 </table>
-<h2 id="implementacion-con-langgraph">Implementacion con LangGraph</h2>
+<h2 id="implementación-con-langgraph">Implementación con LangGraph</h2>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>from langgraph.graph import StateGraph, START, END</span></span>
 <span class="line"><span>from typing import TypedDict, Literal</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>class GraphState(TypedDict):</span></span>
-<span class="line"><span>question: str</span></span>
-<span class="line"><span>documents: list</span></span>
-<span class="line"><span>generation: str</span></span>
-<span class="line"><span>relevance: str</span></span>
+<span class="line"><span>    question: str</span></span>
+<span class="line"><span>    documents: list</span></span>
+<span class="line"><span>    generation: str</span></span>
+<span class="line"><span>    relevance: str</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># Definir nodos</span></span>
 <span class="line"><span>def retrieve(state):</span></span>
-<span class="line"><span>docs = retriever.invoke(state["question"])</span></span>
-<span class="line"><span>return {"documents": docs}</span></span>
+<span class="line"><span>    docs = retriever.invoke(state["question"])</span></span>
+<span class="line"><span>    return {"documents": docs}</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>def grade_documents(state):</span></span>
-<span class="line"><span>scores = [llm.grade(doc, state["question"]) for doc in state["documents"]]</span></span>
-<span class="line"><span>relevant = [doc for doc, score in zip(state["documents"], scores) if score == "relevant"]</span></span>
-<span class="line"><span>return {"documents": relevant, "relevance": "relevant" if relevant else "irrelevant"}</span></span>
+<span class="line"><span>    scores = [llm.grade(doc, state["question"]) for doc in state["documents"]]</span></span>
+<span class="line"><span>    relevant = [doc for doc, score in zip(state["documents"], scores) if score == "relevant"]</span></span>
+<span class="line"><span>    return {"documents": relevant, "relevance": "relevant" if relevant else "irrelevant"}</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>def rewrite_query(state):</span></span>
-<span class="line"><span>new_query = llm.rewrite(state["question"])</span></span>
-<span class="line"><span>return {"question": new_query}</span></span>
+<span class="line"><span>    new_query = llm.rewrite(state["question"])</span></span>
+<span class="line"><span>    return {"question": new_query}</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>def generate(state):</span></span>
-<span class="line"><span>answer = llm.generate(state["question"], state["documents"])</span></span>
-<span class="line"><span>return {"generation": answer}</span></span>
+<span class="line"><span>    answer = llm.generate(state["question"], state["documents"])</span></span>
+<span class="line"><span>    return {"generation": answer}</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># Construir el grafo</span></span>
 <span class="line"><span>workflow = StateGraph(GraphState)</span></span>
@@ -400,7 +400,7 @@
 <span class="line"><span>workflow.add_edge("generate", END)</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>app = workflow.compile()</span></span></code></pre>
-<h2 id="practica">Practica</h2>
+<h2 id="práctica">Práctica</h2>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 1: Self-corrective RAG</div>
 <p>Construye un pipeline con LangGraph que:</p>
@@ -419,18 +419,18 @@
 <li>Web search (eventos actuales)</li>
 <li>Direct LLM (conocimiento general)</li>
 </ul>
-<p>Usa <code>Send</code> de LangGraph para ejecucion paralela cuando aplique.</p>
+<p>Usa <code>Send</code> de LangGraph para ejecución paralela cuando aplique.</p>
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Bounded execution</div>
 <p>Agrega guardrails al agente:</p>
 <ul>
 <li>Max 5 iteraciones del loop ReAct</li>
-<li>Max 10 tool calls por sesion</li>
+<li>Max 10 tool calls por sesión</li>
 <li>Circuit breaker: si 3 tool calls consecutivos fallan, abortar</li>
 </ul>
 </div>
-<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Que patron de agente deberias usar como default?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Multi-agent swarm</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Supervisor-worker</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">ReAct (single-agent)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Graph orchestration</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Que hace el Sufficient Context Agent de Google?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Genera la respuesta final</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Identifica que informacion falta y da feedback especifico para re-buscar</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Califica documentos como relevant/irrelevant</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Decide que data source usar</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Que porcentaje de fallos en agentes viene de problemas de diseno, no del modelo?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">10%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">25%</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">41.77%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">60%</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Que es &quot;context poisoning&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El contexto es demasiado largo</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Un error entra al contexto y se usa como ground truth en pasos subsiguientes</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El agente elige el wrong tool</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Nueva info contradice info existente</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">Cuando justificas multi-agent sobre single-agent?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, es mas avanzado</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando tienes mas de 3 tools</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando midas un failure mode que un solo agente no pueda resolver</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando el LLM es demasiado lento</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/evaluation-and-metrics">← Evaluación y Métricas</a><a href="/lessons/multimodal-rag">Multimodal RAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Qué patrón de agente deberías usar como default?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Multi-agent swarm</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Supervisor-worker</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">ReAct (single-agent)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Graph orchestration</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Qué hace el Sufficient Context Agent de Google?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Genera la respuesta final</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Identifica qué información falta y da feedback específico para re-buscar</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Califica documentos como relevant/irrelevant</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Decide qué data source usar</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Qué porcentaje de fallos en agentes viene de problemas de diseño, no del modelo?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">10%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">25%</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">41.77%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">60%</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">¿Qué es &quot;context poisoning&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El contexto es demasiado largo</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Un error entra al contexto y se usa como ground truth en pasos subsiguientes</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El agente elige el wrong tool</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Nueva info contradice info existente</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">¿Cuándo justificas multi-agent sobre single-agent?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, es más avanzado</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando tienes más de 3 tools</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando midas un failure mode que un solo agente no pueda resolver</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando el LLM es demasiado lento</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/evaluation-and-metrics">← Evaluación y Métricas</a><a href="/lessons/multimodal-rag">Multimodal RAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {
     const btn = document.querySelector('.back-to-top');
     if (!btn) return;

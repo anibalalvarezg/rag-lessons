@@ -11,29 +11,29 @@ pubDate: "2026-07-24"
 quizzes:
 
   - id: "q1"
-    question: "Que tipo de pregunta resuelve Global Search que baseline RAG no puede?"
+    question: "¿Qué tipo de pregunta resuelve Global Search que baseline RAG no puede?"
     options:
-      - text: "\"Que es la relatividad?\""
+      - text: "\"¿Qué es la relatividad?\""
         correct: false
-      - text: "\"Cuales son los 5 temas principales del corpus?\""
+      - text: "\"¿Cuáles son los 5 temas principales del corpus?\""
         correct: true
-      - text: "\"Quien descubrio la penicilina?\""
+      - text: "\"¿Quién descubrió la penicilina?\""
         correct: false
-      - text: "\"Cual es la capital de Francia?\""
+      - text: "\"¿Cuál es la capital de Francia?\""
         correct: false
   - id: "q2"
-    question: "Que algoritmo usa GraphRAG para community detection?"
+    question: "¿Qué algoritmo usa GraphRAG para community detection?"
     options:
       - text: "PageRank"
         correct: false
-      - text: "Leiden (clustering jerarquico)"
+      - text: "Leiden (clustering jerárquico)"
         correct: true
       - text: "k-means"
         correct: false
       - text: "DBSCAN"
         correct: false
   - id: "q3"
-    question: "Cuanto reduce Dynamic Community Selection el costo vs Global Search estatico?"
+    question: "¿Cuánto reduce Dynamic Community Selection el costo vs Global Search estático?"
     options:
       - text: "25%"
         correct: false
@@ -44,7 +44,7 @@ quizzes:
       - text: "90%"
         correct: false
   - id: "q4"
-    question: "Que metodo de busqueda es el mas costoso?"
+    question: "¿Qué método de búsqueda es el más costoso?"
     options:
       - text: "Basic Search"
         correct: false
@@ -52,10 +52,10 @@ quizzes:
         correct: false
       - text: "Global Search"
         correct: false
-      - text: "DRIFT Search (global + multiples locals)"
+      - text: "DRIFT Search (global + múltiples locals)"
         correct: true
   - id: "q5"
-    question: "Que es entity resolution y por que es critica?"
+    question: "¿Qué es entity resolution y por qué es crítica?"
     options:
       - text: "Extraer entidades del texto"
         correct: false
@@ -71,40 +71,40 @@ quizzes:
 
 ## Objetivo
 
-Al finalizar, entenderas como GraphRAG supera a baseline RAG en preguntas globales y multi-hop, sabras construir un knowledge graph con LLMs, y conoceras las 4 estrategias de busqueda (Global, Local, DRIFT, Basic).
+Al finalizar, entenderás cómo GraphRAG supera a baseline RAG en preguntas globales y multi-hop, sabrás construir un knowledge graph con LLMs, y conocerás las 4 estrategias de búsqueda (Global, Local, DRIFT, Basic).
 
-## Por que baseline RAG falla
+## Por qué baseline RAG falla
 
-Baseline RAG usa vector similarity en snippets de texto. Funciona para preguntas factuales simples, pero falla en dos categorias criticas:
+Baseline RAG usa vector similarity en snippets de texto. Funciona para preguntas factuales simples, pero falla en dos categorías críticas:
 
-| Tipo de pregunta | Ejemplo | Por que falla baseline RAG |
+| Tipo de pregunta | Ejemplo | Por qué falla baseline RAG |
 | --- | --- | --- |
-| **Global / Holistica** | "Cuales son los 5 temas principales del corpus?" | No hay nada en la query que dirija al info correcta; vector search busca similaridad semantica, no agregacion |
-| **Multi-hop** | "Como esta conectada la politica X con el resultado Y a traves de Z?" | Requiere travesar relaciones entre entidades; vector search no sigue edges del grafo |
-| **Resumen del corpus** | "Resume las actualizaciones de las ultimas 2 semanas" | Informacion dispersa en muchos chunks; ningun chunk individual contiene la respuesta |
+| **Global / Holística** | "¿Cuáles son los 5 temas principales del corpus?" | No hay nada en la query que dirija al info correcta; vector search busca similaridad semántica, no agregación |
+| **Multi-hop** | "¿Cómo está conectada la política X con el resultado Y a través de Z?" | Requiere travesar relaciones entre entidades; vector search no sigue edges del grafo |
+| **Resumen del corpus** | "Resume las actualizaciones de las últimas 2 semanas" | Información dispersa en muchos chunks; ningún chunk individual contiene la respuesta |
 
-## Que es GraphRAG
+## Qué es GraphRAG
 
-GraphRAG (Microsoft Research, 2024) combina extraccion de knowledge graph, clustering jerarquico, y resumen de comunidades para responder preguntas que requieren comprension holistica del dataset.
+GraphRAG (Microsoft Research, 2024) combina extracción de knowledge graph, clustering jerárquico, y resumen de comunidades para responder preguntas que requieren comprensión holística del dataset.
 
-<small>Fuente: [arXiv:2404.16130 — GraphRAG: Community Summaries for RAG (Microsoft Research)](https://arxiv.org/abs/2404.16130) | [Documentacion oficial](https://microsoft.github.io/graphrag/)</small>
+<small>Fuente: [arXiv:2404.16130 — GraphRAG: Community Summaries for RAG (Microsoft Research)](https://arxiv.org/abs/2404.16130) | [Documentación oficial](https://microsoft.github.io/graphrag/)</small>
 
 <div class="callout info">
 <div class="callout-title">Pipeline de indexing</div>
-<p><strong>1. Chunking</strong> -> <strong>2. Entity/Relationship Extraction</strong> (LLM) -> <strong>3. Knowledge Graph</strong> (entidades + relaciones) -> <strong>4. Community Detection</strong> (Leiden algorithm) -> <strong>5. Community Summaries</strong> (LLM resume cada comunidad) -> <strong>6. Hierarchical structure</strong></p>
+<p><strong>1. Chunking</strong> → <strong>2. Entity/Relationship Extraction</strong> (LLM) → <strong>3. Knowledge Graph</strong> (entidades + relaciones) → <strong>4. Community Detection</strong> (Leiden algorithm) → <strong>5. Community Summaries</strong> (LLM resume cada comunidad) → <strong>6. Hierarchical structure</strong></p>
 </div>
 
 ### Paso 2: Entity Extraction con LLMs
 ```
 # LangChain LLMGraphTransformer
-# Nota: en v1+, se movio de langchain-experimental a langchain-neo4j
+# Nota: en v1+, se movió de langchain-experimental a langchain-neo4j
 from langchain_neo4j import LLMGraphTransformer
 
 transformer = LLMGraphTransformer(
-llm=llm,
-allowed_nodes=["Person", "Organization", "Concept", "Event"],
-allowed_relationships=["WORKS_AT", "CAUSES", "MENTIONS", "RELATED_TO"],
-node_properties=["description", "importance"],
+    llm=llm,
+    allowed_nodes=["Person", "Organization", "Concept", "Event"],
+    allowed_relationships=["WORKS_AT", "CAUSES", "MENTIONS", "RELATED_TO"],
+    node_properties=["description", "importance"],
 )
 
 graph_docs = transformer.convert_to_graph_documents(chunks)
@@ -114,13 +114,13 @@ graph_docs = transformer.convert_to_graph_documents(chunks)
 
 ### Paso 4: Community Detection (Leiden Algorithm)
 
-El algoritmo de Leiden detecta comunidades jerarquicas en el grafo. Cada nivel de la jerarquia representa un nivel de abstraccion diferente:
+El algoritmo de Leiden detecta comunidades jerárquicas en el grafo. Cada nivel de la jerarquía representa un nivel de abstracción diferente:
 
 - **Nivel 0 (hojas):** Entidades individuales con sus relaciones directas
 
-- **Nivel 1:** Clusteres de entidades relacionadas (temas especificos)
+- **Nivel 1:** Clusters de entidades relacionadas (temas específicos)
 
-- **Nivel 2 (raiz):** Temas de alto nivel del corpus completo
+- **Nivel 2 (raíz):** Temas de alto nivel del corpus completo
 
 ### Paso 5: Community Summaries
 ```
@@ -136,31 +136,31 @@ quantum advantage, and commercial applications."
 """
 ```
 
-## Las 4 estrategias de busqueda
+## Las 4 estrategias de búsqueda
 
-### 1. Global Search (para preguntas holisticas)
+### 1. Global Search (para preguntas holísticas)
 
-Usa community summaries en un patron **map-reduce**:
+Usa community summaries en un patrón **map-reduce**:
 
 ```
 # MAP: Cada community report genera puntos con rating de importancia
 for batch in shuffled_community_reports:
-intermediate = llm.map(query, batch)
-# ["quantum error correction es importante (rating: 8)",
-#  "commercial applications creciendo (rating: 7)", ...]
+    intermediate = llm.map(query, batch)
+    # ["quantum error correction es importante (rating: 8)",
+    #  "commercial applications creciendo (rating: 7)", ...]
 
-# REDUCE: Los puntos mas importantes se agregan en la respuesta final
+# REDUCE: Los puntos más importantes se agregan en la respuesta final
 top_points = rank_and_filter(intermediate_responses)
 final_answer = llm.reduce(query, top_points)
 ```
 
-- **Cuando usar:** "Cuales son los temas principales?", "Resume el corpus", "Que tendencias hay?"
+- **Cuándo usar:** "¿Cuáles son los temas principales?", "Resume el corpus", "¿Qué tendencias hay?"
 
-- **Ventaja:** Unica forma de responder preguntas que requieren comprension de todo el corpus
+- **Ventaja:** Única forma de responder preguntas que requieren comprensión de todo el corpus
 
 - **Costo:** Alto (muchas llamadas LLM en map-reduce)
 
-### 2. Local Search (para entidades especificas)
+### 2. Local Search (para entidades específicas)
 
 Combina knowledge graph estructurado con texto no estructurado:
 
@@ -184,7 +184,7 @@ context = prioritize_and_filter(graph_context + text_chunks)
 answer = llm.generate(query, context)
 ```
 
-- **Cuando usar:** "Que propiedades curativas tiene la manzanilla?", "Quien es X y que relacion tiene con Y?"
+- **Cuándo usar:** "¿Qué propiedades curativas tiene la manzanilla?", "¿Quién es X y qué relación tiene con Y?"
 
 - **Ventaja:** Multi-hop traversal, entity disambiguation, contexto comunitario
 
@@ -192,7 +192,7 @@ answer = llm.generate(query, context)
 
 ### 3. DRIFT Search (exploratorio)
 
-Combina amplitud de Global con profundidad de Local en un arbol de exploracion iterativo:
+Combina amplitud de Global con profundidad de Local en un árbol de exploración iterativo:
 
 ```
 # DRIFT: 3 fases
@@ -200,68 +200,68 @@ Combina amplitud de Global con profundidad de Local en un arbol de exploracion i
 top_communities = retrieve_top_k_community_reports(query)
 global_answer = llm.generate(query, top_communities)
 follow_ups = llm.generate_follow_ups(query, global_answer)
-# ["Cuales son los subtemas de X?", "Que entidades clave estan involucradas?"]
+# ["¿Cuáles son los subtemas de X?", "¿Qué entidades clave están involucradas?"]
 
 # FASE 2 - Follow-up (Local): profundizar iterativamente
 while budget_remaining and confidence_high:
-best_question = select_highest_confidence(follow_ups)
-local_answer = local_search(best_question)
-new_follow_ups = llm.generate_follow_ups(best_question, local_answer)
-follow_ups.extend(new_follow_ups)
+    best_question = select_highest_confidence(follow_ups)
+    local_answer = local_search(best_question)
+    new_follow_ups = llm.generate_follow_ups(best_question, local_answer)
+    follow_ups.extend(new_follow_ups)
 
-# FASE 3 - Output: arbol jerarquico rankeado
+# FASE 3 - Output: árbol jerárquico rankeado
 # Question -> Global Answer -> Follow-up 1 -> Local Answer -> ...
 #            -> Follow-up 2 -> Local Answer -> ...
 ```
 
-- **Cuando usar:** "Cuentame sobre [topico amplio]", "Que deberia saber sobre [dominio]?"
+- **Cuándo usar:** "Cuéntame sobre [tópico amplio]", "¿Qué debería saber sobre [dominio]?"
 
 - **Ventaja:** Balanced breadth + depth, adaptive exploration
 
-- **Costo:** El mas alto (global + multiples locals)
+- **Costo:** El más alto (global + múltiples locals)
 
 ### 4. Basic Search (baseline vector)
 
 Vector similarity search simple. Para cuando la pregunta es factual directa.
 
-- **Cuando usar:** "Que es X?", "Busca menciones de Y"
+- **Cuándo usar:** "¿Qué es X?", "Busca menciones de Y"
 
-- **Ventaja:** Mas rapido, menor costo
+- **Ventaja:** Más rápido, menor costo
 
-## Decision: Que metodo elegir
+## Decisión: Qué método elegir
 ```
-# Arbol de decision
+# Árbol de decisión
 if es_pregunta_sobre_el_corpus_completo():
-return Global_Search
+    return Global_Search
 elif es_sobre_entidades_especificas():
-return Local_Search
+    return Local_Search
 elif es_exploratorio_o_desconocido():
-return DRIFT_Search
+    return DRIFT_Search
 else:
-return Basic_Search
+    return Basic_Search
 ```
 
-| Pregunta | Metodo |
+| Pregunta | Método |
 | --- | --- |
-| "Cuales son los temas principales?" | Global |
-| "Que propiedades tiene X?" | Local |
-| "Cuentame sobre [topico]" | DRIFT |
-| "Que es Y?" | Basic |
+| "¿Cuáles son los temas principales?" | Global |
+| "¿Qué propiedades tiene X?" | Local |
+| "Cuéntame sobre [tópico]" | DRIFT |
+| "¿Qué es Y?" | Basic |
 | "Resume las actualizaciones recientes" | Global |
-| "Como esta A conectado con B?" | Local |
+| "¿Cómo está A conectado con B?" | Local |
 
 ## Dynamic Community Selection: -77% costo
 
-Global Search estatico procesa TODOS los community reports. Dynamic Selection los califica primero con un modelo barato (GPT-4o-mini) y solo procesa los relevantes.
+Global Search estático procesa TODOS los community reports. Dynamic Selection los califica primero con un modelo barato (GPT-4o-mini) y solo procesa los relevantes.
 
 <div class="callout success">
 <div class="callout-title">Resultado</div>
-<p>Calidad comparable a Global Search estatico, pero con <strong>77% menos tokens</strong>. De ~1500 reports a ~470. El rate operation es clasificacion (mas barata que summarization).
+<p>Calidad comparable a Global Search estático, pero con <strong>77% menos tokens</strong>. De ~1500 reports a ~470. La operación es clasificación (más barata que summarization).
 
 <small>Fuente: <a href="https://arxiv.org/abs/2410.04361">arXiv:2410.04361 — Microsoft GraphRAG: Dynamic Community Selection</a></small></p>
 </div>
 
-## Implementacion con Neo4j + LangChain
+## Implementación con Neo4j + LangChain
 ```
 # 1. Construir el knowledge graph
 from langchain_neo4j import Neo4jGraph
@@ -278,33 +278,33 @@ graph.add_graph_documents(graph_docs, include_source=True)
 from langchain_neo4j import Neo4jVector
 
 vector_index = Neo4jVector.from_existing_graph(
-OpenAIEmbeddings(),
-index_name="entities",
-node_label="Entity",
-text_node_properties=["id", "description"],
-embedding_node_property="embedding"
+    OpenAIEmbeddings(),
+    index_name="entities",
+    node_label="Entity",
+    text_node_properties=["id", "description"],
+    embedding_node_property="embedding"
 )
 
 # 3. Graph traversal retriever
 def graph_retriever(question):
-entities = entity_chain.invoke({"question": question})
-for entity in entities:
-graph.query("""
-CALL db.index.fulltext.queryNodes('entity', $query)
-YIELD node, score
-CALL { MATCH (node)-[r]->(neighbor)
-RETURN node.id + ' -> ' + type(r) + ' -> ' + neighbor.id }
-RETURN output LIMIT 50
-""", {"query": entity})
+    entities = entity_chain.invoke({"question": question})
+    for entity in entities:
+        graph.query("""
+        CALL db.index.fulltext.queryNodes('entity', $query)
+        YIELD node, score
+        CALL { MATCH (node)-[r]->(neighbor)
+        RETURN node.id + ' -> ' + type(r) + ' -> ' + neighbor.id }
+        RETURN output LIMIT 50
+        """, {"query": entity})
 
 # 4. Hybrid retrieval (vector + graph)
 chain = (
-{"context": graph_retriever, "question": RunnablePassthrough()}
-| prompt | llm | StrOutputParser()
+    {"context": graph_retriever, "question": RunnablePassthrough()}
+    | prompt | llm | StrOutputParser()
 )
 ```
 
-## Entity Resolution: El paso critico
+## Entity Resolution: El paso crítico
 
 El LLM extrae "IBM", "International Business Machines", "IBM Corp" como entidades separadas. Entity resolution las fusiona:
 
@@ -316,30 +316,30 @@ El LLM extrae "IBM", "International Business Machines", "IBM Corp" como entidade
 # 4. Merge en el grafo
 ```
 
-- **Metodo:** Embeddings + kNN graph + LLM verification
+- **Método:** Embeddings + kNN graph + LLM verification
 
-- **Umbral tipico:** cosine similarity > 0.95 para candidatos
+- **Umbral típico:** Cosine similarity > 0.95 para candidatos
 
-- **Desafio:** No hay entity resolution en el repo oficial de Microsoft
+- **Desafío:** No hay entity resolution en el repo oficial de Microsoft
 
-## Costo y produccion
+## Costo y producción
 | Aspecto | Detalle |
 | --- | --- |
-| **Indexing** | Caro — extraccion de entidades + resumenes de comunidad son multiples LLM calls |
+| **Indexing** | Caro — extracción de entidades + resúmenes de comunidad son múltiples LLM calls |
 | **Global Search** | Alto costo (map-reduce sobre todos los community reports) |
-| **Local Search** | Moderado (una generacion + graph traversal) |
-| **DRIFT** | El mas alto (global + multiples locals iterativos) |
+| **Local Search** | Moderado (una generación + graph traversal) |
+| **DRIFT** | El más alto (global + múltiples locals iterativos) |
 | **Re-indexing** | Necesario cuando cambia el corpus significativamente |
-| **Prompt Tuning** | Recomendado — los prompts default no son optimos para todo dominio |
+| **Prompt Tuning** | Recomendado — los prompts default no son óptimos para todo dominio |
 
-## Practica
+## Práctica
 
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 1: Knowledge Graph con LangChain</div>
-<p>Usando el notebook <code>create-graph.ipynb</code> del repo:</p>
+<p>Usa el código de Neo4j de arriba como base:</p>
 <ul>
-<li>Extrae entidades y relaciones de un dataset de peliculas</li>
+<li>Extrae entidades y relaciones de un dataset de películas</li>
 <li>Almacena en Neo4j</li>
 <li>Visualiza el grafo en Neo4j Browser</li>
 </ul>
@@ -348,11 +348,11 @@ El LLM extrae "IBM", "International Business Machines", "IBM Corp" como entidade
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 2: Local vs Global</div>
-<p>Usando el notebook <code>graph-query.ipynb</code>:</p>
+<p>Usa el código de graph query de arriba:</p>
 <ul>
 <li>Responde una pregunta local (sobre una entidad)</li>
 <li>Responde una pregunta global (sobre temas del corpus)</li>
-<li>Compara: que tipo de contexto usa cada metodo?</li>
+<li>Compara: ¿qué tipo de contexto usa cada método?</li>
 </ul>
 </div>
 
@@ -361,7 +361,7 @@ El LLM extrae "IBM", "International Business Machines", "IBM Corp" como entidade
 <div class="exercise-title">Ejercicio 3: Hybrid retrieval</div>
 <p>Combina vector search + graph traversal:</p>
 <ul>
-<li>Vector search para similaridad semantica</li>
+<li>Vector search para similaridad semántica</li>
 <li>Graph traversal para relaciones multi-hop</li>
 <li>Merge de resultados con RRF</li>
 </ul>

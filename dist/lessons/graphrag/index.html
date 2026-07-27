@@ -25,68 +25,68 @@
     }, { passive: true });
   })();
 </script><main id="content"><article><header><h1>GraphRAG</h1><p class="subtitle">Lección 9 — Agentic RAG y GraphRAG</p></header><h2 id="objetivo">Objetivo</h2>
-<p>Al finalizar, entenderas como GraphRAG supera a baseline RAG en preguntas globales y multi-hop, sabras construir un knowledge graph con LLMs, y conoceras las 4 estrategias de busqueda (Global, Local, DRIFT, Basic).</p>
-<h2 id="por-que-baseline-rag-falla">Por que baseline RAG falla</h2>
-<p>Baseline RAG usa vector similarity en snippets de texto. Funciona para preguntas factuales simples, pero falla en dos categorias criticas:</p>
+<p>Al finalizar, entenderás cómo GraphRAG supera a baseline RAG en preguntas globales y multi-hop, sabrás construir un knowledge graph con LLMs, y conocerás las 4 estrategias de búsqueda (Global, Local, DRIFT, Basic).</p>
+<h2 id="por-qué-baseline-rag-falla">Por qué baseline RAG falla</h2>
+<p>Baseline RAG usa vector similarity en snippets de texto. Funciona para preguntas factuales simples, pero falla en dos categorías críticas:</p>
 <table>
 <thead>
 <tr>
 <th>Tipo de pregunta</th>
 <th>Ejemplo</th>
-<th>Por que falla baseline RAG</th>
+<th>Por qué falla baseline RAG</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Global / Holistica</strong></td>
-<td>“Cuales son los 5 temas principales del corpus?”</td>
-<td>No hay nada en la query que dirija al info correcta; vector search busca similaridad semantica, no agregacion</td>
+<td><strong>Global / Holística</strong></td>
+<td>“¿Cuáles son los 5 temas principales del corpus?”</td>
+<td>No hay nada en la query que dirija al info correcta; vector search busca similaridad semántica, no agregación</td>
 </tr>
 <tr>
 <td><strong>Multi-hop</strong></td>
-<td>“Como esta conectada la politica X con el resultado Y a traves de Z?”</td>
+<td>“¿Cómo está conectada la política X con el resultado Y a través de Z?”</td>
 <td>Requiere travesar relaciones entre entidades; vector search no sigue edges del grafo</td>
 </tr>
 <tr>
 <td><strong>Resumen del corpus</strong></td>
-<td>“Resume las actualizaciones de las ultimas 2 semanas”</td>
-<td>Informacion dispersa en muchos chunks; ningun chunk individual contiene la respuesta</td>
+<td>“Resume las actualizaciones de las últimas 2 semanas”</td>
+<td>Información dispersa en muchos chunks; ningún chunk individual contiene la respuesta</td>
 </tr>
 </tbody>
 </table>
-<h2 id="que-es-graphrag">Que es GraphRAG</h2>
-<p>GraphRAG (Microsoft Research, 2024) combina extraccion de knowledge graph, clustering jerarquico, y resumen de comunidades para responder preguntas que requieren comprension holistica del dataset.</p>
-<p><small>Fuente: <a href="https://arxiv.org/abs/2404.16130">arXiv:2404.16130 — GraphRAG: Community Summaries for RAG (Microsoft Research)</a> | <a href="https://microsoft.github.io/graphrag/">Documentacion oficial</a></small></p>
+<h2 id="qué-es-graphrag">Qué es GraphRAG</h2>
+<p>GraphRAG (Microsoft Research, 2024) combina extracción de knowledge graph, clustering jerárquico, y resumen de comunidades para responder preguntas que requieren comprensión holística del dataset.</p>
+<p><small>Fuente: <a href="https://arxiv.org/abs/2404.16130">arXiv:2404.16130 — GraphRAG: Community Summaries for RAG (Microsoft Research)</a> | <a href="https://microsoft.github.io/graphrag/">Documentación oficial</a></small></p>
 <div class="callout info">
 <div class="callout-title">Pipeline de indexing</div>
-<p><strong>1. Chunking</strong> -> <strong>2. Entity/Relationship Extraction</strong> (LLM) -> <strong>3. Knowledge Graph</strong> (entidades + relaciones) -> <strong>4. Community Detection</strong> (Leiden algorithm) -> <strong>5. Community Summaries</strong> (LLM resume cada comunidad) -> <strong>6. Hierarchical structure</strong></p>
+<p><strong>1. Chunking</strong> → <strong>2. Entity/Relationship Extraction</strong> (LLM) → <strong>3. Knowledge Graph</strong> (entidades + relaciones) → <strong>4. Community Detection</strong> (Leiden algorithm) → <strong>5. Community Summaries</strong> (LLM resume cada comunidad) → <strong>6. Hierarchical structure</strong></p>
 </div>
 <h3 id="paso-2-entity-extraction-con-llms">Paso 2: Entity Extraction con LLMs</h3>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># LangChain LLMGraphTransformer</span></span>
-<span class="line"><span># Nota: en v1+, se movio de langchain-experimental a langchain-neo4j</span></span>
+<span class="line"><span># Nota: en v1+, se movió de langchain-experimental a langchain-neo4j</span></span>
 <span class="line"><span>from langchain_neo4j import LLMGraphTransformer</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>transformer = LLMGraphTransformer(</span></span>
-<span class="line"><span>llm=llm,</span></span>
-<span class="line"><span>allowed_nodes=["Person", "Organization", "Concept", "Event"],</span></span>
-<span class="line"><span>allowed_relationships=["WORKS_AT", "CAUSES", "MENTIONS", "RELATED_TO"],</span></span>
-<span class="line"><span>node_properties=["description", "importance"],</span></span>
+<span class="line"><span>    llm=llm,</span></span>
+<span class="line"><span>    allowed_nodes=["Person", "Organization", "Concept", "Event"],</span></span>
+<span class="line"><span>    allowed_relationships=["WORKS_AT", "CAUSES", "MENTIONS", "RELATED_TO"],</span></span>
+<span class="line"><span>    node_properties=["description", "importance"],</span></span>
 <span class="line"><span>)</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>graph_docs = transformer.convert_to_graph_documents(chunks)</span></span>
 <span class="line"><span># Nodes: [Person("Einstein"), Organization("CERN"), ...]</span></span>
 <span class="line"><span># Relationships: [Einstein -WORKS_AT-&gt; CERN, ...]</span></span></code></pre>
 <h3 id="paso-4-community-detection-leiden-algorithm">Paso 4: Community Detection (Leiden Algorithm)</h3>
-<p>El algoritmo de Leiden detecta comunidades jerarquicas en el grafo. Cada nivel de la jerarquia representa un nivel de abstraccion diferente:</p>
+<p>El algoritmo de Leiden detecta comunidades jerárquicas en el grafo. Cada nivel de la jerarquía representa un nivel de abstracción diferente:</p>
 <ul>
 <li>
 <p><strong>Nivel 0 (hojas):</strong> Entidades individuales con sus relaciones directas</p>
 </li>
 <li>
-<p><strong>Nivel 1:</strong> Clusteres de entidades relacionadas (temas especificos)</p>
+<p><strong>Nivel 1:</strong> Clusters de entidades relacionadas (temas específicos)</p>
 </li>
 <li>
-<p><strong>Nivel 2 (raiz):</strong> Temas de alto nivel del corpus completo</p>
+<p><strong>Nivel 2 (raíz):</strong> Temas de alto nivel del corpus completo</p>
 </li>
 </ul>
 <h3 id="paso-5-community-summaries">Paso 5: Community Summaries</h3>
@@ -100,30 +100,30 @@
 <span class="line"><span>is a key academic contributor. Key themes: error correction,</span></span>
 <span class="line"><span>quantum advantage, and commercial applications."</span></span>
 <span class="line"><span>"""</span></span></code></pre>
-<h2 id="las-4-estrategias-de-busqueda">Las 4 estrategias de busqueda</h2>
-<h3 id="1-global-search-para-preguntas-holisticas">1. Global Search (para preguntas holisticas)</h3>
-<p>Usa community summaries en un patron <strong>map-reduce</strong>:</p>
+<h2 id="las-4-estrategias-de-búsqueda">Las 4 estrategias de búsqueda</h2>
+<h3 id="1-global-search-para-preguntas-holísticas">1. Global Search (para preguntas holísticas)</h3>
+<p>Usa community summaries en un patrón <strong>map-reduce</strong>:</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># MAP: Cada community report genera puntos con rating de importancia</span></span>
 <span class="line"><span>for batch in shuffled_community_reports:</span></span>
-<span class="line"><span>intermediate = llm.map(query, batch)</span></span>
-<span class="line"><span># ["quantum error correction es importante (rating: 8)",</span></span>
-<span class="line"><span>#  "commercial applications creciendo (rating: 7)", ...]</span></span>
+<span class="line"><span>    intermediate = llm.map(query, batch)</span></span>
+<span class="line"><span>    # ["quantum error correction es importante (rating: 8)",</span></span>
+<span class="line"><span>    #  "commercial applications creciendo (rating: 7)", ...]</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span># REDUCE: Los puntos mas importantes se agregan en la respuesta final</span></span>
+<span class="line"><span># REDUCE: Los puntos más importantes se agregan en la respuesta final</span></span>
 <span class="line"><span>top_points = rank_and_filter(intermediate_responses)</span></span>
 <span class="line"><span>final_answer = llm.reduce(query, top_points)</span></span></code></pre>
 <ul>
 <li>
-<p><strong>Cuando usar:</strong> “Cuales son los temas principales?”, “Resume el corpus”, “Que tendencias hay?”</p>
+<p><strong>Cuándo usar:</strong> “¿Cuáles son los temas principales?”, “Resume el corpus”, “¿Qué tendencias hay?”</p>
 </li>
 <li>
-<p><strong>Ventaja:</strong> Unica forma de responder preguntas que requieren comprension de todo el corpus</p>
+<p><strong>Ventaja:</strong> Única forma de responder preguntas que requieren comprensión de todo el corpus</p>
 </li>
 <li>
 <p><strong>Costo:</strong> Alto (muchas llamadas LLM en map-reduce)</p>
 </li>
 </ul>
-<h3 id="2-local-search-para-entidades-especificas">2. Local Search (para entidades especificas)</h3>
+<h3 id="2-local-search-para-entidades-específicas">2. Local Search (para entidades específicas)</h3>
 <p>Combina knowledge graph estructurado con texto no estructurado:</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo de Local Search:</span></span>
 <span class="line"><span># 1. Extraer entidades de la query</span></span>
@@ -144,7 +144,7 @@
 <span class="line"><span>answer = llm.generate(query, context)</span></span></code></pre>
 <ul>
 <li>
-<p><strong>Cuando usar:</strong> “Que propiedades curativas tiene la manzanilla?”, “Quien es X y que relacion tiene con Y?”</p>
+<p><strong>Cuándo usar:</strong> “¿Qué propiedades curativas tiene la manzanilla?”, “¿Quién es X y qué relación tiene con Y?”</p>
 </li>
 <li>
 <p><strong>Ventaja:</strong> Multi-hop traversal, entity disambiguation, contexto comunitario</p>
@@ -154,77 +154,77 @@
 </li>
 </ul>
 <h3 id="3-drift-search-exploratorio">3. DRIFT Search (exploratorio)</h3>
-<p>Combina amplitud de Global con profundidad de Local en un arbol de exploracion iterativo:</p>
+<p>Combina amplitud de Global con profundidad de Local en un árbol de exploración iterativo:</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># DRIFT: 3 fases</span></span>
 <span class="line"><span># FASE 1 - Primer (Global): context amplio</span></span>
 <span class="line"><span>top_communities = retrieve_top_k_community_reports(query)</span></span>
 <span class="line"><span>global_answer = llm.generate(query, top_communities)</span></span>
 <span class="line"><span>follow_ups = llm.generate_follow_ups(query, global_answer)</span></span>
-<span class="line"><span># ["Cuales son los subtemas de X?", "Que entidades clave estan involucradas?"]</span></span>
+<span class="line"><span># ["¿Cuáles son los subtemas de X?", "¿Qué entidades clave están involucradas?"]</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># FASE 2 - Follow-up (Local): profundizar iterativamente</span></span>
 <span class="line"><span>while budget_remaining and confidence_high:</span></span>
-<span class="line"><span>best_question = select_highest_confidence(follow_ups)</span></span>
-<span class="line"><span>local_answer = local_search(best_question)</span></span>
-<span class="line"><span>new_follow_ups = llm.generate_follow_ups(best_question, local_answer)</span></span>
-<span class="line"><span>follow_ups.extend(new_follow_ups)</span></span>
+<span class="line"><span>    best_question = select_highest_confidence(follow_ups)</span></span>
+<span class="line"><span>    local_answer = local_search(best_question)</span></span>
+<span class="line"><span>    new_follow_ups = llm.generate_follow_ups(best_question, local_answer)</span></span>
+<span class="line"><span>    follow_ups.extend(new_follow_ups)</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span># FASE 3 - Output: arbol jerarquico rankeado</span></span>
+<span class="line"><span># FASE 3 - Output: árbol jerárquico rankeado</span></span>
 <span class="line"><span># Question -&gt; Global Answer -&gt; Follow-up 1 -&gt; Local Answer -&gt; ...</span></span>
 <span class="line"><span>#            -&gt; Follow-up 2 -&gt; Local Answer -&gt; ...</span></span></code></pre>
 <ul>
 <li>
-<p><strong>Cuando usar:</strong> “Cuentame sobre [topico amplio]”, “Que deberia saber sobre [dominio]?”</p>
+<p><strong>Cuándo usar:</strong> “Cuéntame sobre [tópico amplio]”, “¿Qué debería saber sobre [dominio]?”</p>
 </li>
 <li>
 <p><strong>Ventaja:</strong> Balanced breadth + depth, adaptive exploration</p>
 </li>
 <li>
-<p><strong>Costo:</strong> El mas alto (global + multiples locals)</p>
+<p><strong>Costo:</strong> El más alto (global + múltiples locals)</p>
 </li>
 </ul>
 <h3 id="4-basic-search-baseline-vector">4. Basic Search (baseline vector)</h3>
 <p>Vector similarity search simple. Para cuando la pregunta es factual directa.</p>
 <ul>
 <li>
-<p><strong>Cuando usar:</strong> “Que es X?”, “Busca menciones de Y”</p>
+<p><strong>Cuándo usar:</strong> “¿Qué es X?”, “Busca menciones de Y”</p>
 </li>
 <li>
-<p><strong>Ventaja:</strong> Mas rapido, menor costo</p>
+<p><strong>Ventaja:</strong> Más rápido, menor costo</p>
 </li>
 </ul>
-<h2 id="decision-que-metodo-elegir">Decision: Que metodo elegir</h2>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Arbol de decision</span></span>
+<h2 id="decisión-qué-método-elegir">Decisión: Qué método elegir</h2>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Árbol de decisión</span></span>
 <span class="line"><span>if es_pregunta_sobre_el_corpus_completo():</span></span>
-<span class="line"><span>return Global_Search</span></span>
+<span class="line"><span>    return Global_Search</span></span>
 <span class="line"><span>elif es_sobre_entidades_especificas():</span></span>
-<span class="line"><span>return Local_Search</span></span>
+<span class="line"><span>    return Local_Search</span></span>
 <span class="line"><span>elif es_exploratorio_o_desconocido():</span></span>
-<span class="line"><span>return DRIFT_Search</span></span>
+<span class="line"><span>    return DRIFT_Search</span></span>
 <span class="line"><span>else:</span></span>
-<span class="line"><span>return Basic_Search</span></span></code></pre>
+<span class="line"><span>    return Basic_Search</span></span></code></pre>
 <table>
 <thead>
 <tr>
 <th>Pregunta</th>
-<th>Metodo</th>
+<th>Método</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>“Cuales son los temas principales?”</td>
+<td>“¿Cuáles son los temas principales?”</td>
 <td>Global</td>
 </tr>
 <tr>
-<td>“Que propiedades tiene X?”</td>
+<td>“¿Qué propiedades tiene X?”</td>
 <td>Local</td>
 </tr>
 <tr>
-<td>“Cuentame sobre [topico]”</td>
+<td>“Cuéntame sobre [tópico]”</td>
 <td>DRIFT</td>
 </tr>
 <tr>
-<td>“Que es Y?”</td>
+<td>“¿Qué es Y?”</td>
 <td>Basic</td>
 </tr>
 <tr>
@@ -232,19 +232,19 @@
 <td>Global</td>
 </tr>
 <tr>
-<td>“Como esta A conectado con B?”</td>
+<td>“¿Cómo está A conectado con B?”</td>
 <td>Local</td>
 </tr>
 </tbody>
 </table>
 <h2 id="dynamic-community-selection--77-costo">Dynamic Community Selection: -77% costo</h2>
-<p>Global Search estatico procesa TODOS los community reports. Dynamic Selection los califica primero con un modelo barato (GPT-4o-mini) y solo procesa los relevantes.</p>
+<p>Global Search estático procesa TODOS los community reports. Dynamic Selection los califica primero con un modelo barato (GPT-4o-mini) y solo procesa los relevantes.</p>
 <div class="callout success">
 <div class="callout-title">Resultado</div>
-<p>Calidad comparable a Global Search estatico, pero con <strong>77% menos tokens</strong>. De ~1500 reports a ~470. El rate operation es clasificacion (mas barata que summarization).
+<p>Calidad comparable a Global Search estático, pero con <strong>77% menos tokens</strong>. De ~1500 reports a ~470. La operación es clasificación (más barata que summarization).
 <p><small>Fuente: <a href="https://arxiv.org/abs/2410.04361">arXiv:2410.04361 — Microsoft GraphRAG: Dynamic Community Selection</a></small></p></p>
 </div>
-<h2 id="implementacion-con-neo4j--langchain">Implementacion con Neo4j + LangChain</h2>
+<h2 id="implementación-con-neo4j--langchain">Implementación con Neo4j + LangChain</h2>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 1. Construir el knowledge graph</span></span>
 <span class="line"><span>from langchain_neo4j import Neo4jGraph</span></span>
 <span class="line"><span>from langchain_experimental.graph_transformers import LLMGraphTransformer</span></span>
@@ -260,31 +260,31 @@
 <span class="line"><span>from langchain_neo4j import Neo4jVector</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>vector_index = Neo4jVector.from_existing_graph(</span></span>
-<span class="line"><span>OpenAIEmbeddings(),</span></span>
-<span class="line"><span>index_name="entities",</span></span>
-<span class="line"><span>node_label="Entity",</span></span>
-<span class="line"><span>text_node_properties=["id", "description"],</span></span>
-<span class="line"><span>embedding_node_property="embedding"</span></span>
+<span class="line"><span>    OpenAIEmbeddings(),</span></span>
+<span class="line"><span>    index_name="entities",</span></span>
+<span class="line"><span>    node_label="Entity",</span></span>
+<span class="line"><span>    text_node_properties=["id", "description"],</span></span>
+<span class="line"><span>    embedding_node_property="embedding"</span></span>
 <span class="line"><span>)</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># 3. Graph traversal retriever</span></span>
 <span class="line"><span>def graph_retriever(question):</span></span>
-<span class="line"><span>entities = entity_chain.invoke({"question": question})</span></span>
-<span class="line"><span>for entity in entities:</span></span>
-<span class="line"><span>graph.query("""</span></span>
-<span class="line"><span>CALL db.index.fulltext.queryNodes('entity', $query)</span></span>
-<span class="line"><span>YIELD node, score</span></span>
-<span class="line"><span>CALL { MATCH (node)-[r]-&gt;(neighbor)</span></span>
-<span class="line"><span>RETURN node.id + ' -&gt; ' + type(r) + ' -&gt; ' + neighbor.id }</span></span>
-<span class="line"><span>RETURN output LIMIT 50</span></span>
-<span class="line"><span>""", {"query": entity})</span></span>
+<span class="line"><span>    entities = entity_chain.invoke({"question": question})</span></span>
+<span class="line"><span>    for entity in entities:</span></span>
+<span class="line"><span>        graph.query("""</span></span>
+<span class="line"><span>        CALL db.index.fulltext.queryNodes('entity', $query)</span></span>
+<span class="line"><span>        YIELD node, score</span></span>
+<span class="line"><span>        CALL { MATCH (node)-[r]-&gt;(neighbor)</span></span>
+<span class="line"><span>        RETURN node.id + ' -&gt; ' + type(r) + ' -&gt; ' + neighbor.id }</span></span>
+<span class="line"><span>        RETURN output LIMIT 50</span></span>
+<span class="line"><span>        """, {"query": entity})</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># 4. Hybrid retrieval (vector + graph)</span></span>
 <span class="line"><span>chain = (</span></span>
-<span class="line"><span>{"context": graph_retriever, "question": RunnablePassthrough()}</span></span>
-<span class="line"><span>| prompt | llm | StrOutputParser()</span></span>
+<span class="line"><span>    {"context": graph_retriever, "question": RunnablePassthrough()}</span></span>
+<span class="line"><span>    | prompt | llm | StrOutputParser()</span></span>
 <span class="line"><span>)</span></span></code></pre>
-<h2 id="entity-resolution-el-paso-critico">Entity Resolution: El paso critico</h2>
+<h2 id="entity-resolution-el-paso-crítico">Entity Resolution: El paso crítico</h2>
 <p>El LLM extrae “IBM”, “International Business Machines”, “IBM Corp” como entidades separadas. Entity resolution las fusiona:</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Pipeline de entity resolution</span></span>
 <span class="line"><span># 1. Calcular embeddings de nombres y descripciones</span></span>
@@ -293,16 +293,16 @@
 <span class="line"><span># 4. Merge en el grafo</span></span></code></pre>
 <ul>
 <li>
-<p><strong>Metodo:</strong> Embeddings + kNN graph + LLM verification</p>
+<p><strong>Método:</strong> Embeddings + kNN graph + LLM verification</p>
 </li>
 <li>
-<p><strong>Umbral tipico:</strong> cosine similarity &gt; 0.95 para candidatos</p>
+<p><strong>Umbral típico:</strong> Cosine similarity &gt; 0.95 para candidatos</p>
 </li>
 <li>
-<p><strong>Desafio:</strong> No hay entity resolution en el repo oficial de Microsoft</p>
+<p><strong>Desafío:</strong> No hay entity resolution en el repo oficial de Microsoft</p>
 </li>
 </ul>
-<h2 id="costo-y-produccion">Costo y produccion</h2>
+<h2 id="costo-y-producción">Costo y producción</h2>
 <table>
 <thead>
 <tr>
@@ -313,7 +313,7 @@
 <tbody>
 <tr>
 <td><strong>Indexing</strong></td>
-<td>Caro — extraccion de entidades + resumenes de comunidad son multiples LLM calls</td>
+<td>Caro — extracción de entidades + resúmenes de comunidad son múltiples LLM calls</td>
 </tr>
 <tr>
 <td><strong>Global Search</strong></td>
@@ -321,11 +321,11 @@
 </tr>
 <tr>
 <td><strong>Local Search</strong></td>
-<td>Moderado (una generacion + graph traversal)</td>
+<td>Moderado (una generación + graph traversal)</td>
 </tr>
 <tr>
 <td><strong>DRIFT</strong></td>
-<td>El mas alto (global + multiples locals iterativos)</td>
+<td>El más alto (global + múltiples locals iterativos)</td>
 </tr>
 <tr>
 <td><strong>Re-indexing</strong></td>
@@ -333,39 +333,39 @@
 </tr>
 <tr>
 <td><strong>Prompt Tuning</strong></td>
-<td>Recomendado — los prompts default no son optimos para todo dominio</td>
+<td>Recomendado — los prompts default no son óptimos para todo dominio</td>
 </tr>
 </tbody>
 </table>
-<h2 id="practica">Practica</h2>
+<h2 id="práctica">Práctica</h2>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 1: Knowledge Graph con LangChain</div>
-<p>Usando el notebook <code>create-graph.ipynb</code> del repo:</p>
+<p>Usa el código de Neo4j de arriba como base:</p>
 <ul>
-<li>Extrae entidades y relaciones de un dataset de peliculas</li>
+<li>Extrae entidades y relaciones de un dataset de películas</li>
 <li>Almacena en Neo4j</li>
 <li>Visualiza el grafo en Neo4j Browser</li>
 </ul>
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 2: Local vs Global</div>
-<p>Usando el notebook <code>graph-query.ipynb</code>:</p>
+<p>Usa el código de graph query de arriba:</p>
 <ul>
 <li>Responde una pregunta local (sobre una entidad)</li>
 <li>Responde una pregunta global (sobre temas del corpus)</li>
-<li>Compara: que tipo de contexto usa cada metodo?</li>
+<li>Compara: ¿qué tipo de contexto usa cada método?</li>
 </ul>
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Hybrid retrieval</div>
 <p>Combina vector search + graph traversal:</p>
 <ul>
-<li>Vector search para similaridad semantica</li>
+<li>Vector search para similaridad semántica</li>
 <li>Graph traversal para relaciones multi-hop</li>
 <li>Merge de resultados con RRF</li>
 </ul>
 </div>
-<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Que tipo de pregunta resuelve Global Search que baseline RAG no puede?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;Que es la relatividad?&quot;</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">&quot;Cuales son los 5 temas principales del corpus?&quot;</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;Quien descubrio la penicilina?&quot;</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;Cual es la capital de Francia?&quot;</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Que algoritmo usa GraphRAG para community detection?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">PageRank</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Leiden (clustering jerarquico)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">k-means</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">DBSCAN</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Cuanto reduce Dynamic Community Selection el costo vs Global Search estatico?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">25%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">50%</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">77%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">90%</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Que metodo de busqueda es el mas costoso?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Basic Search</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Local Search</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Global Search</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">DRIFT Search (global + multiples locals)</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">Que es entity resolution y por que es critica?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Extraer entidades del texto</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Fusionar variantes de la misma entidad (IBM, &quot;International Business Machines&quot;)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Eliminar entidades irrelevantes</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Asignar embeddings a entidades</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/multimodal-rag">← Multimodal RAG</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Qué tipo de pregunta resuelve Global Search que baseline RAG no puede?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;¿Qué es la relatividad?&quot;</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">&quot;¿Cuáles son los 5 temas principales del corpus?&quot;</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;¿Quién descubrió la penicilina?&quot;</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;¿Cuál es la capital de Francia?&quot;</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Qué algoritmo usa GraphRAG para community detection?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">PageRank</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Leiden (clustering jerárquico)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">k-means</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">DBSCAN</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Cuánto reduce Dynamic Community Selection el costo vs Global Search estático?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">25%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">50%</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">77%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">90%</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">¿Qué método de búsqueda es el más costoso?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Basic Search</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Local Search</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Global Search</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">DRIFT Search (global + múltiples locals)</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">¿Qué es entity resolution y por qué es crítica?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Extraer entidades del texto</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Fusionar variantes de la misma entidad (IBM, &quot;International Business Machines&quot;)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Eliminar entidades irrelevantes</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Asignar embeddings a entidades</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/multimodal-rag">← Multimodal RAG</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {
     const btn = document.querySelector('.back-to-top');
     if (!btn) return;

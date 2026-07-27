@@ -39,7 +39,7 @@
 <div class="callout info">
 <div class="callout-title">Dato clave de producción</div>
 <p>El tamaño de chunk mueve las métricas más que la elección del algoritmo. En benchmarks de 2026, la diferencia entre 256 y 512 tokens fue mayor que la diferencia entre recursive y semantic chunking.
-<p><small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — 7 estrategias, 50 papers academicos</a></small></p></p>
+<p><small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — 7 estrategias, 50 papers académicos</a></small></p></p>
 </div>
 <h2 id="las-estrategias-principales">Las estrategias principales</h2>
 <h3 id="1-fixed-size-tamaño-fijo">1. Fixed-size (Tamaño fijo)</h3>
@@ -55,6 +55,23 @@
 <p><strong>Configuración típica:</strong> 512 tokens, overlap 50-64 tokens (10-15%)</p>
 </li>
 </ul>
+<h3 id="parsing-de-documentos-antes-del-chunking">Parsing de documentos: antes del chunking</h3>
+<p>Antes de dividir en chunks, necesitas extraer texto del documento fuente. Para PDFs, <code>PyMuPDF</code> (<code>fitz</code>) es rápido y preserva estructura básica:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>import fitz  # PyMuPDF</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>def extraer_texto_pdf(path: str) -&gt; list[str]:</span></span>
+<span class="line"><span>    """Extrae el texto de cada página de un PDF."""</span></span>
+<span class="line"><span>    doc = fitz.open(path)</span></span>
+<span class="line"><span>    paginas = []</span></span>
+<span class="line"><span>    for pagina in doc:</span></span>
+<span class="line"><span>        paginas.append(pagina.get_text("text"))</span></span>
+<span class="line"><span>    doc.close()</span></span>
+<span class="line"><span>    return paginas</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Uso</span></span>
+<span class="line"><span>texto = extraer_texto_pdf("politicas.pdf")</span></span>
+<span class="line"><span># texto es una lista: una string por página del PDF</span></span></code></pre>
+<p>Este es el código al que se refiere el Ejercicio 1 de práctica. Úsalo como punto de partida para inspeccionar el tamaño y la estrategia de división.</p>
 <h3 id="2-recursive-character-splitting-el-default-recomendado">2. Recursive character splitting (El default recomendado)</h3>
 <p>Intenta dividir en la frontera más grande disponible (párrafos), y si el chunk sigue siendo muy grande, recursa a oraciones, luego palabras. Respeta la estructura cuando puede.</p>
 <div class="callout success">
@@ -115,7 +132,7 @@
 <p>Resuelve el dilema del tamaño desacoplando retrieval de generación:</p>
 <ul>
 <li>
-<p><strong>Child chunks (100-300 tokens):</strong> Se embeben y buscan. Son precisos y topicamente enfocados.</p>
+<p><strong>Child chunks (100-300 tokens):</strong> Se embeben y buscan. Son precisos y tópicamente enfocados.</p>
 </li>
 <li>
 <p><strong>Parent chunks (1000-2000 tokens):</strong> Se leen por el LLM. Dan contexto rico.</p>
@@ -140,7 +157,7 @@
 </li>
 </ol>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># LangChain ParentDocumentRetriever</span></span>
-<span class="line"><span># Nota: en LangChain v1+, ParentDocumentRetriever se migro a langchain-classic</span></span>
+<span class="line"><span># Nota: en LangChain v1+, ParentDocumentRetriever se migró a langchain-classic</span></span>
 <span class="line"><span># pip install langchain-classic</span></span>
 <span class="line"><span>from langchain_classic.retrievers import ParentDocumentRetriever</span></span>
 <span class="line"><span>from langchain_classic.storage import InMemoryStore</span></span>
@@ -237,8 +254,8 @@
 </table>
 <h2 id="práctica">Práctica</h2>
 <div class="exercise">
-<div class="exercise-title">Ejercicio 1: Analiza el chunking del repo</div>
-<p>Abre <code>chapter2/parse-pdf.ipynb</code> del repositorio hands-on-rag. Identifica:</p>
+<div class="exercise-title">Ejercicio 1: Analiza el chunking</div>
+<p>Revisa el código de PyMuPDF de arriba. Identifica:</p>
 <ul>
 <li>¿Qué tamaño de chunk se usa?</li>
 <li>¿Qué estrategia de división?</li>
@@ -247,18 +264,17 @@
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 2: Implementa parent-child</div>
-<p>Usando el código del Capítulo 2 como base, modifica el pipeline para usar parent-child chunking:</p>
+<p>Usa el código de ParentDocumentRetriever de arriba como base y modifícalo para:</p>
 <ul>
 <li>Child chunks: 250 tokens</li>
 <li>Parent chunks: 1500 tokens</li>
 <li>Embedda solo los children</li>
 <li>Al recuperar, retorna el parent</li>
 </ul>
-<p><strong>Pista:</strong> Mira <code>ParentDocumentRetriever</code> de LangChain.</p>
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Compara estrategias</div>
-<p>Crea un mini-eval con 5 preguntas sobre el documento del Capítulo 1 (Alice in Wonderland). Ejecuta el pipeline 3 veces:</p>
+<p>Crea un mini-eval con 5 preguntas sobre un documento PDF. Ejecuta el pipeline 3 veces:</p>
 <ul>
 <li>Recursive 512 sin overlap</li>
 <li>Recursive 512 con overlap 64</li>

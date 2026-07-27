@@ -25,9 +25,9 @@
     }, { passive: true });
   })();
 </script><main id="content"><article><header><h1>Multimodal RAG</h1><p class="subtitle">Lección 8 — Agentic RAG y GraphRAG</p></header><h2 id="objetivo">Objetivo</h2>
-<p>Al finalizar, sabras porque text-only RAG falla con documentos visuales, conoceras las 3 arquitecturas de Multimodal RAG, y sabras elegir los modelos correctos (CLIP, SigLIP, ColPali) para tu caso de uso.</p>
-<h2 id="el-problema-rag-de-texto-pierde-informacion-visual">El problema: RAG de texto pierde informacion visual</h2>
-<p>Los documentos empresariales contienen charts, tablas, diagramas y fotos que text-only RAG <em>descarta silenciosamente</em>. Un pipeline de OCR convierte una tabla compleja a texto plano y pierde la estructura. Un chart se convierte en cero contexto util.</p>
+<p>Al finalizar, sabrás por qué text-only RAG falla con documentos visuales, conocerás las 3 arquitecturas de Multimodal RAG, y sabrás elegir los modelos correctos (CLIP, SigLIP, ColPali) para tu caso de uso.</p>
+<h2 id="el-problema-rag-de-texto-pierde-información-visual">El problema: RAG de texto pierde información visual</h2>
+<p>Los documentos empresariales contienen charts, tablas, diagramas y fotos que text-only RAG <em>descarta silenciosamente</em>. Un pipeline de OCR convierte una tabla compleja a texto plano y pierde la estructura. Un chart se convierte en cero contexto útil.</p>
 <table>
 <thead>
 <tr>
@@ -45,7 +45,7 @@
 <tr>
 <td>Evidencia preservada</td>
 <td>Pasajes de texto</td>
-<td>Frames, paginas, regiones, segmentos de audio</td>
+<td>Frames, páginas, regiones, segmentos de audio</td>
 </tr>
 <tr>
 <td>Embedding model</td>
@@ -53,21 +53,21 @@
 <td>CLIP, SigLIP, ColPali, ImageBind</td>
 </tr>
 <tr>
-<td>Generacion</td>
+<td>Generación</td>
 <td>Text LLM</td>
 <td>Vision-Language Model (GPT-4o, Claude, Gemini)</td>
 </tr>
 <tr>
 <td>Grounding</td>
 <td>Chunks de texto citados</td>
-<td>Frames, paginas, timestamps citados</td>
+<td>Frames, páginas, timestamps citados</td>
 </tr>
 </tbody>
 </table>
-<h2 id="las-3-arquitecturas-de-produccion">Las 3 arquitecturas de produccion</h2>
-<h3 id="1-caption-and-index-la-mas-simple">1. Caption-and-Index (la mas simple)</h3>
+<h2 id="las-3-arquitecturas-de-producción">Las 3 arquitecturas de producción</h2>
+<h3 id="1-caption-and-index-la-más-simple">1. Caption-and-Index (la más simple)</h3>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo:</span></span>
-<span class="line"><span># 1. Extraer imagenes del PDF/documento</span></span>
+<span class="line"><span># 1. Extraer imágenes del PDF/documento</span></span>
 <span class="line"><span># 2. Caption cada imagen con un VLM</span></span>
 <span class="line"><span>#    "Bar chart showing Q3 revenue of $4.2B, up 12% YoY"</span></span>
 <span class="line"><span># 3. Embeber el caption como texto normal</span></span>
@@ -77,29 +77,29 @@
 <span class="line"><span># Desventaja: lossy — el caption puede hallucinar o perder detalles</span></span></code></pre>
 <h3 id="2-unified-vision-embeddings-el-punto-medio">2. Unified Vision Embeddings (el punto medio)</h3>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo:</span></span>
-<span class="line"><span># 1. Embeber imagenes Y texto en el mismo espacio vectorial</span></span>
+<span class="line"><span># 1. Embeber imágenes Y texto en el mismo espacio vectorial</span></span>
 <span class="line"><span># 2. Buscar con cosine similarity cross-modal</span></span>
-<span class="line"><span># 3. Generar con VLM que ve las imagenes directamente</span></span>
+<span class="line"><span># 3. Generar con VLM que ve las imágenes directamente</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># Modelos principales:</span></span>
 <span class="line"><span># - Cohere Embed 4: 128K context, Matryoshka (256-1536 dim)</span></span>
 <span class="line"><span># - voyage-multimodal-3.5: soporta video frames</span></span>
-<span class="line"><span># - SigLIP 2: open source, So400m, multilingue</span></span>
+<span class="line"><span># - SigLIP 2: open source, So400m, multilingüe</span></span>
 <span class="line"><span># - Nomic Embed Multimodal: 3B/7B, self-hosted</span></span></code></pre>
-<h3 id="3-page-as-image-con-late-interaction-la-mas-precisa">3. Page-as-Image con Late Interaction (la mas precisa)</h3>
+<h3 id="3-page-as-image-con-late-interaction-la-más-precisa">3. Page-as-Image con Late Interaction (la más precisa)</h3>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo:</span></span>
-<span class="line"><span># 1. Renderizar cada pagina del PDF como imagen (DPI alto)</span></span>
-<span class="line"><span># 2. ColPali/ColQwen produce embeddings multi-vector por pagina</span></span>
-<span class="line"><span>#    (un vector por "patch" visual de la pagina)</span></span>
+<span class="line"><span># 1. Renderizar cada página del PDF como imagen (DPI alto)</span></span>
+<span class="line"><span># 2. ColPali/ColQwen produce embeddings multi-vector por página</span></span>
+<span class="line"><span>#    (un vector por "patch" visual de la página)</span></span>
 <span class="line"><span># 3. Retrieval: MaxSim scoring (query tokens vs page patches)</span></span>
-<span class="line"><span># 4. Generar con VLM que recibe las imagenes de pagina</span></span>
+<span class="line"><span># 4. Generar con VLM que recibe las imágenes de página</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span># Ventaja: NO necesita OCR — "ve" la pagina como un humano</span></span>
+<span class="line"><span># Ventaja: NO necesita OCR — "ve" la página como un humano</span></span>
 <span class="line"><span># Captura charts, tablas, layout, texto — todo junto</span></span>
-<span class="line"><span># Desventaja: 100-1000x mas vectores por pagina</span></span></code></pre>
+<span class="line"><span># Desventaja: 100-1000x más vectores por página</span></span></code></pre>
 <div class="callout info">
-<div class="callout-title">El patron de produccion recomendado</div>
-<p><strong>Hybrid late-fusion:</strong> Indice paralelo de texto + imagen. BM25 + dense para texto, ColPali para imagenes. Reranking cross-modal. VLM como generador final. Flexible, mejor recall en corpus mixtos.</p>
+<div class="callout-title">El patrón de producción recomendado</div>
+<p><strong>Hybrid late-fusion:</strong> Índice paralelo de texto + imagen. BM25 + dense para texto, ColPali para imágenes. Reranking cross-modal. VLM como generador final. Flexible, mejor recall en corpus mixtos.</p>
 </div>
 <h2 id="modelos-de-embedding-visual-landscape-2026">Modelos de embedding visual: landscape 2026</h2>
 <table>
@@ -116,13 +116,13 @@
 <td><strong>CLIP ViT-L/14</strong></td>
 <td>Dense (single vector)</td>
 <td>768</td>
-<td>General purpose, imagenes naturales</td>
+<td>General purpose, imágenes naturales</td>
 </tr>
 <tr>
 <td><strong>SigLIP 2 So400m</strong></td>
 <td>Dense</td>
 <td>1152</td>
-<td>Mejor accuracy-speed, multilingue, documentos</td>
+<td>Mejor accuracy-speed, multilingüe, documentos</td>
 </tr>
 <tr>
 <td><strong>ColPali v1.3</strong></td>
@@ -162,55 +162,55 @@
 </tr>
 </tbody>
 </table>
-<h2 id="parsing-de-documentos-la-capa-de-ingestion">Parsing de documentos: la capa de ingestion</h2>
-<h3 id="el-patron-de-3-niveles-para-tablas">El patron de 3 niveles para tablas</h3>
+<h2 id="parsing-de-documentos-la-capa-de-ingesta">Parsing de documentos: la capa de ingesta</h2>
+<h3 id="el-patrón-de-3-niveles-para-tablas">El patrón de 3 niveles para tablas</h3>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Production pattern para extraer tablas de PDFs:</span></span>
-<span class="line"><span># Nivel 1: pdfplumber (rapido, rule-based)</span></span>
-<span class="line"><span>#   -&gt; Si columnas consistentes y &lt;15% celdas vacias -&gt; usar</span></span>
+<span class="line"><span># Nivel 1: pdfplumber (rápido, rule-based)</span></span>
+<span class="line"><span>#   -&gt; Si columnas consistentes y &lt;15% celdas vacías -&gt; usar</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># Nivel 2: Docling (IBM Research, neural layout analysis)</span></span>
-<span class="line"><span>#   -&gt; Si pdfplumber falla validacion -&gt; Docling</span></span>
-<span class="line"><span>#   -&gt; 3-5x mas lento pero mejor en tablas complejas</span></span>
+<span class="line"><span>#   -&gt; Si pdfplumber falla validación -&gt; Docling</span></span>
+<span class="line"><span>#   -&gt; 3-5x más lento pero mejor en tablas complejas</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># Nivel 3: VLM extraction (GPT-4o, Claude)</span></span>
-<span class="line"><span>#   -&gt; Si Docling tambien falla -&gt; VLM</span></span>
-<span class="line"><span>#   -&gt; El 5-10% mas dificil</span></span>
+<span class="line"><span>#   -&gt; Si Docling también falla -&gt; VLM</span></span>
+<span class="line"><span>#   -&gt; El 5-10% más difícil</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span># Este patron maneja 95%+ de tablas empresariales</span></span></code></pre>
+<span class="line"><span># Este patrón maneja 95%+ de tablas empresariales</span></span></code></pre>
 <h3 id="docling-ibm-research">Docling (IBM Research)</h3>
 <ul>
 <li>
-<p>Analisis de layout con modelo DocLayNet</p>
+<p>Análisis de layout con modelo DocLayNet</p>
 </li>
 <li>
-<p>Extrae por tipo de region: tablas, texto, imagenes, formulas</p>
+<p>Extrae por tipo de región: tablas, texto, imágenes, fórmulas</p>
 </li>
 <li>
-<p>Soporta: PDF, DOCX, PPTX, XLSX, HTML, imagenes, audio, video</p>
+<p>Soporta: PDF, DOCX, PPTX, XLSX, HTML, imágenes, audio, video</p>
 </li>
 <li>
 <p>Integra con LangChain, LlamaIndex, Haystack</p>
 </li>
 </ul>
 <h2 id="universalrag-routing-modality-aware">UniversalRAG: routing modality-aware</h2>
-<p>En vez de forzar todas las modalidades en un espacio vectorial (que causa “modality gap”), UniversalRAG predice que modalidad necesita la query y busca en el corpus especializado:</p>
+<p>En vez de forzar todas las modalidades en un espacio vectorial (que causa “modality gap”), UniversalRAG predice qué modalidad necesita la query y busca en el corpus especializado:</p>
 <pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 7 pathways de routing:</span></span>
 <span class="line"><span># None -&gt; no necesita retrieval</span></span>
-<span class="line"><span># Paragraph -&gt; texto nivel parrafo</span></span>
+<span class="line"><span># Paragraph -&gt; texto nivel párrafo</span></span>
 <span class="line"><span># Document -&gt; documento completo</span></span>
-<span class="line"><span># Table -&gt; tablas especificas</span></span>
-<span class="line"><span># Image -&gt; imagenes</span></span>
+<span class="line"><span># Table -&gt; tablas específicas</span></span>
+<span class="line"><span># Image -&gt; imágenes</span></span>
 <span class="line"><span># Clip -&gt; segmentos de video</span></span>
 <span class="line"><span># Video -&gt; video completo</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>router = llm.predict_modality(query)</span></span>
-<span class="line"><span># "Que dice el chart de Q3?" -&gt; [Image, Table]</span></span>
+<span class="line"><span># "¿Qué dice el chart de Q3?" -&gt; [Image, Table]</span></span>
 <span class="line"><span># "Resume el documento" -&gt; [Document]</span></span>
-<span class="line"><span># "Que dice el audio?" -&gt; [Clip]</span></span>
+<span class="line"><span># "¿Qué dice el audio?" -&gt; [Clip]</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>results = {}</span></span>
 <span class="line"><span>for modality, granularity in router:</span></span>
-<span class="line"><span>results[modality] = specialized_retriever[modality].search(query)</span></span></code></pre>
+<span class="line"><span>    results[modality] = specialized_retriever[modality].search(query)</span></span></code></pre>
 <ul>
 <li>
 <p><strong>Ventaja:</strong> Escala a nuevas modalidades sin modificar las existentes</p>
@@ -219,7 +219,7 @@
 <p><strong>Resultado:</strong> +32% sobre baselines vision-centric en enterprise datasets</p>
 </li>
 </ul>
-<h2 id="generacion-con-vlms">Generacion con VLMs</h2>
+<h2 id="generación-con-vlms">Generación con VLMs</h2>
 <p>Una vez recuperada la evidencia multimodal, el generador debe ser un Vision-Language Model:</p>
 <table>
 <thead>
@@ -253,13 +253,13 @@
 </tbody>
 </table>
 <div class="callout warning">
-<div class="callout-title">Costo de imagenes en contexto</div>
-<p>5 paginas de imagen pueden agregar 4K-8K tokens de input. Para documentos de 100+ paginas, el routing y priorizacion de paginas son criticos para controlar costo y latencia.</p>
+<div class="callout-title">Costo de imágenes en contexto</div>
+<p>5 páginas de imagen pueden agregar 4K-8K tokens de input. Para documentos de 100+ páginas, el routing y priorización de páginas son críticos para controlar costo y latencia.</p>
 </div>
-<h2 id="cuando-no-construir-multimodal-rag">Cuando NO construir Multimodal RAG</h2>
+<h2 id="cuándo-no-construir-multimodal-rag">Cuándo NO construir Multimodal RAG</h2>
 <ul>
 <li>
-<p><strong>Tu corpus es puro texto:</strong> text-only RAG es mas barato y suficiente</p>
+<p><strong>Tu corpus es puro texto:</strong> text-only RAG es más barato y suficiente</p>
 </li>
 <li>
 <p><strong>Las tablas son simples:</strong> OCR + Markdown puede bastar</p>
@@ -268,32 +268,32 @@
 <p><strong>Presupuesto limitado:</strong> ColPali requiere GPU, VLM generation es caro</p>
 </li>
 <li>
-<p><strong>Latencia critica:</strong> Late interaction es 3-5x mas lento que dense retrieval</p>
+<p><strong>Latencia crítica:</strong> Late interaction es 3-5x más lento que dense retrieval</p>
 </li>
 </ul>
 <div class="callout success">
-<div class="callout-title">La regla empirica</div>
-<p>Si tu knowledge base contiene <strong>mas del 20% de imagenes naturales</strong> (fotos, diagramas, scans), construye un approach de dos torres: SigLIP para imagenes + text embedder para texto, fusion con RRF. Si es puramente paginas de documentos, usa ColPali directamente.</p>
+<div class="callout-title">La regla empírica</div>
+<p>Si tu knowledge base contiene <strong>más del 20% de imágenes naturales</strong> (fotos, diagramas, scans), construye un approach de dos torres: SigLIP para imágenes + text embedder para texto, fusion con RRF. Si es puramente páginas de documentos, usa ColPali directamente.</p>
 </div>
-<h2 id="practica">Practica</h2>
+<h2 id="práctica">Práctica</h2>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 1: Image RAG con SigLIP</div>
-<p>Usando el notebook <code>image-retrieval-siglip.ipynb</code> del repo:</p>
+<p>Usa el código de SigLIP de arriba como base:</p>
 <ul>
-<li>Embebe un conjunto de imagenes con SigLIP</li>
+<li>Embebe un conjunto de imágenes con SigLIP</li>
 <li>Indexa en un vector store</li>
-<li>Busca imagenes por query de texto</li>
-<li>Genera respuestas con un VLM que recupero las imagenes</li>
+<li>Busca imágenes por query de texto</li>
+<li>Genera respuestas con un VLM que recuperó las imágenes</li>
 </ul>
 </div>
 <div class="exercise">
-<div class="exercise-title">Ejercicio 2: PDF como imagenes</div>
+<div class="exercise-title">Ejercicio 2: PDF como imágenes</div>
 <p>Construye un pipeline que:</p>
 <ul>
-<li>Renderice cada pagina de un PDF como imagen</li>
+<li>Renderice cada página de un PDF como imagen</li>
 <li>Embeba con ColPali o SigLIP</li>
-<li>Recupere las paginas mas relevantes</li>
-<li>Pase las imagenes de pagina a GPT-4o para generar respuesta</li>
+<li>Recupere las páginas más relevantes</li>
+<li>Pase las imágenes de página a GPT-4o para generar respuesta</li>
 </ul>
 </div>
 <div class="exercise">
@@ -302,11 +302,11 @@
 <ul>
 <li>Intenta con pdfplumber primero</li>
 <li>Si falla, usa Docling</li>
-<li>Para las 5% mas dificiles, usa VLM extraction</li>
+<li>Para las 5% más difíciles, usa VLM extraction</li>
 <li>Almacena como Markdown + imagen de tabla</li>
 </ul>
 </div>
-<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Por que ColPali supera a CLIP/SigLIP en document retrieval?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque es un modelo mas grande</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque usa late interaction (multi-vector) que captura layout, charts, y texto a nivel de patch</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque fue entrenado en mas datos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque usa OCR mejorado</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Que es &quot;modality gap&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Diferencia de velocidad entre modalidades</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Inputs se agrupan por modalidad en vez de relevancia semantica en el espacio de embeddings</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Falta de modelos para una modalidad</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Diferencia de costo entre modalidades</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Cual es el patron de 3 niveles para extraer tablas de PDFs?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">OCR -&gt; NER -&gt; Embedding</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">pdfplumber (rapido) -&gt; Docling (neural) -&gt; VLM (fallback)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">CLIP -&gt; SigLIP -&gt; ColPali</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Chunking -&gt; Reranking -&gt; Generation</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Cuando deberias empezar con text-only RAG en vez de multimodal?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Nunca, multimodal siempre es mejor</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando tu corpus es puro texto, las tablas son simples, o el presupuesto es limitado</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo para prototipos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando usas GraphRAG</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/agentic-rag">← Agentic RAG</a><a href="/lessons/graphrag">GraphRAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Por qué ColPali supera a CLIP/SigLIP en document retrieval?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque es un modelo más grande</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque usa late interaction (multi-vector) que captura layout, charts, y texto a nivel de patch</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque fue entrenado en más datos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque usa OCR mejorado</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Qué es &quot;modality gap&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Diferencia de velocidad entre modalidades</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Inputs se agrupan por modalidad en vez de relevancia semántica en el espacio de embeddings</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Falta de modelos para una modalidad</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Diferencia de costo entre modalidades</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Cuál es el patrón de 3 niveles para extraer tablas de PDFs?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">OCR -&gt; NER -&gt; Embedding</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">pdfplumber (rápido) -&gt; Docling (neural) -&gt; VLM (fallback)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">CLIP -&gt; SigLIP -&gt; ColPali</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Chunking -&gt; Reranking -&gt; Generation</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">¿Cuándo deberías empezar con text-only RAG en vez de multimodal?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Nunca, multimodal siempre es mejor</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando tu corpus es puro texto, las tablas son simples, o el presupuesto es limitado</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo para prototipos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando usas GraphRAG</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/agentic-rag">← Agentic RAG</a><a href="/lessons/graphrag">GraphRAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {
     const btn = document.querySelector('.back-to-top');
     if (!btn) return;

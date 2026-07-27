@@ -97,16 +97,17 @@ El flujo tiene dos caminos que se encuentran:
 <p>Un demo para aquí. Un sistema en producción agrega: re-ranking de resultados, guardrails de entrada/salida, evaluación continua, monitoreo, y manejo de fallos.</p>
 </div>
 
-## Los 4 pilares de RAG en producción
+## Los 5 pilares de RAG en producción
 
 Tu repositorio `hands-on-rag` organiza exactamente estos pilares en sus capítulos:
 
 | Pilar | Capítulo | Pregunta clave |
 | --- | --- | --- |
-| **1. Ingesta y Segmentación** | 2-3 | ¿Cómo divido mis documentos sin perder información? |
-| **2. Recuperación Avanzada** | 3-4 | ¿Cómo encuentro los chunks correctos de forma precisa? |
-| **3. Agentic RAG y GraphRAG** | 7-9 | ¿Cuándo debe el sistema buscar vs. responder directamente? |
+| **1. Fundamentos** | 1 | ¿Qué es RAG, cuándo usarlo y cuáles son sus límites? |
+| **2. Ingesta y Segmentación** | 2-3 | ¿Cómo divido mis documentos sin perder información? |
+| **3. Recuperación Avanzada** | 3-4 | ¿Cómo encuentro los chunks correctos de forma precisa? |
 | **4. RAGOps y Evaluación** | 6 | ¿Cómo sé si mi sistema funciona bien? |
+| **5. Agentic RAG y GraphRAG** | 7-9 | ¿Cuándo debe el sistema buscar vs. responder directamente? |
 
 ## RAG vs. Long Context vs. Fine-tuning
 
@@ -123,19 +124,78 @@ RAG no es la única solución. En 2026, existen tres opciones principales:
 <p>Si tu corpus cabe en 200k tokens (unas 500 páginas), probablemente no necesitas RAG. Prueba primero con long context + prompt caching. RAG gana cuando: el corpus es grande, cambia frecuentemente, o necesitas citas verificables.</p>
 </div>
 
+## Pipeline mínimo en código (LangChain)
+
+Antes de los ejercicios, aquí tienes un pipeline RAG mínimo en LangChain que implementa los 4 pasos (load → split → embed → store → query) descritos arriba. Este es el código al que se refieren los ejercicios de práctica.
+
+```python
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from langchain_postgres.vectorstores import PGVector
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+
+# --- Camino offline: Indexing ---
+
+# 1. Parsing — extraer texto de un PDF
+loader = PyPDFLoader("politicas.pdf")
+documents = loader.load()
+
+# 2. Chunking — dividir en fragmentos manejables
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=512,
+    chunk_overlap=64,
+    separators=["\n\n", "\n", ". ", " ", ""]
+)
+chunks = splitter.split_documents(documents)
+
+# 3. Embedding + 4. Almacenamiento — vectorizar y guardar
+embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=1536)
+vectorstore = PGVector.from_documents(
+    documents=chunks,
+    embedding=embeddings,
+    connection_string="postgresql://user:pass@localhost:5432/rag",
+    collection_name="politicas",
+)
+
+# --- Camino online: Query ---
+
+# 1. Query embedding + 2. Retrieval + 3. Generation
+retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+prompt = ChatPromptTemplate.from_template(
+    "Responde la pregunta usando SOLO el contexto. Cita la fuente.\n\n"
+    "Contexto: {context}\n\nPregunta: {question}"
+)
+
+def responder(question: str) -> str:
+    docs = retriever.invoke(question)              # 1 + 2
+    context = "\n\n".join(d.page_content for d in docs)
+    return llm.invoke(prompt.invoke({"context": context, "question": question})).content  # 3
+
+print(responder("¿Cuál es la política de devoluciones?"))
+```
+
+<div class="callout warning">
+<div class="callout-title">Esto es un demo</div>
+<p>No tienes credenciales ni una base de datos corriendo todavía — este código es para leerlo e identificar los 4 componentes. En la siguiente lección implementarás cada uno en detalle. Observa las 4 funciones clave: <code>loader.load()</code> (parse), <code>splitter.split_documents()</code> (chunk), <code>PGVector.from_documents()</code> (embed + store) y <code>retriever.invoke()</code> (retrieve). El LLM (<code>ChatOpenAI</code>) hace la generación al final.</p>
+</div>
+
 ## Práctica
 
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 1</div>
-<p>Abre el repositorio <code>hands-on-rag</code> y navega al capítulo 1. Ejecuta el notebook <code>sample-rag.ipynb</code>. ¿Qué componentes del pipeline identificas?</p>
-<p><strong>Pistas:</strong> Busca las funciones de LangChain que se usan (load, split, embed, store, query).</p>
+<p>Ejecuta el código del pipeline de arriba en tu entorno local. Identifica los 4 componentes del pipeline RAG.</p>
+<p><strong>Pistas:</strong> Observa las funciones de LangChain que se usan (load, split, embed, store, query).</p>
 </div>
 
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 2</div>
-<p>Responde estas preguntas sobre el notebook del Capítulo 1:</p>
+<p>Modifica el código y responde:</p>
 <ul>
 <li>¿Qué modelo de embedding se usa?</li>
 <li>¿Qué base de datos vectorial?</li>

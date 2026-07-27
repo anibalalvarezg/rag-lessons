@@ -7,13 +7,14 @@ const base = import.meta.env.BASE_URL;
 const pillars = [
   { id: 'pilar-1', title: 'Fundamentos', filter: 'pilar-1' },
   { id: 'pilar-2', title: 'Ingesta y Segmentación', filter: 'pilar-2' },
-  { id: 'pilar-3', title: 'Agentic RAG y GraphRAG', filter: 'pilar-3' },
+  { id: 'pilar-3', title: 'Recuperación Avanzada', filter: 'pilar-3' },
   { id: 'pilar-4', title: 'RAGOps y Evaluación', filter: 'pilar-4' },
+  { id: 'pilar-5', title: 'Agentic RAG y GraphRAG', filter: 'pilar-5' },
 ];
 ---
 <BaseLayout
   title="Guía de RAG"
-  description="Guía práctica para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG."
+  description="Guía práctica para construir sistemas RAG en producción: fundamentos, chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG."
   keywords="RAG, Retrieval Augmented Generation, LLM, producción, chunking, embeddings, vector store, reranking, GraphRAG, agentic RAG, evaluación RAG"
 >
   <main id="content">
@@ -22,7 +23,7 @@ const pillars = [
       <p class="lead">De la teoría a la implementación. 9 lecciones para construir sistemas RAG que funcionan en producción.</p>
       <div class="meta">
         <span>9 lecciones</span>
-        <span>4 pilares</span>
+        <span>5 pilares</span>
         <span>19 términos</span>
         <span>15+ fuentes</span>
       </div>
@@ -66,6 +67,7 @@ const pillars = [
           <p><a href="https://github.com/anibalalvarezg/rag-lessons">rag-lessons</a> — Lecciones HTML de este curso.</p>
         </div>
       </div>
+      <p style="margin-top: var(--sp-6); font-size: 0.9rem; color: var(--text-muted); text-align: center;">Esta guía se basó en el repositorio <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a> de Ofir Mendelovich. Los ejemplos de código provienen de ese proyecto bajo licencia Apache 2.0.</p>
     </div>
   </main>
 </BaseLayout>

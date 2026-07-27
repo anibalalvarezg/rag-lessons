@@ -62,6 +62,13 @@ quizzes:
 
 Al finalizar esta lección, entenderás el patrón de dos etapas (retrieve + rerank), sabrás elegir un reranker, y conocerás las técnicas de query transformation (HyDE, Multi-Query, Decomposition) para mejorar recall.
 
+**Prerequisitos:** [Lección 3](/rag-lessons/lessons/embeddings-and-vector-stores) — tu índice `acme_docs` ya está poblado.
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>El <code>base_retriever</code> que envuelve el reranker es el <code>vectorstore.as_retriever()</code> que construiste en la Lección 3. En esta lección además indexas el segundo documento del corpus: <code>manual-tecnico.pdf</code> (donde vive la configuración de <code>settings.yaml</code>). Los ejemplos de "¿Cómo configurar el timeout?" de aquí en adelante son consultas de empleados de Acme sobre ese manual — y son el mismo caso que verificarás en la Lección 5 y evaluarás en la Lección 6.</p>
+</div>
+
 ## El patrón de dos etapas
 
 En producción, la recuperación nunca es un solo paso. Es un funnel:
@@ -101,21 +108,22 @@ En producción, la recuperación nunca es un solo paso. Es un funnel:
 </div>
 
 ## Implementación con LangChain
-```
+
+```python
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain_cohere import CohereRerank
 
 # Reranker hosted
 reranker = CohereRerank(model="rerank-v3.5", top_n=5)
 
-# Envolver el retriever base
+# Envolver el retriever base (el de la Lección 3 sobre acme_docs)
 compression_retriever = ContextualCompressionRetriever(
     base_compressor=reranker,
     base_retriever=base_retriever  # tu hybrid retriever
 )
 
 # Ahora retrieval + reranking en un solo paso
-results = compression_retriever.invoke("pregunta del usuario")
+results = compression_retriever.invoke("¿Cómo configurar el timeout?")
 ```
 
 ## Query Transformation: Arreglar la pregunta, no el índice
@@ -126,7 +134,7 @@ Muchas veces el retrieval falla no por el índice, sino por la pregunta del usua
 
 Pide al LLM que escriba una respuesta hipotética, embebe esa respuesta, y busca con ella. La intuición: una respuesta real y una hipotética viven en la misma región del espacio de embeddings; la pregunta vive en otra.
 
-```
+```python
 # Flujo HyDE
 # 1. Usuario pregunta: "¿Cómo configurar el timeout?"
 # 2. LLM genera respuesta hipotética:
@@ -146,7 +154,7 @@ Pide al LLM que escriba una respuesta hipotética, embebe esa respuesta, y busca
 
 Genera N paráfrasis de la query, busca con cada una, fusiona resultados con Reciprocal Rank Fusion.
 
-```
+```python
 # Flujo Multi-Query
 # Query original: "cancelar suscripción"
 # Paráfrasis generadas:
@@ -166,11 +174,11 @@ Genera N paráfrasis de la query, busca con cada una, fusiona resultados con Rec
 
 Preguntas multi-hop se dividen en sub-preguntas atómicas, cada una busca por separado.
 
-```
-# Query: "¿Cuál es la política de reembolsos para clientes EU vs US?"
+```python
+# Query: "¿Cuál es la política de devoluciones para clientes EU vs US?"
 # Descomposición:
-#   1. "Política de reembolsos clientes EU"
-#   2. "Política de reembolsos clientes US"
+#   1. "Política de devoluciones clientes EU"
+#   2. "Política de devoluciones clientes US"
 # Cada sub-query busca documentos independientes
 ```
 
@@ -179,7 +187,8 @@ Preguntas multi-hop se dividen en sub-preguntas atómicas, cada una busca por se
 - **Riesgo:** Over-decomposition (dividir preguntas simples en sub-preguntas innecesarias)
 
 ## El pipeline completo de producción
-```
+
+```python
 # Pipeline típico 2026
 query = usuario.pregunta
 

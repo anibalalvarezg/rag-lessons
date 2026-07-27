@@ -73,6 +73,13 @@ quizzes:
 
 Al finalizar, sabrás cómo clasificar hallucinations en 3 tipos, implementar guardrails de entrada/salida, y construir un pipeline de detección que combine múltiples señales baratas para decidir si confiar, abstenerse o escalar.
 
+**Prerequisitos:** [Lección 4](/rag-lessons/lessons/hybrid-retrieval-and-reranking) — las señales de esta lección envuelven ese pipeline.
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Las verificaciones de esta lección se insertan <em>después</em> del pipeline de la Lección 4 (Transform → Retrieve → Rerank → Generate): toman la <code>query</code>, los <code>chunks</code> rerankeados y la <code>response</code> generada, y deciden si la respuesta del asistente Acme se publica, se corrige o se abstiene. El ejemplo "timeout / settings.yaml / 30 segundos" es la misma consulta al <code>manual-tecnico.pdf</code> que usaste en la Lección 4 — aquí aprendes a detectar cuándo el sistema la responde mal.</p>
+</div>
+
 ## Taxonomía de hallucinations: 3 tipos, 3 firmas
 
 No todas las hallucinations son iguales. La taxonomía de Marin (2026) identifica 3 tipos con firmas geométricas distintas:
@@ -125,7 +132,7 @@ Aquí es donde ocurre la detección de hallucinations. El patrón práctico es u
 
 Dado que en RAG siempre tienes el contexto recuperado, la verificación más poderosa es simple: **¿cada afirmación de la respuesta está soportada por los chunks recuperados?**
 
-```
+```python
 # Flujo de grounding check
 # 1. Descomponer respuesta en afirmaciones atómicas
 claims = extract_claims(response)
@@ -158,7 +165,7 @@ Mide si la respuesta se movió hacia el contexto o se quedó cerca de la pregunt
 
 <small>Fuente: [arXiv:2512.13771 — Semantic Grounding Index (SGI) Paper](https://arxiv.org/abs/2512.13771)</small>
 
-```
+```python
 # SGI = theta(response, question) / theta(response, context)
 # SGI > 1: respuesta cerca del contexto (grounded) -> PASS
 # SGI < 1: respuesta cerca de la pregunta (potentially hallucinated) -> FLAG
@@ -189,7 +196,7 @@ result = compute_sgi(
 
 Cuando no hay contexto para verificar contra, genera N respuestas con temperature > 0 y compara. Los hechos reales son consistentes entre muestras; los inventados varían.
 
-```
+```python
 # Generar 3 muestras con temperature=0.7
 samples = [llm.generate(query, temp=0.7) for _ in range(3)]
 # Comparar hechos clave entre muestras
@@ -229,7 +236,7 @@ Los log-probabilities de tokens indican incertidumbre del modelo. Tokens con baj
 
 ## Pipeline completo de guardrails en producción
 
-```
+```python
 # HALO-inspired architecture (6 capas)
 # Ref: arxiv.org/abs/2607.17883
 

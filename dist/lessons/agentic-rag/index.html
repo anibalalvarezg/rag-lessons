@@ -26,6 +26,11 @@
   })();
 </script><main id="content"><article><header><h1>Agentic RAG</h1><p class="subtitle">Lección 7 — Agentic RAG y GraphRAG</p></header><h2 id="objetivo">Objetivo</h2>
 <p>Al finalizar, entenderás los patrones de agentes RAG (ReAct, self-corrective, multi-agent), sabrás cuándo escalar de un solo agente a múltiples, y conocerás los frameworks de producción (LangGraph, LlamaIndex, CrewAI).</p>
+<p><strong>Prerequisitos:</strong> <a href="/rag-lessons/lessons/evaluation-and-metrics">Lección 6</a> — un agente sin evaluación es un agente que falla en silencio.</p>
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>El <code>retriever</code> y el <code>llm</code> de los nodos de LangGraph son los que construiste en las Lecciones 3-4 (índice <code>acme_docs</code> + reranker). Aquí el asistente de Acme deja de ser un pipeline lineal: el router decide si la pregunta del empleado va al vectorstore (políticas y manual técnico), a web search (noticias externas) o se responde directo; y el loop self-corrective re-busca cuando los documentos no son relevantes. Los guardrails de la Lección 5 siguen activos en el nodo de generación.</p>
+</div>
 <h2 id="de-rag-vanilla-a-agentic-rag">De RAG vanilla a Agentic RAG</h2>
 <p>RAG vanilla es un pipeline lineal: retrieve → generate. Agentic RAG agrega razonamiento iterativo: el sistema decide <em>cuándo</em> buscar, <em>cómo</em> reformular, y <em>cuándo</em> dejar de buscar.</p>
 <table>
@@ -66,47 +71,47 @@
 </table>
 <h2 id="el-patrón-react-think--act--observe">El patrón ReAct: Think → Act → Observe</h2>
 <p>El patrón fundamental de agentes. El LLM alterna entre razonamiento (thought), acción (action), y observación (observation) en un loop hasta completar la tarea.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># El loop ReAct</span></span>
-<span class="line"><span>while not task_complete:</span></span>
-<span class="line"><span>    # THINK: Razona sobre el estado actual</span></span>
-<span class="line"><span>    thought = llm.reason(</span></span>
-<span class="line"><span>        question=query,</span></span>
-<span class="line"><span>        context=current_context,</span></span>
-<span class="line"><span>        history=previous_steps</span></span>
-<span class="line"><span>    )</span></span>
-<span class="line"><span>    # "Necesito buscar información sobre X antes de responder"</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>    # ACT: Ejecuta una tool call</span></span>
-<span class="line"><span>    observation = tool.execute(thought.action)</span></span>
-<span class="line"><span>    # Retrieval de docs, web search, API call, etc.</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>    # OBSERVE: Procesa el resultado</span></span>
-<span class="line"><span>    current_context.append(observation)</span></span>
-<span class="line"><span>    # Si la respuesta es suficiente -&gt; termina</span></span>
-<span class="line"><span>    # Si no -&gt; repite el ciclo</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># El loop ReAct</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">while</span><span style="color:#D73A49;--shiki-dark:#F97583"> not</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> task_complete:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # THINK: Razona sobre el estado actual</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    thought </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.reason(</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">        question</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">query,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">        context</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">current_context,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">        history</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">previous_steps</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    )</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # "Necesito buscar información sobre X antes de responder"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # ACT: Ejecuta una tool call</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    observation </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> tool.execute(thought.action)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # Retrieval de docs, web search, API call, etc.</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # OBSERVE: Procesa el resultado</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    current_context.append(observation)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # Si la respuesta es suficiente -&gt; termina</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # Si no -&gt; repite el ciclo</span></span></code></pre>
 <div class="callout info">
 <div class="callout-title">Por qué ReAct funciona</div>
 <p>Interleaving reasoning con action mantiene al agente grounded. Un approach solo de razonamiento puede derivar en conocimiento interno. Un approach solo de acción carece de síntesis. ReAct combina ambos.</p>
 </div>
 <h2 id="self-corrective-rag-el-pipeline-que-se-arregla-solo">Self-Corrective RAG: El pipeline que se arregla solo</h2>
 <p>El patrón más importante en Agentic RAG. Agrega nodos de verificación que permiten al sistema re-intentar cuando la calidad es baja.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo de Self-Corrective RAG (LangGraph)</span></span>
-<span class="line"><span>#</span></span>
-<span class="line"><span># [Start] -&gt; [Retrieve] -&gt; [Grade Documents]</span></span>
-<span class="line"><span>#                               |</span></span>
-<span class="line"><span>#                    +----------+----------+</span></span>
-<span class="line"><span>#                    |                     |</span></span>
-<span class="line"><span>#               Relevant?            Not Relevant?</span></span>
-<span class="line"><span>#                    |                     |</span></span>
-<span class="line"><span>#               [Generate]         [Rewrite Query]</span></span>
-<span class="line"><span>#                    |                     |</span></span>
-<span class="line"><span>#                  [End]            [Retrieve] (loop)</span></span>
-<span class="line"><span>#</span></span>
-<span class="line"><span># El agente puede:</span></span>
-<span class="line"><span># 1. Calificar cada documento como relevant/irrelevant</span></span>
-<span class="line"><span># 2. Si todos son irrelevantes -&gt; re-escribir la query</span></span>
-<span class="line"><span># 3. Re-buscar con la query reformulada</span></span>
-<span class="line"><span># 4. Limitar reintentos (max 3) para evitar loops infinitos</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo de Self-Corrective RAG (LangGraph)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># [Start] -&gt; [Retrieve] -&gt; [Grade Documents]</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#                               |</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#                    +----------+----------+</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#                    |                     |</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#               Relevant?            Not Relevant?</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#                    |                     |</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#               [Generate]         [Rewrite Query]</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#                    |                     |</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#                  [End]            [Retrieve] (loop)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># El agente puede:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Calificar cada documento como relevant/irrelevant</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Si todos son irrelevantes -&gt; re-escribir la query</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Re-buscar con la query reformulada</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Limitar reintentos (max 3) para evitar loops infinitos</span></span></code></pre>
 <h3 id="nodos-del-pipeline">Nodos del pipeline</h3>
 <table>
 <thead>
@@ -146,44 +151,45 @@
 </table>
 <h2 id="query-routing-dirigir-al-data-source-correcto">Query Routing: Dirigir al data source correcto</h2>
 <p>Un router clasifica la query y la dirige al retriever apropiado. Evita buscar en vector store cuando la query requiere datos en tiempo real, o viceversa.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Router pattern</span></span>
-<span class="line"><span>class RouteQuery(BaseModel):</span></span>
-<span class="line"><span>    datasource: Literal["vectorstore", "web_search", "direct_response"]</span></span>
-<span class="line"><span>    reasoning: str</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Clasificación</span></span>
-<span class="line"><span>router = llm.with_structured_output(RouteQuery)</span></span>
-<span class="line"><span>result = router.invoke([</span></span>
-<span class="line"><span>    {"role": "system", "content": """Clasifica la query:</span></span>
-<span class="line"><span>    - vectorstore: preguntas sobre documentos internos</span></span>
-<span class="line"><span>    - web_search: eventos actuales, datos en tiempo real</span></span>
-<span class="line"><span>    - direct_response: conocimiento general"""},</span></span>
-<span class="line"><span>    {"role": "user", "content": query}</span></span>
-<span class="line"><span>])</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Fan-out paralelo (multi-source)</span></span>
-<span class="line"><span>if result.datasource == "vectorstore":</span></span>
-<span class="line"><span>    docs = vector_retriever.invoke(query)</span></span>
-<span class="line"><span>elif result.datasource == "web_search":</span></span>
-<span class="line"><span>    docs = web_search.invoke(query)</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Router pattern</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> RouteQuery</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#6F42C1;--shiki-dark:#B392F0">BaseModel</span><span style="color:#24292E;--shiki-dark:#E1E4E8">):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    datasource: Literal[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"vectorstore"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"web_search"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"direct_response"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    reasoning: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Clasificación</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">router </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.with_structured_output(RouteQuery)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">result </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> router.invoke([</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    {</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"role"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"system"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"content"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"""Clasifica la query:</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    - vectorstore: preguntas sobre documentos internos de Acme</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">      (políticas de RRHH, manual técnico)</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    - web_search: eventos actuales, datos en tiempo real</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    - direct_response: conocimiento general"""</span><span style="color:#24292E;--shiki-dark:#E1E4E8">},</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    {</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"role"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"user"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"content"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: query}</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Fan-out paralelo (multi-source)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> result.datasource </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "vectorstore"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    docs </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> vector_retriever.invoke(query)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">elif</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> result.datasource </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "web_search"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    docs </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> web_search.invoke(query)</span></span></code></pre>
 <h2 id="multi-agent-rag-especialización-y-coordinación">Multi-Agent RAG: Especialización y coordinación</h2>
 <p>Cuando un solo agente no puede manejar la complejidad, se decomponen roles en agentes especializados que colaboran.</p>
 <h3 id="arquitectura-típica-de-google-agentic-rag">Arquitectura típica de Google Agentic RAG</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 5 agentes especializados (Google Enterprise Agent Platform)</span></span>
-<span class="line"><span>#</span></span>
-<span class="line"><span># 1. Orchestrator: Evalúa la complejidad, delega</span></span>
-<span class="line"><span># 2. Planner: Mapea rutas de información</span></span>
-<span class="line"><span>#    "Pregunta sobre budget AND timeline -&gt;</span></span>
-<span class="line"><span>#     primero finance DB, luego project management logs"</span></span>
-<span class="line"><span># 3. Query Rewriter: Transforma la query en sub-queries</span></span>
-<span class="line"><span>#    "¿Qué pasa con Project X?" -&gt;</span></span>
-<span class="line"><span>#    ["Status report Project X Q3", "Key blockers Project X"]</span></span>
-<span class="line"><span># 4. Search Fanout: Busca en paralelo en múltiples fuentes</span></span>
-<span class="line"><span># 5. Sufficient Context Agent: VERIFICADOR DE CALIDAD</span></span>
-<span class="line"><span>#    - Examina los chunks recuperados</span></span>
-<span class="line"><span>#    - Revisa un draft intermedio</span></span>
-<span class="line"><span>#    - Identifica EXACTAMENTE qué falta</span></span>
-<span class="line"><span>#    - Si falta info -&gt; feedback específico -&gt; re-search</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 5 agentes especializados (Google Enterprise Agent Platform)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Orchestrator: Evalúa la complejidad, delega</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Planner: Mapea rutas de información</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    "Pregunta sobre budget AND timeline -&gt;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#     primero finance DB, luego project management logs"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Query Rewriter: Transforma la query en sub-queries</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    "¿Qué pasa con Project X?" -&gt;</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    ["Status report Project X Q3", "Key blockers Project X"]</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Search Fanout: Busca en paralelo en múltiples fuentes</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 5. Sufficient Context Agent: VERIFICADOR DE CALIDAD</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    - Examina los chunks recuperados</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    - Revisa un draft intermedio</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    - Identifica EXACTAMENTE qué falta</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    - Si falta info -&gt; feedback específico -&gt; re-search</span></span></code></pre>
 <div class="callout success">
 <div class="callout-title">El Sufficient Context Agent (innovación clave)</div>
 <p>No solo dice "no tengo suficiente info". Genera feedback específico: "Encontraste meds y diet, pero falta allergies. Busca por 'rashes' o 'adverse events'". Esto permite al sistema recuperar la información faltante en vez de abstenerse prematuramente. +34% en factuality vs vanilla RAG.
@@ -359,47 +365,47 @@
 </tbody>
 </table>
 <h2 id="implementación-con-langgraph">Implementación con LangGraph</h2>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>from langgraph.graph import StateGraph, START, END</span></span>
-<span class="line"><span>from typing import TypedDict, Literal</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>class GraphState(TypedDict):</span></span>
-<span class="line"><span>    question: str</span></span>
-<span class="line"><span>    documents: list</span></span>
-<span class="line"><span>    generation: str</span></span>
-<span class="line"><span>    relevance: str</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Definir nodos</span></span>
-<span class="line"><span>def retrieve(state):</span></span>
-<span class="line"><span>    docs = retriever.invoke(state["question"])</span></span>
-<span class="line"><span>    return {"documents": docs}</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>def grade_documents(state):</span></span>
-<span class="line"><span>    scores = [llm.grade(doc, state["question"]) for doc in state["documents"]]</span></span>
-<span class="line"><span>    relevant = [doc for doc, score in zip(state["documents"], scores) if score == "relevant"]</span></span>
-<span class="line"><span>    return {"documents": relevant, "relevance": "relevant" if relevant else "irrelevant"}</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>def rewrite_query(state):</span></span>
-<span class="line"><span>    new_query = llm.rewrite(state["question"])</span></span>
-<span class="line"><span>    return {"question": new_query}</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>def generate(state):</span></span>
-<span class="line"><span>    answer = llm.generate(state["question"], state["documents"])</span></span>
-<span class="line"><span>    return {"generation": answer}</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Construir el grafo</span></span>
-<span class="line"><span>workflow = StateGraph(GraphState)</span></span>
-<span class="line"><span>workflow.add_node("retrieve", retrieve)</span></span>
-<span class="line"><span>workflow.add_node("grade", grade_documents)</span></span>
-<span class="line"><span>workflow.add_node("rewrite", rewrite_query)</span></span>
-<span class="line"><span>workflow.add_node("generate", generate)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>workflow.set_entry_point("retrieve")</span></span>
-<span class="line"><span>workflow.add_edge("retrieve", "grade")</span></span>
-<span class="line"><span>workflow.add_conditional_edges("grade", lambda s: "generate" if s["relevance"] == "relevant" else "rewrite")</span></span>
-<span class="line"><span>workflow.add_edge("rewrite", "retrieve")  # Loop back</span></span>
-<span class="line"><span>workflow.add_edge("generate", END)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>app = workflow.compile()</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langgraph.graph </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> StateGraph, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">START</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">END</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> typing </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> TypedDict, Literal</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> GraphState</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#6F42C1;--shiki-dark:#B392F0">TypedDict</span><span style="color:#24292E;--shiki-dark:#E1E4E8">):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    question: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    documents: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">list</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    generation: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    relevance: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Definir nodos</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> retrieve</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(state):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    docs </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> retriever.invoke(state[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"question"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">])</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"documents"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: docs}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> grade_documents</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(state):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    scores </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [llm.grade(doc, state[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"question"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]) </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> doc </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> state[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"documents"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]]</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    relevant </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [doc </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> doc, score </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> zip</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(state[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"documents"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], scores) </span><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> score </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "relevant"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"documents"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: relevant, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"relevance"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"relevant"</span><span style="color:#D73A49;--shiki-dark:#F97583"> if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> relevant </span><span style="color:#D73A49;--shiki-dark:#F97583">else</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "irrelevant"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> rewrite_query</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(state):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    new_query </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.rewrite(state[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"question"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">])</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"question"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: new_query}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> generate</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(state):</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    answer </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.generate(state[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"question"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], state[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"documents"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">])</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"generation"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: answer}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Construir el grafo</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> StateGraph(GraphState)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_node(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"retrieve"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, retrieve)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_node(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"grade"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, grade_documents)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_node(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"rewrite"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, rewrite_query)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_node(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"generate"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, generate)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.set_entry_point(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"retrieve"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_edge(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"retrieve"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"grade"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_conditional_edges(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"grade"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#D73A49;--shiki-dark:#F97583">lambda</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> s: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"generate"</span><span style="color:#D73A49;--shiki-dark:#F97583"> if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> s[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"relevance"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "relevant"</span><span style="color:#D73A49;--shiki-dark:#F97583"> else</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "rewrite"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_edge(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"rewrite"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"retrieve"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># Loop back</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">workflow.add_edge(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"generate"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">END</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">app </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> workflow.compile()</span></span></code></pre>
 <h2 id="práctica">Práctica</h2>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 1: Self-corrective RAG</div>

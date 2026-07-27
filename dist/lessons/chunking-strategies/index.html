@@ -26,6 +26,11 @@
   })();
 </script><main id="content"><article><header><h1>Estrategias de Chunking</h1><p class="subtitle">Lección 2 — Ingesta y Segmentación</p></header><h2 id="objetivo">Objetivo</h2>
 <p>Al finalizar esta lección, podrás elegir la estrategia de chunking correcta para tu corpus, implementar parent-child chunking, y justificar cada decisión de tamaño de chunk con datos.</p>
+<p><strong>Prerequisitos:</strong> <a href="/rag-lessons/lessons/what-is-rag">Lección 1</a>. Si <code>chunk_size=512</code> te hace preguntarte “¿512 qué?”, lee el <a href="/rag-lessons/lessons/anexo-tokens-embeddings">Anexo A</a>.</p>
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Sigues trabajando sobre <code>corpus/politicas.pdf</code> de la Lección 1. El código de esta lección reemplaza el paso de <strong>parsing + chunking</strong> del pipeline: primero extraes el texto con PyMuPDF (<code>paginas</code>), luego lo divides con un splitter (<code>chunks</code>). La variable <code>chunks</code> que produces aquí es la que embebes y almacenas en la Lección 3.</p>
+</div>
 <h2 id="el-dilema-del-tamaño-de-chunk">El dilema del tamaño de chunk</h2>
 <p>Todo sistema RAG enfrenta la misma tensión:</p>
 <ul>
@@ -57,21 +62,21 @@
 </ul>
 <h3 id="parsing-de-documentos-antes-del-chunking">Parsing de documentos: antes del chunking</h3>
 <p>Antes de dividir en chunks, necesitas extraer texto del documento fuente. Para PDFs, <code>PyMuPDF</code> (<code>fitz</code>) es rápido y preserva estructura básica:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>import fitz  # PyMuPDF</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>def extraer_texto_pdf(path: str) -&gt; list[str]:</span></span>
-<span class="line"><span>    """Extrae el texto de cada página de un PDF."""</span></span>
-<span class="line"><span>    doc = fitz.open(path)</span></span>
-<span class="line"><span>    paginas = []</span></span>
-<span class="line"><span>    for pagina in doc:</span></span>
-<span class="line"><span>        paginas.append(pagina.get_text("text"))</span></span>
-<span class="line"><span>    doc.close()</span></span>
-<span class="line"><span>    return paginas</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Uso</span></span>
-<span class="line"><span>texto = extraer_texto_pdf("politicas.pdf")</span></span>
-<span class="line"><span># texto es una lista: una string por página del PDF</span></span></code></pre>
-<p>Este es el código al que se refiere el Ejercicio 1 de práctica. Úsalo como punto de partida para inspeccionar el tamaño y la estrategia de división.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> fitz  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># PyMuPDF</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> extraer_texto_pdf</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(path: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) -&gt; list[</span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]:</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    """Extrae el texto de cada página de un PDF."""</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    doc </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> fitz.open(path)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    paginas </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> []</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> pagina </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> doc:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        paginas.append(pagina.get_text(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"text"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    doc.close()</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> paginas</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Uso</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">paginas </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> extraer_texto_pdf(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"corpus/politicas.pdf"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># paginas es una lista: una string por página del PDF</span></span></code></pre>
+<p>Ojo: <strong>este paso no hace chunking</strong> — solo convierte el PDF en texto. El chunking ocurre después, cuando le aplicas uno de los splitters de abajo. Este es el código al que se refiere el Ejercicio 1 de práctica.</p>
 <h3 id="2-recursive-character-splitting-el-default-recomendado">2. Recursive character splitting (El default recomendado)</h3>
 <p>Intenta dividir en la frontera más grande disponible (párrafos), y si el chunk sigue siendo muy grande, recursa a oraciones, luego palabras. Respeta la estructura cuando puede.</p>
 <div class="callout success">
@@ -80,13 +85,16 @@
 <p><small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — Recursive 512: 69% accuracy, Semantic: 54% accuracy</a></small></p></p>
 </div>
 <p>Configuración de LangChain:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>from langchain_text_splitters import RecursiveCharacterTextSplitter</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>splitter = RecursiveCharacterTextSplitter(</span></span>
-<span class="line"><span>chunk_size=512,</span></span>
-<span class="line"><span>chunk_overlap=64,</span></span>
-<span class="line"><span>separators=["\n\n", "\n", ". ", " ", ""]</span></span>
-<span class="line"><span>)</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_text_splitters </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">splitter </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter(</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    chunk_size</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">512</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    chunk_overlap</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">64</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    separators</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#005CC5;--shiki-dark:#79B8FF">\n\n</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#005CC5;--shiki-dark:#79B8FF">\n</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">". "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">" "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">""</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Conectando con el parsing de arriba:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">chunks </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> splitter.create_documents(paginas)</span></span></code></pre>
 <h3 id="3-semantic-chunking-división-semántica">3. Semantic chunking (División semántica)</h3>
 <p>Embedda cada oración, mide similitud coseno entre oraciones adyacentes, y crea un boundary cuando la similitud cae por debajo de un threshold. Respeta cambios de tema, no estructura.</p>
 <ul>
@@ -101,29 +109,31 @@
 </li>
 </ul>
 <p>Implementación conceptual:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>def semantic_chunk(text, threshold_percentile=95):</span></span>
-<span class="line"><span>sentences = split_into_sentences(text)</span></span>
-<span class="line"><span>embeddings = [embed(s) for s in sentences]</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>chunks = []</span></span>
-<span class="line"><span>current = [sentences[0]]</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>for i in range(1, len(sentences)):</span></span>
-<span class="line"><span>sim = cosine_sim(embeddings[i-1], embeddings[i])</span></span>
-<span class="line"><span>distances.append(1 - sim)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>threshold = percentile(distances, threshold_percentile)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>for i in range(1, len(sentences)):</span></span>
-<span class="line"><span>dist = 1 - cosine_sim(embeddings[i-1], embeddings[i])</span></span>
-<span class="line"><span>if dist &gt; threshold:</span></span>
-<span class="line"><span>chunks.append(" ".join(current))</span></span>
-<span class="line"><span>current = [sentences[i]]</span></span>
-<span class="line"><span>else:</span></span>
-<span class="line"><span>current.append(sentences[i])</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>chunks.append(" ".join(current))</span></span>
-<span class="line"><span>return chunks</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> numpy </span><span style="color:#D73A49;--shiki-dark:#F97583">as</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> semantic_chunk</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(text: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, threshold_percentile: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">float</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 95</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) -&gt; list[</span><span style="color:#005CC5;--shiki-dark:#79B8FF">str</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    sentences </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> split_into_sentences(text)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    embeddings </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [embed(s) </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> s </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> sentences]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # 1. Distancia coseno entre oraciones adyacentes</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    distances </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">        1</span><span style="color:#D73A49;--shiki-dark:#F97583"> -</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> cosine_sim(embeddings[i </span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], embeddings[i])</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> range</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">len</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(sentences))</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    ]</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    threshold </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np.percentile(distances, threshold_percentile)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">    # 2. Cortar donde la distancia supera el threshold</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    chunks </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> []</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    current </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [sentences[</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]]</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> range</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">len</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(sentences)):</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> distances[i </span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">&gt;</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> threshold:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            chunks.append(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">" "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.join(current))</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            current </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [sentences[i]]</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        else</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            current.append(sentences[i])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    chunks.append(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">" "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.join(current))</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> chunks</span></span></code></pre>
 <div class="callout warning">
 <div class="callout-title">Problema conocido con defaults</div>
 <p>LangChain's <code>SemanticChunker</code> con threshold al percentil 95 produce chunks de solo 43 tokens en promedio en textos académicos. Casi siempre necesitas subir el threshold a 99 o ajustar el <code>min_chunk_size</code>.</p>
@@ -156,21 +166,21 @@
 <p>El LLM recibe los parents, no los children</p>
 </li>
 </ol>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># LangChain ParentDocumentRetriever</span></span>
-<span class="line"><span># Nota: en LangChain v1+, ParentDocumentRetriever se migró a langchain-classic</span></span>
-<span class="line"><span># pip install langchain-classic</span></span>
-<span class="line"><span>from langchain_classic.retrievers import ParentDocumentRetriever</span></span>
-<span class="line"><span>from langchain_classic.storage import InMemoryStore</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>child_splitter = RecursiveCharacterTextSplitter(chunk_size=250)</span></span>
-<span class="line"><span>parent_splitter = RecursiveCharacterTextSplitter(chunk_size=1500)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>retriever = ParentDocumentRetriever(</span></span>
-<span class="line"><span>vectorstore=vectorstore,      # children embeddings</span></span>
-<span class="line"><span>docstore=InMemoryStore(),      # parent texts</span></span>
-<span class="line"><span>child_splitter=child_splitter,</span></span>
-<span class="line"><span>parent_splitter=parent_splitter,</span></span>
-<span class="line"><span>)</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># LangChain ParentDocumentRetriever</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Nota: en LangChain v1+, ParentDocumentRetriever se migró a langchain-classic</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># pip install langchain-classic</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_classic.retrievers </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ParentDocumentRetriever</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_classic.storage </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> InMemoryStore</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">child_splitter </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter(</span><span style="color:#E36209;--shiki-dark:#FFAB70">chunk_size</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">250</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">parent_splitter </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter(</span><span style="color:#E36209;--shiki-dark:#FFAB70">chunk_size</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1500</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">retriever </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ParentDocumentRetriever(</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    vectorstore</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">vectorstore,     </span><span style="color:#6A737D;--shiki-dark:#6A737D"># children embeddings (el vectorstore de la L1)</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    docstore</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">InMemoryStore(),    </span><span style="color:#6A737D;--shiki-dark:#6A737D"># parent texts</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    child_splitter</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">child_splitter,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    parent_splitter</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">parent_splitter,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
 <div class="callout success">
 <div class="callout-title">Impacto medido</div>
 <p>Parent-child retrieval mejora típicamente: +10-20% en faithfulness, +5-15% en answer relevance. La ganancia en faithfulness es la más grande porque el LLM no necesita "adivinar" el contexto faltante.</p>
@@ -190,18 +200,18 @@
 </ol>
 <h2 id="contextual-retrieval-anthropic">Contextual Retrieval (Anthropic)</h2>
 <p>Antes de embeber cada chunk, prepender un resumen generado por LLM:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Prompt para contextual retrieval</span></span>
-<span class="line"><span>context_prompt = f"""</span></span>
-<span class="line"><span>Here is the full document:</span></span>
-<span class="line"><span>{full_document}</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>Here is one chunk:</span></span>
-<span class="line"><span>{chunk}</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>Write a 50-100 token context that situates this chunk in the document.</span></span>
-<span class="line"><span>"""</span></span>
-<span class="line"><span>context = llm.generate(context_prompt)</span></span>
-<span class="line"><span>chunk_with_context = f"{context}\n\n{chunk}"</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Prompt para contextual retrieval</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">context_prompt </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#D73A49;--shiki-dark:#F97583"> f</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Here is the full document:</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">full_document</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Here is one chunk:</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">chunk</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Write a 50-100 token context that situates this chunk in the document.</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">context </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.generate(context_prompt)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">chunk_with_context </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#D73A49;--shiki-dark:#F97583"> f</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">context</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}\n\n{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">chunk</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span></span></code></pre>
 <p><strong>Resultados reportados:</strong></p>
 <ul>
 <li>
@@ -254,12 +264,12 @@
 </table>
 <h2 id="práctica">Práctica</h2>
 <div class="exercise">
-<div class="exercise-title">Ejercicio 1: Analiza el chunking</div>
-<p>Revisa el código de PyMuPDF de arriba. Identifica:</p>
+<div class="exercise-title">Ejercicio 1: Del PDF a los chunks</div>
+<p>Conecta las dos piezas de código de arriba: extrae <code>corpus/politicas.pdf</code> con <code>extraer_texto_pdf</code> y pásale el resultado al <code>RecursiveCharacterTextSplitter</code> (configuración 512/64). Luego responde:</p>
 <ul>
-<li>¿Qué tamaño de chunk se usa?</li>
-<li>¿Qué estrategia de división?</li>
-<li>¿Qué overlap se configuró?</li>
+<li>¿Cuántos chunks salieron del documento completo?</li>
+<li>¿Cuál es el tamaño en tokens del chunk más grande y del más chico? (usa tiktoken del Anexo A)</li>
+<li>Abre dos chunks consecutivos: ¿puedes ver el overlap de 64 tokens entre ellos?</li>
 </ul>
 </div>
 <div class="exercise">
@@ -274,7 +284,7 @@
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Compara estrategias</div>
-<p>Crea un mini-eval con 5 preguntas sobre un documento PDF. Ejecuta el pipeline 3 veces:</p>
+<p>Crea un mini-eval con 5 preguntas sobre <code>corpus/politicas.pdf</code>. Ejecuta el pipeline 3 veces:</p>
 <ul>
 <li>Recursive 512 sin overlap</li>
 <li>Recursive 512 con overlap 64</li>

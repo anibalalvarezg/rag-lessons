@@ -73,6 +73,13 @@ quizzes:
 
 Al finalizar, entenderás los patrones de agentes RAG (ReAct, self-corrective, multi-agent), sabrás cuándo escalar de un solo agente a múltiples, y conocerás los frameworks de producción (LangGraph, LlamaIndex, CrewAI).
 
+**Prerequisitos:** [Lección 6](/rag-lessons/lessons/evaluation-and-metrics) — un agente sin evaluación es un agente que falla en silencio.
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>El <code>retriever</code> y el <code>llm</code> de los nodos de LangGraph son los que construiste en las Lecciones 3-4 (índice <code>acme_docs</code> + reranker). Aquí el asistente de Acme deja de ser un pipeline lineal: el router decide si la pregunta del empleado va al vectorstore (políticas y manual técnico), a web search (noticias externas) o se responde directo; y el loop self-corrective re-busca cuando los documentos no son relevantes. Los guardrails de la Lección 5 siguen activos en el nodo de generación.</p>
+</div>
+
 ## De RAG vanilla a Agentic RAG
 
 RAG vanilla es un pipeline lineal: retrieve → generate. Agentic RAG agrega razonamiento iterativo: el sistema decide *cuándo* buscar, *cómo* reformular, y *cuándo* dejar de buscar.
@@ -89,7 +96,7 @@ RAG vanilla es un pipeline lineal: retrieve → generate. Agentic RAG agrega raz
 
 El patrón fundamental de agentes. El LLM alterna entre razonamiento (thought), acción (action), y observación (observation) en un loop hasta completar la tarea.
 
-```
+```python
 # El loop ReAct
 while not task_complete:
     # THINK: Razona sobre el estado actual
@@ -119,7 +126,7 @@ while not task_complete:
 
 El patrón más importante en Agentic RAG. Agrega nodos de verificación que permiten al sistema re-intentar cuando la calidad es baja.
 
-```
+```python
 # Flujo de Self-Corrective RAG (LangGraph)
 #
 # [Start] -> [Retrieve] -> [Grade Documents]
@@ -152,7 +159,7 @@ El patrón más importante en Agentic RAG. Agrega nodos de verificación que per
 
 Un router clasifica la query y la dirige al retriever apropiado. Evita buscar en vector store cuando la query requiere datos en tiempo real, o viceversa.
 
-```
+```python
 # Router pattern
 class RouteQuery(BaseModel):
     datasource: Literal["vectorstore", "web_search", "direct_response"]
@@ -162,7 +169,8 @@ class RouteQuery(BaseModel):
 router = llm.with_structured_output(RouteQuery)
 result = router.invoke([
     {"role": "system", "content": """Clasifica la query:
-    - vectorstore: preguntas sobre documentos internos
+    - vectorstore: preguntas sobre documentos internos de Acme
+      (políticas de RRHH, manual técnico)
     - web_search: eventos actuales, datos en tiempo real
     - direct_response: conocimiento general"""},
     {"role": "user", "content": query}
@@ -180,7 +188,7 @@ elif result.datasource == "web_search":
 Cuando un solo agente no puede manejar la complejidad, se decomponen roles en agentes especializados que colaboran.
 
 ### Arquitectura típica de Google Agentic RAG
-```
+```python
 # 5 agentes especializados (Google Enterprise Agent Platform)
 #
 # 1. Orchestrator: Evalúa la complejidad, delega
@@ -259,7 +267,7 @@ La taxonomía de 2026 organiza los patrones en 4 cuadrantes:
 
 ## Implementación con LangGraph
 
-```
+```python
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Literal
 

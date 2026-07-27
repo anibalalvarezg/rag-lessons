@@ -73,6 +73,13 @@ quizzes:
 
 Al finalizar, entenderás cómo GraphRAG supera a baseline RAG en preguntas globales y multi-hop, sabrás construir un knowledge graph con LLMs, y conocerás las 4 estrategias de búsqueda (Global, Local, DRIFT, Basic).
 
+**Prerequisitos:** [Lección 7](/rag-lessons/lessons/agentic-rag) — GraphRAG es otro data source que un agente puede enrutar.
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Los <code>chunks</code> del corpus Acme (políticas + manual técnico) son la entrada del <code>LLMGraphTransformer</code>: aquí construyes un knowledge graph de las entidades de la empresa (políticas, configuraciones, personas, sistemas) sobre Neo4j. El <code>llm</code> es el mismo de siempre. Cuando una pregunta del empleado sea multi-hop ("¿qué política aplica al sistema que tiene el timeout en 30s?"), el router de la Lección 7 puede dirigirla a este grafo en vez del vectorstore.</p>
+</div>
+
 ## Por qué baseline RAG falla
 
 Baseline RAG usa vector similarity en snippets de texto. Funciona para preguntas factuales simples, pero falla en dos categorías críticas:
@@ -95,7 +102,7 @@ GraphRAG (Microsoft Research, 2024) combina extracción de knowledge graph, clus
 </div>
 
 ### Paso 2: Entity Extraction con LLMs
-```
+```python
 # LangChain LLMGraphTransformer
 # Nota: en v1+, se movió de langchain-experimental a langchain-neo4j
 from langchain_neo4j import LLMGraphTransformer
@@ -123,7 +130,7 @@ El algoritmo de Leiden detecta comunidades jerárquicas en el grafo. Cada nivel 
 - **Nivel 2 (raíz):** Temas de alto nivel del corpus completo
 
 ### Paso 5: Community Summaries
-```
+```python
 # Para cada comunidad, el LLM genera un resumen
 # Ejemplo de community report:
 """
@@ -142,7 +149,7 @@ quantum advantage, and commercial applications."
 
 Usa community summaries en un patrón **map-reduce**:
 
-```
+```python
 # MAP: Cada community report genera puntos con rating de importancia
 for batch in shuffled_community_reports:
     intermediate = llm.map(query, batch)
@@ -164,7 +171,7 @@ final_answer = llm.reduce(query, top_points)
 
 Combina knowledge graph estructurado con texto no estructurado:
 
-```
+```python
 # Flujo de Local Search:
 # 1. Extraer entidades de la query
 entities = extract_entities(query)
@@ -194,7 +201,7 @@ answer = llm.generate(query, context)
 
 Combina amplitud de Global con profundidad de Local en un árbol de exploración iterativo:
 
-```
+```python
 # DRIFT: 3 fases
 # FASE 1 - Primer (Global): context amplio
 top_communities = retrieve_top_k_community_reports(query)
@@ -229,7 +236,7 @@ Vector similarity search simple. Para cuando la pregunta es factual directa.
 - **Ventaja:** Más rápido, menor costo
 
 ## Decisión: Qué método elegir
-```
+```python
 # Árbol de decisión
 if es_pregunta_sobre_el_corpus_completo():
     return Global_Search
@@ -262,21 +269,20 @@ Global Search estático procesa TODOS los community reports. Dynamic Selection l
 </div>
 
 ## Implementación con Neo4j + LangChain
-```
+```python
 # 1. Construir el knowledge graph
-from langchain_neo4j import Neo4jGraph
-from langchain_experimental.graph_transformers import LLMGraphTransformer
+# Nota: en v1+, LLMGraphTransformer vive en langchain-neo4j (ver Paso 2 arriba)
+from langchain_neo4j import Neo4jGraph, Neo4jVector, LLMGraphTransformer
+from langchain_openai import OpenAIEmbeddings
 
 graph = Neo4jGraph(url="neo4j+s://...", username="neo4j", password="...")
 
-# Extraer entidades y relaciones
+# Extraer entidades y relaciones de los chunks del corpus Acme
 transformer = LLMGraphTransformer(llm=llm)
-graph_docs = transformer.convert_to_graph_documents(documents)
+graph_docs = transformer.convert_to_graph_documents(chunks)
 graph.add_graph_documents(graph_docs, include_source=True)
 
 # 2. Vector index sobre el grafo
-from langchain_neo4j import Neo4jVector
-
 vector_index = Neo4jVector.from_existing_graph(
     OpenAIEmbeddings(),
     index_name="entities",
@@ -286,16 +292,19 @@ vector_index = Neo4jVector.from_existing_graph(
 )
 
 # 3. Graph traversal retriever
-def graph_retriever(question):
+def graph_retriever(question: str) -> str:
     entities = entity_chain.invoke({"question": question})
+    relations = []
     for entity in entities:
-        graph.query("""
+        rows = graph.query("""
         CALL db.index.fulltext.queryNodes('entity', $query)
         YIELD node, score
         CALL { MATCH (node)-[r]->(neighbor)
-        RETURN node.id + ' -> ' + type(r) + ' -> ' + neighbor.id }
+        RETURN node.id + ' -> ' + type(r) + ' -> ' + neighbor.id AS output }
         RETURN output LIMIT 50
         """, {"query": entity})
+        relations.extend(row["output"] for row in rows)
+    return "\n".join(relations)
 
 # 4. Hybrid retrieval (vector + graph)
 chain = (
@@ -308,7 +317,7 @@ chain = (
 
 El LLM extrae "IBM", "International Business Machines", "IBM Corp" como entidades separadas. Entity resolution las fusiona:
 
-```
+```python
 # Pipeline de entity resolution
 # 1. Calcular embeddings de nombres y descripciones
 # 2. Encontrar candidatos similares (kNN, cosine > 0.95)
@@ -339,9 +348,9 @@ El LLM extrae "IBM", "International Business Machines", "IBM Corp" como entidade
 <div class="exercise-title">Ejercicio 1: Knowledge Graph con LangChain</div>
 <p>Usa el código de Neo4j de arriba como base:</p>
 <ul>
-<li>Extrae entidades y relaciones de un dataset de películas</li>
+<li>Extrae entidades y relaciones de los <code>chunks</code> del corpus Acme (políticas + manual técnico)</li>
 <li>Almacena en Neo4j</li>
-<li>Visualiza el grafo en Neo4j Browser</li>
+<li>Visualiza el grafo en Neo4j Browser — ¿qué entidades conectan ambos documentos?</li>
 </ul>
 </div>
 

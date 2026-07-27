@@ -7,7 +7,7 @@ const lessons = defineCollection({
   schema: z.object({
     title: z.string(),
     subtitle: z.string(),
-    pillar: z.enum(['fundamentos', 'ingesta', 'recuperacion', 'agentic', 'ragops']),
+    pillar: z.enum(['fundamentos', 'ingesta', 'recuperacion', 'agentic', 'ragops', 'anexo']),
     pillarName: z.string(),
     lessonNum: z.number(),
     description: z.string(),

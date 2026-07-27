@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Anexo A: Tokens, vectores y similitud de coseno — Guía de RAG</title><meta name="description" content="Qué es un token (con tiktoken), qué es un vector, y cómo calcular similitud de coseno con numpy puro. La intuición mínima antes de chunking y embeddings."><meta name="keywords" content="token, tiktoken, vector, similitud de coseno, numpy, embeddings"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://rag-lessons.netlify.app/lessons/anexo-tokens-embeddings/"><meta property="og:type" content="article"><meta property="og:title" content="Anexo A: Tokens, vectores y similitud de coseno — Guía de RAG"><meta property="og:description" content="Qué es un token (con tiktoken), qué es un vector, y cómo calcular similitud de coseno con numpy puro. La intuición mínima antes de chunking y embeddings."><meta property="og:url" content="https://rag-lessons.netlify.app/lessons/anexo-tokens-embeddings/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="Guía de RAG"><meta property="article:section" content="Anexos"><meta property="article:published_time" content="2026-07-27"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Anexo A: Tokens, vectores y similitud de coseno — Guía de RAG"><meta name="twitter:description" content="Qué es un token (con tiktoken), qué es un vector, y cómo calcular similitud de coseno con numpy puro. La intuición mínima antes de chunking y embeddings."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"Guía de RAG","description":"Guía práctica para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/_astro/BaseLayout.w6ndjUYT.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/" class="masthead">Guía de RAG</a><nav aria-label="Navegación principal"><a href="/#pilar-1">Fundamentos</a><a href="/#pilar-2">Ingesta</a><a href="/#pilar-3">Recuperación</a><a href="/#pilar-4">Agentic &amp; GraphRAG</a><a href="/#pilar-5">RAGOps</a><a href="/reference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
+  (function() {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = stored || (prefersDark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+  })();
+</script><script>
+  document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    html.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script><script>
+  (function() {
+    let lastY = 0;
+    const header = document.querySelector('.site-header');
+    if (!header) return;
+    window.addEventListener('scroll', function() {
+      var y = window.scrollY;
+      if (y > lastY && y > 80) header.classList.add('hidden');
+      else header.classList.remove('hidden');
+      lastY = y;
+    }, { passive: true });
+  })();
+</script><main id="content"><article><header><h1>Anexo A: Tokens, vectores y similitud de coseno</h1><p class="subtitle">Anexo A — Fundamentos</p></header><h2 id="objetivo">Objetivo</h2>
+<p>Al finalizar este anexo, sabrás qué es un token (y por qué <code>chunk_size=512</code> no significa 512 palabras), qué es un vector, y cómo se calcula la similitud de coseno que usan todos los sistemas RAG — todo con código ejecutable de numpy y tiktoken.</p>
+<h2 id="por-qué-este-anexo-existe">Por qué este anexo existe</h2>
+<p>En el curso verás <code>chunk_size=512</code>, <code>dimensions=1536</code> y <code>cosine similarity</code> desde la Lección 1. Este anexo te da la intuición mínima para que esos números dejen de ser magia. Son 15 minutos bien invertidos.</p>
+<h2 id="qué-es-un-token">Qué es un token</h2>
+<p>Los LLMs no leen palabras ni caracteres: leen <strong>tokens</strong>, unidades de texto de ~4 caracteres en promedio. Una palabra común es 1 token; una palabra rara se divide en varios.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> tiktoken</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># El tokenizer de GPT-4o / text-embedding-3</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">enc </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> tiktoken.get_encoding(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"cl100k_base"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">text </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "Las devoluciones se aceptan hasta 30 días después de la compra."</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">tokens </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> enc.encode(text)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">print</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">len</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(tokens))                    </span><span style="color:#6A737D;--shiki-dark:#6A737D"># número de tokens</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">print</span><span style="color:#24292E;--shiki-dark:#E1E4E8">([enc.decode([t]) </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> t </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> tokens])</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># ['Las', ' dev', 'oluc', 'iones', ' se', ' acept', 'an', ...]</span></span></code></pre>
+<p>Observa: “devoluciones” se rompe en <code>dev</code> + <code>oluc</code> + <code>iones</code>. El español suele consumir <strong>más tokens por palabra</strong> que el inglés, porque el tokenizer fue entrenado mayoritariamente con texto en inglés.</p>
+<div class="callout info">
+<div class="callout-title">Regla práctica</div>
+<p>En español, 1 token ≈ 0.7-0.8 palabras. Entonces <code>chunk_size=512</code> ≈ 350-400 palabras ≈ media página. Cuando la Lección 2 recomienda chunks de 512 tokens, eso es lo que realmente significa en tu documento.</p>
+</div>
+<h2 id="qué-es-un-vector">Qué es un vector</h2>
+<p>Un embedding es una lista de números — un punto en un espacio de alta dimensión. Para construir intuición, trabajemos en 2D con vectores inventados:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> numpy </span><span style="color:#D73A49;--shiki-dark:#F97583">as</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Imagina que el eje X mide "qué tan relacionado con RRHH" es un texto</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># y el eje Y mide "qué tan técnico" es.</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">politica_devoluciones </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np.array([</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.9</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">])   </span><span style="color:#6A737D;--shiki-dark:#6A737D"># muy RRHH, poco técnico</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">politica_vacaciones   </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np.array([</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.85</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.15</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]) </span><span style="color:#6A737D;--shiki-dark:#6A737D"># muy RRHH, poco técnico</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">manual_timeout        </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np.array([</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.9</span><span style="color:#24292E;--shiki-dark:#E1E4E8">])   </span><span style="color:#6A737D;--shiki-dark:#6A737D"># poco RRHH, muy técnico</span></span></code></pre>
+<h2 id="similitud-de-coseno-desde-cero">Similitud de coseno desde cero</h2>
+<p>La similitud de coseno mide el <strong>ángulo</strong> entre dos vectores, ignorando su longitud. Resultado entre -1 (opuestos) y 1 (idéntica dirección):</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> cosine_similarity</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(a: np.ndarray, b: np.ndarray) -&gt; </span><span style="color:#005CC5;--shiki-dark:#79B8FF">float</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> float</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(np.dot(a, b) </span><span style="color:#D73A49;--shiki-dark:#F97583">/</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (np.linalg.norm(a) </span><span style="color:#D73A49;--shiki-dark:#F97583">*</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np.linalg.norm(b)))</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">print</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(cosine_similarity(politica_devoluciones, politica_vacaciones))  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># ~0.996 — mismo tema</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">print</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(cosine_similarity(politica_devoluciones, manual_timeout))       </span><span style="color:#6A737D;--shiki-dark:#6A737D"># ~0.235 — temas distintos</span></span></code></pre>
+<p>Las tres operaciones que usa la fórmula:</p>
+<ol>
+<li>
+<p><strong>Producto punto</strong> (<code>np.dot</code>): cuánto apuntan en la misma dirección</p>
+</li>
+<li>
+<p><strong>Norma</strong> (<code>np.linalg.norm</code>): la longitud de cada vector</p>
+</li>
+<li>
+<p><strong>División</strong>: normalizar para que solo importe el ángulo, no la longitud</p>
+</li>
+</ol>
+<div class="callout warning">
+<div class="callout-title">Por qué coseno y no distancia euclidiana</div>
+<p>Dos textos sobre el mismo tema pueden tener embeddings de distinta "longitud" (por ejemplo, un chunk corto vs uno largo). La distancia euclidiana los marcaría como lejanos; el coseno los reconoce como alineados. Por eso RAG busca por ángulo, no por distancia.</p>
+</div>
+<h2 id="conexión-con-el-curso">Conexión con el curso</h2>
+<ul>
+<li>
+<p><strong>Lección 0:</strong> el script <code>hello_rag.py</code> usa exactamente esta función de coseno con embeddings reales de 1536 dimensiones — la misma matemática que acabas de ver en 2D.</p>
+</li>
+<li>
+<p><strong>Lección 2:</strong> <code>chunk_size</code> y <code>chunk_overlap</code> están en tokens. Ya sabes medirlos con tiktoken.</p>
+</li>
+<li>
+<p><strong>Lección 3:</strong> cuando elijas entre modelos de 1536 vs 3072 dimensiones, estarás eligiendo el tamaño de estos vectores.</p>
+</li>
+</ul>
+<h2 id="práctica">Práctica</h2>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 1: Mide tus propios tokens</div>
+<p>Toma un párrafo de <code>corpus/politicas.pdf</code> y con tiktoken responde:</p>
+<ul>
+<li>¿Cuántos tokens tiene? ¿Cuántas palabras?</li>
+<li>¿Cuál es el ratio palabras/token en tu texto?</li>
+<li>Si chunk_size=512, ¿cuántos párrafos como ese caben en un chunk?</li>
+</ul>
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 2: Coseno a mano</div>
+<p>Con vectores 3D inventados por ti:</p>
+<ul>
+<li>Crea dos vectores que apunten casi igual y verifica que el coseno da cerca de 1</li>
+<li>Crea uno perpendicular (<code>[1,0,0]</code> vs <code>[0,1,0]</code>) y verifica que da 0</li>
+<li>Multiplica un vector por 5 — ¿cambia el coseno? ¿Por qué?</li>
+</ul>
+</div>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Qué es un token para un LLM?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre una palabra completa del idioma español</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Una unidad de texto de ~4 caracteres que puede ser parte de una palabra</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Un carácter individual como una letra o dígito</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Una oración completa terminada en punto final</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Un chunk_size de 512 tokens equivale aproximadamente a...</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">512 palabras del texto original en español</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">512 caracteres del texto original en español</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">350-400 palabras del texto original en español</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">512 oraciones del texto original en español</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Qué mide la similitud de coseno entre dos vectores?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">La distancia en línea recta entre sus puntas</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">El ángulo entre ellos, ignorando su longitud</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">La cantidad de dimensiones que comparten</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">La diferencia entre sus valores máximos</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/graphrag">← GraphRAG</a><a href="/lessons/anexo-prompt-rag">Anexo B: Anatomía de un prompt RAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+  (function() {
+    const btn = document.querySelector('.back-to-top');
+    if (!btn) return;
+    window.addEventListener('scroll', function() {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+    btn.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+</script></body></html>

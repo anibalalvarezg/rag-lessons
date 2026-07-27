@@ -26,6 +26,11 @@
   })();
 </script><main id="content"><article><header><h1>Multimodal RAG</h1><p class="subtitle">Lección 8 — Agentic RAG y GraphRAG</p></header><h2 id="objetivo">Objetivo</h2>
 <p>Al finalizar, sabrás por qué text-only RAG falla con documentos visuales, conocerás las 3 arquitecturas de Multimodal RAG, y sabrás elegir los modelos correctos (CLIP, SigLIP, ColPali) para tu caso de uso.</p>
+<p><strong>Prerequisitos:</strong> <a href="/rag-lessons/lessons/embeddings-and-vector-stores">Lección 3</a> — los conceptos de embedding y vector store son los mismos, solo cambia la modalidad.</p>
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Llega el tercer documento del corpus: <code>reporte-financiero.pdf</code>, lleno de tablas y charts que tu pipeline de texto (Lecciones 1-3) destruiría al parsearlo. En esta lección agregas un índice visual paralelo al <code>acme_docs</code> textual, y el generador pasa de <code>gpt-4o-mini</code> (solo texto) a un VLM que ve las páginas recuperadas. El routing del Ejercicio 3 de la Lección 7 decide qué queries necesitan este índice visual.</p>
+</div>
 <h2 id="el-problema-rag-de-texto-pierde-información-visual">El problema: RAG de texto pierde información visual</h2>
 <p>Los documentos empresariales contienen charts, tablas, diagramas y fotos que text-only RAG <em>descarta silenciosamente</em>. Un pipeline de OCR convierte una tabla compleja a texto plano y pierde la estructura. Un chart se convierte en cero contexto útil.</p>
 <table>
@@ -66,37 +71,58 @@
 </table>
 <h2 id="las-3-arquitecturas-de-producción">Las 3 arquitecturas de producción</h2>
 <h3 id="1-caption-and-index-la-más-simple">1. Caption-and-Index (la más simple)</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo:</span></span>
-<span class="line"><span># 1. Extraer imágenes del PDF/documento</span></span>
-<span class="line"><span># 2. Caption cada imagen con un VLM</span></span>
-<span class="line"><span>#    "Bar chart showing Q3 revenue of $4.2B, up 12% YoY"</span></span>
-<span class="line"><span># 3. Embeber el caption como texto normal</span></span>
-<span class="line"><span># 4. Buscar con BM25 + dense (ya sabes hacer esto)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Ventaja: reutiliza todo tu pipeline de text RAG existente</span></span>
-<span class="line"><span># Desventaja: lossy — el caption puede hallucinar o perder detalles</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Extraer imágenes del PDF/documento</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Caption cada imagen con un VLM</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    "Bar chart showing Q3 revenue of $4.2B, up 12% YoY"</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Embeber el caption como texto normal</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Buscar con BM25 + dense (ya sabes hacer esto)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Ventaja: reutiliza todo tu pipeline de text RAG existente</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Desventaja: lossy — el caption puede hallucinar o perder detalles</span></span></code></pre>
 <h3 id="2-unified-vision-embeddings-el-punto-medio">2. Unified Vision Embeddings (el punto medio)</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo:</span></span>
-<span class="line"><span># 1. Embeber imágenes Y texto en el mismo espacio vectorial</span></span>
-<span class="line"><span># 2. Buscar con cosine similarity cross-modal</span></span>
-<span class="line"><span># 3. Generar con VLM que ve las imágenes directamente</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Modelos principales:</span></span>
-<span class="line"><span># - Cohere Embed 4: 128K context, Matryoshka (256-1536 dim)</span></span>
-<span class="line"><span># - voyage-multimodal-3.5: soporta video frames</span></span>
-<span class="line"><span># - SigLIP 2: open source, So400m, multilingüe</span></span>
-<span class="line"><span># - Nomic Embed Multimodal: 3B/7B, self-hosted</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Embeber imágenes Y texto en el mismo espacio vectorial</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Buscar con cosine similarity cross-modal</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Generar con VLM que ve las imágenes directamente</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Modelos principales:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># - Cohere Embed 4: 128K context, Matryoshka (256-1536 dim)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># - voyage-multimodal-3.5: soporta video frames</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># - SigLIP 2: open source, So400m, multilingüe</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># - Nomic Embed Multimodal: 3B/7B, self-hosted</span></span></code></pre>
+<p>Implementación con SigLIP (open source, corre local):</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># pip install sentence-transformers pillow</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> sentence_transformers </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> SentenceTransformer</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> PIL</span><span style="color:#D73A49;--shiki-dark:#F97583"> import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Image</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> numpy </span><span style="color:#D73A49;--shiki-dark:#F97583">as</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">model </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> SentenceTransformer(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"google/siglip-so400m-patch14-384"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Embeber imágenes y texto en el mismo espacio</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">images </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [Image.open(</span><span style="color:#D73A49;--shiki-dark:#F97583">f</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"reporte_pagina_</span><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span><span style="color:#032F62;--shiki-dark:#9ECBFF">.png"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> range</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">6</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)]</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">image_vectors </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> model.encode(images, </span><span style="color:#E36209;--shiki-dark:#FFAB70">normalize_embeddings</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">True</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">queries </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"gráfico de ingresos del tercer trimestre"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"tabla de gastos operativos"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">query_vectors </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> model.encode(queries, </span><span style="color:#E36209;--shiki-dark:#FFAB70">normalize_embeddings</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">True</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Búsqueda cross-modal con similitud de coseno (ya normalizados: producto punto)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">scores </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> np.dot(query_vectors, image_vectors.T)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">top_page </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> scores[</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">].argmax()  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># página más relevante para la query 0</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Esa página (como imagen) va al VLM para generar la respuesta</span></span></code></pre>
+<p>Este es el código al que se refiere el Ejercicio 1 de práctica.</p>
 <h3 id="3-page-as-image-con-late-interaction-la-más-precisa">3. Page-as-Image con Late Interaction (la más precisa)</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo:</span></span>
-<span class="line"><span># 1. Renderizar cada página del PDF como imagen (DPI alto)</span></span>
-<span class="line"><span># 2. ColPali/ColQwen produce embeddings multi-vector por página</span></span>
-<span class="line"><span>#    (un vector por "patch" visual de la página)</span></span>
-<span class="line"><span># 3. Retrieval: MaxSim scoring (query tokens vs page patches)</span></span>
-<span class="line"><span># 4. Generar con VLM que recibe las imágenes de página</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Ventaja: NO necesita OCR — "ve" la página como un humano</span></span>
-<span class="line"><span># Captura charts, tablas, layout, texto — todo junto</span></span>
-<span class="line"><span># Desventaja: 100-1000x más vectores por página</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Renderizar cada página del PDF como imagen (DPI alto)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. ColPali/ColQwen produce embeddings multi-vector por página</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    (un vector por "patch" visual de la página)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Retrieval: MaxSim scoring (query tokens vs page patches)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Generar con VLM que recibe las imágenes de página</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Ventaja: NO necesita OCR — "ve" la página como un humano</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Captura charts, tablas, layout, texto — todo junto</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Desventaja: 100-1000x más vectores por página</span></span></code></pre>
 <div class="callout info">
 <div class="callout-title">El patrón de producción recomendado</div>
 <p><strong>Hybrid late-fusion:</strong> Índice paralelo de texto + imagen. BM25 + dense para texto, ColPali para imágenes. Reranking cross-modal. VLM como generador final. Flexible, mejor recall en corpus mixtos.</p>
@@ -164,19 +190,19 @@
 </table>
 <h2 id="parsing-de-documentos-la-capa-de-ingesta">Parsing de documentos: la capa de ingesta</h2>
 <h3 id="el-patrón-de-3-niveles-para-tablas">El patrón de 3 niveles para tablas</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Production pattern para extraer tablas de PDFs:</span></span>
-<span class="line"><span># Nivel 1: pdfplumber (rápido, rule-based)</span></span>
-<span class="line"><span>#   -&gt; Si columnas consistentes y &lt;15% celdas vacías -&gt; usar</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Nivel 2: Docling (IBM Research, neural layout analysis)</span></span>
-<span class="line"><span>#   -&gt; Si pdfplumber falla validación -&gt; Docling</span></span>
-<span class="line"><span>#   -&gt; 3-5x más lento pero mejor en tablas complejas</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Nivel 3: VLM extraction (GPT-4o, Claude)</span></span>
-<span class="line"><span>#   -&gt; Si Docling también falla -&gt; VLM</span></span>
-<span class="line"><span>#   -&gt; El 5-10% más difícil</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># Este patrón maneja 95%+ de tablas empresariales</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Production pattern para extraer tablas de PDFs:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Nivel 1: pdfplumber (rápido, rule-based)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   -&gt; Si columnas consistentes y &lt;15% celdas vacías -&gt; usar</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Nivel 2: Docling (IBM Research, neural layout analysis)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   -&gt; Si pdfplumber falla validación -&gt; Docling</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   -&gt; 3-5x más lento pero mejor en tablas complejas</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Nivel 3: VLM extraction (GPT-4o, Claude)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   -&gt; Si Docling también falla -&gt; VLM</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   -&gt; El 5-10% más difícil</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Este patrón maneja 95%+ de tablas empresariales</span></span></code></pre>
 <h3 id="docling-ibm-research">Docling (IBM Research)</h3>
 <ul>
 <li>
@@ -194,23 +220,23 @@
 </ul>
 <h2 id="universalrag-routing-modality-aware">UniversalRAG: routing modality-aware</h2>
 <p>En vez de forzar todas las modalidades en un espacio vectorial (que causa “modality gap”), UniversalRAG predice qué modalidad necesita la query y busca en el corpus especializado:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 7 pathways de routing:</span></span>
-<span class="line"><span># None -&gt; no necesita retrieval</span></span>
-<span class="line"><span># Paragraph -&gt; texto nivel párrafo</span></span>
-<span class="line"><span># Document -&gt; documento completo</span></span>
-<span class="line"><span># Table -&gt; tablas específicas</span></span>
-<span class="line"><span># Image -&gt; imágenes</span></span>
-<span class="line"><span># Clip -&gt; segmentos de video</span></span>
-<span class="line"><span># Video -&gt; video completo</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>router = llm.predict_modality(query)</span></span>
-<span class="line"><span># "¿Qué dice el chart de Q3?" -&gt; [Image, Table]</span></span>
-<span class="line"><span># "Resume el documento" -&gt; [Document]</span></span>
-<span class="line"><span># "¿Qué dice el audio?" -&gt; [Clip]</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>results = {}</span></span>
-<span class="line"><span>for modality, granularity in router:</span></span>
-<span class="line"><span>    results[modality] = specialized_retriever[modality].search(query)</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 7 pathways de routing:</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># None -&gt; no necesita retrieval</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Paragraph -&gt; texto nivel párrafo</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Document -&gt; documento completo</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Table -&gt; tablas específicas</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Image -&gt; imágenes</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Clip -&gt; segmentos de video</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Video -&gt; video completo</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">router </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.predict_modality(query)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># "¿Qué dice el chart de Q3?" -&gt; [Image, Table]</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># "Resume el documento" -&gt; [Document]</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># "¿Qué dice el audio?" -&gt; [Clip]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">results </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {}</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> modality, granularity </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> router:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    results[modality] </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> specialized_retriever[modality].search(query)</span></span></code></pre>
 <ul>
 <li>
 <p><strong>Ventaja:</strong> Escala a nuevas modalidades sin modificar las existentes</p>
@@ -280,17 +306,17 @@
 <div class="exercise-title">Ejercicio 1: Image RAG con SigLIP</div>
 <p>Usa el código de SigLIP de arriba como base:</p>
 <ul>
-<li>Embebe un conjunto de imágenes con SigLIP</li>
-<li>Indexa en un vector store</li>
-<li>Busca imágenes por query de texto</li>
-<li>Genera respuestas con un VLM que recuperó las imágenes</li>
+<li>Embebe las páginas de <code>reporte-financiero.pdf</code> renderizadas como imágenes</li>
+<li>Indexa los vectores en tu pgvector de la Lección 0 (nueva colección <code>acme_images</code>)</li>
+<li>Busca con 3 queries de texto y verifica que recupera la página correcta</li>
+<li>Pasa la imagen ganadora a un VLM para generar la respuesta</li>
 </ul>
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 2: PDF como imágenes</div>
-<p>Construye un pipeline que:</p>
+<p>Construye un pipeline sobre <code>reporte-financiero.pdf</code> que:</p>
 <ul>
-<li>Renderice cada página de un PDF como imagen</li>
+<li>Renderice cada página del PDF como imagen (PyMuPDF, DPI >= 150)</li>
 <li>Embeba con ColPali o SigLIP</li>
 <li>Recupere las páginas más relevantes</li>
 <li>Pase las imágenes de página a GPT-4o para generar respuesta</li>
@@ -298,12 +324,12 @@
 </div>
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Table extraction</div>
-<p>Extrae tablas de un PDF financiero:</p>
+<p>Extrae las tablas de <code>reporte-financiero.pdf</code>:</p>
 <ul>
 <li>Intenta con pdfplumber primero</li>
 <li>Si falla, usa Docling</li>
 <li>Para las 5% más difíciles, usa VLM extraction</li>
-<li>Almacena como Markdown + imagen de tabla</li>
+<li>Almacena como Markdown + imagen de tabla, e indexa el Markdown en <code>acme_docs</code> con la estrategia de la Lección 2</li>
 </ul>
 </div>
 <section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Por qué ColPali supera a CLIP/SigLIP en document retrieval?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque es un modelo más grande</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque usa late interaction (multi-vector) que captura layout, charts, y texto a nivel de patch</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque fue entrenado en más datos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque usa OCR mejorado</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Qué es &quot;modality gap&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Diferencia de velocidad entre modalidades</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Inputs se agrupan por modalidad en vez de relevancia semántica en el espacio de embeddings</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Falta de modelos para una modalidad</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Diferencia de costo entre modalidades</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Cuál es el patrón de 3 niveles para extraer tablas de PDFs?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">OCR -&gt; NER -&gt; Embedding</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">pdfplumber (rápido) -&gt; Docling (neural) -&gt; VLM (fallback)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">CLIP -&gt; SigLIP -&gt; ColPali</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Chunking -&gt; Reranking -&gt; Generation</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">¿Cuándo deberías empezar con text-only RAG en vez de multimodal?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Nunca, multimodal siempre es mejor</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando tu corpus es puro texto, las tablas son simples, o el presupuesto es limitado</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo para prototipos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando usas GraphRAG</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/agentic-rag">← Agentic RAG</a><a href="/lessons/graphrag">GraphRAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>

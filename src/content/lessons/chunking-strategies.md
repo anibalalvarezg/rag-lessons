@@ -62,6 +62,13 @@ quizzes:
 
 Al finalizar esta lección, podrás elegir la estrategia de chunking correcta para tu corpus, implementar parent-child chunking, y justificar cada decisión de tamaño de chunk con datos.
 
+**Prerequisitos:** [Lección 1](/rag-lessons/lessons/what-is-rag). Si `chunk_size=512` te hace preguntarte "¿512 qué?", lee el [Anexo A](/rag-lessons/lessons/anexo-tokens-embeddings).
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Sigues trabajando sobre <code>corpus/politicas.pdf</code> de la Lección 1. El código de esta lección reemplaza el paso de <strong>parsing + chunking</strong> del pipeline: primero extraes el texto con PyMuPDF (<code>paginas</code>), luego lo divides con un splitter (<code>chunks</code>). La variable <code>chunks</code> que produces aquí es la que embebes y almacenas en la Lección 3.</p>
+</div>
+
 ## El dilema del tamaño de chunk
 
 Todo sistema RAG enfrenta la misma tensión:
@@ -93,7 +100,7 @@ Corta cada N tokens, opcionalmente con overlap. Es rápido, predecible, y "tonto
 
 Antes de dividir en chunks, necesitas extraer texto del documento fuente. Para PDFs, `PyMuPDF` (`fitz`) es rápido y preserva estructura básica:
 
-```
+```python
 import fitz  # PyMuPDF
 
 def extraer_texto_pdf(path: str) -> list[str]:
@@ -106,11 +113,11 @@ def extraer_texto_pdf(path: str) -> list[str]:
     return paginas
 
 # Uso
-texto = extraer_texto_pdf("politicas.pdf")
-# texto es una lista: una string por página del PDF
+paginas = extraer_texto_pdf("corpus/politicas.pdf")
+# paginas es una lista: una string por página del PDF
 ```
 
-Este es el código al que se refiere el Ejercicio 1 de práctica. Úsalo como punto de partida para inspeccionar el tamaño y la estrategia de división.
+Ojo: **este paso no hace chunking** — solo convierte el PDF en texto. El chunking ocurre después, cuando le aplicas uno de los splitters de abajo. Este es el código al que se refiere el Ejercicio 1 de práctica.
 
 ### 2. Recursive character splitting (El default recomendado)
 
@@ -125,14 +132,17 @@ Intenta dividir en la frontera más grande disponible (párrafos), y si el chunk
 
 Configuración de LangChain:
 
-```
+```python
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 splitter = RecursiveCharacterTextSplitter(
-chunk_size=512,
-chunk_overlap=64,
-separators=["\n\n", "\n", ". ", " ", ""]
+    chunk_size=512,
+    chunk_overlap=64,
+    separators=["\n\n", "\n", ". ", " ", ""]
 )
+
+# Conectando con el parsing de arriba:
+chunks = splitter.create_documents(paginas)
 ```
 
 ### 3. Semantic chunking (División semántica)
@@ -147,30 +157,32 @@ Embedda cada oración, mide similitud coseno entre oraciones adyacentes, y crea 
 
 Implementación conceptual:
 
-```
-def semantic_chunk(text, threshold_percentile=95):
-sentences = split_into_sentences(text)
-embeddings = [embed(s) for s in sentences]
+```python
+import numpy as np
 
-chunks = []
-current = [sentences[0]]
+def semantic_chunk(text: str, threshold_percentile: float = 95) -> list[str]:
+    sentences = split_into_sentences(text)
+    embeddings = [embed(s) for s in sentences]
 
-for i in range(1, len(sentences)):
-sim = cosine_sim(embeddings[i-1], embeddings[i])
-distances.append(1 - sim)
+    # 1. Distancia coseno entre oraciones adyacentes
+    distances = [
+        1 - cosine_sim(embeddings[i - 1], embeddings[i])
+        for i in range(1, len(sentences))
+    ]
+    threshold = np.percentile(distances, threshold_percentile)
 
-threshold = percentile(distances, threshold_percentile)
+    # 2. Cortar donde la distancia supera el threshold
+    chunks = []
+    current = [sentences[0]]
+    for i in range(1, len(sentences)):
+        if distances[i - 1] > threshold:
+            chunks.append(" ".join(current))
+            current = [sentences[i]]
+        else:
+            current.append(sentences[i])
 
-for i in range(1, len(sentences)):
-dist = 1 - cosine_sim(embeddings[i-1], embeddings[i])
-if dist > threshold:
-chunks.append(" ".join(current))
-current = [sentences[i]]
-else:
-current.append(sentences[i])
-
-chunks.append(" ".join(current))
-return chunks
+    chunks.append(" ".join(current))
+    return chunks
 ```
 
 <div class="callout warning">
@@ -198,7 +210,7 @@ Resuelve el dilema del tamaño desacoplando retrieval de generación:
 
 5. El LLM recibe los parents, no los children
 
-```
+```python
 # LangChain ParentDocumentRetriever
 # Nota: en LangChain v1+, ParentDocumentRetriever se migró a langchain-classic
 # pip install langchain-classic
@@ -209,10 +221,10 @@ child_splitter = RecursiveCharacterTextSplitter(chunk_size=250)
 parent_splitter = RecursiveCharacterTextSplitter(chunk_size=1500)
 
 retriever = ParentDocumentRetriever(
-vectorstore=vectorstore,      # children embeddings
-docstore=InMemoryStore(),      # parent texts
-child_splitter=child_splitter,
-parent_splitter=parent_splitter,
+    vectorstore=vectorstore,     # children embeddings (el vectorstore de la L1)
+    docstore=InMemoryStore(),    # parent texts
+    child_splitter=child_splitter,
+    parent_splitter=parent_splitter,
 )
 ```
 
@@ -235,7 +247,7 @@ Las tablas necesitan tratamiento especial. El chunking de texto plano las destru
 
 Antes de embeber cada chunk, prepender un resumen generado por LLM:
 
-```
+```python
 # Prompt para contextual retrieval
 context_prompt = f"""
 Here is the full document:
@@ -273,12 +285,12 @@ chunk_with_context = f"{context}\n\n{chunk}"
 
 
 <div class="exercise">
-<div class="exercise-title">Ejercicio 1: Analiza el chunking</div>
-<p>Revisa el código de PyMuPDF de arriba. Identifica:</p>
+<div class="exercise-title">Ejercicio 1: Del PDF a los chunks</div>
+<p>Conecta las dos piezas de código de arriba: extrae <code>corpus/politicas.pdf</code> con <code>extraer_texto_pdf</code> y pásale el resultado al <code>RecursiveCharacterTextSplitter</code> (configuración 512/64). Luego responde:</p>
 <ul>
-<li>¿Qué tamaño de chunk se usa?</li>
-<li>¿Qué estrategia de división?</li>
-<li>¿Qué overlap se configuró?</li>
+<li>¿Cuántos chunks salieron del documento completo?</li>
+<li>¿Cuál es el tamaño en tokens del chunk más grande y del más chico? (usa tiktoken del Anexo A)</li>
+<li>Abre dos chunks consecutivos: ¿puedes ver el overlap de 64 tokens entre ellos?</li>
 </ul>
 </div>
 
@@ -297,7 +309,7 @@ chunk_with_context = f"{context}\n\n{chunk}"
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Compara estrategias</div>
-<p>Crea un mini-eval con 5 preguntas sobre un documento PDF. Ejecuta el pipeline 3 veces:</p>
+<p>Crea un mini-eval con 5 preguntas sobre <code>corpus/politicas.pdf</code>. Ejecuta el pipeline 3 veces:</p>
 <ul>
 <li>Recursive 512 sin overlap</li>
 <li>Recursive 512 con overlap 64</li>

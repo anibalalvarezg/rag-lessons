@@ -62,11 +62,18 @@ quizzes:
 
 Al finalizar esta lección, podrás elegir un modelo de embedding y una vector store para tu caso de uso, entender cómo los embeddings representan significado, y saber cuándo migrar de pgvector a una base dedicada.
 
+**Prerequisitos:** [Lección 2](/rag-lessons/lessons/chunking-strategies) — ya tienes la variable `chunks` del corpus Acme. La intuición de vectores y coseno está en el [Anexo A](/rag-lessons/lessons/anexo-tokens-embeddings).
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>La variable <code>chunks</code> que usa este código es la que produjiste en la Lección 2 (parsing PyMuPDF + recursive splitter sobre <code>politicas.pdf</code>). Aquí la embebes y la guardas en la colección <code>acme_docs</code> — la misma que creaste en la Lección 1. Al terminar, tu índice queda listo para el retrieval avanzado de la Lección 4.</p>
+</div>
+
 ## Qué es un embedding
 
 Un embedding es un vector numérico de alta dimensión (típicamente 768-3072 dimensiones) que representa el significado semántico de un texto. Textos con significado similar quedan cerca en el espacio vectorial.
 
-```
+```text
 # Ejemplo conceptual
 "El gato duerme en el sofá" -> [0.23, -0.15, 0.87, ..., 0.42]  # 3072 dims
 "Una mascota descansa en un mueble" -> [0.21, -0.12, 0.85, ..., 0.44]  # similar!
@@ -74,6 +81,34 @@ Un embedding es un vector numérico de alta dimensión (típicamente 768-3072 di
 ```
 
 La métrica clave es la **similitud de coseno**: mide el ángulo entre dos vectores. A mayor similitud (más cercano a 1), más relacionados están los textos.
+
+Pruébalo con embeddings reales (es el mismo script de la Lección 0, ahora sobre el corpus Acme):
+
+```python
+import numpy as np
+from openai import OpenAI
+
+client = OpenAI()
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+oraciones = [
+    "Las devoluciones se aceptan hasta 30 días después de la compra.",
+    "Puedes devolver un producto si no pasaron más de 30 días.",
+    "El timeout por defecto es de 30 segundos.",
+]
+
+vectors = [
+    np.array(v.embedding)
+    for v in client.embeddings.create(model="text-embedding-3-small", input=oraciones).data
+]
+
+print(cosine_similarity(vectors[0], vectors[1]))  # alto: misma idea, otras palabras
+print(cosine_similarity(vectors[0], vectors[2]))  # bajo: mismo número "30", otro tema
+```
+
+Este es el código al que se refiere el Ejercicio 1 de práctica.
 
 ## El modelo de embedding importa MÁS que el chunking
 
@@ -175,7 +210,8 @@ BM25 + vector search nativo. Módulos de vectorización built-in.
 </div>
 
 ## Implementación con LangChain
-```
+
+```python
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres.vectorstores import PGVector
 
@@ -185,17 +221,17 @@ embeddings = OpenAIEmbeddings(
     dimensions=1536  # Matryoshka: reducir de 3072 a 1536
 )
 
-# 2. Crear/consultar la vector store
+# 2. Crear/consultar la vector store (chunks viene de la Lección 2)
 vectorstore = PGVector.from_documents(
     documents=chunks,
     embedding=embeddings,
-    connection_string="postgresql://user:pass@localhost/db",
-    collection_name="my_rag_docs"
+    connection_string="postgresql://rag:rag@localhost:5432/rag",
+    collection_name="acme_docs"
 )
 
 # 3. Buscar
 results = vectorstore.similarity_search(
-    "¿Cuál es la política de reembolsos?",
+    "¿Cuál es la política de devoluciones?",
     k=5
 )
 ```
@@ -210,8 +246,8 @@ En 2026, la búsqueda pura vectorial se considera un antipatrón fuera de casos 
 
 Se fusionan con **Reciprocal Rank Fusion (RRF)**:
 
-```
-score_final = SUM(1/(k + rank_i))  # para cada fuente (dense, sparse)
+```python
+score_final = sum(1 / (k + rank_i))  # para cada fuente (dense, sparse)
 # k=60 es el parámetro común
 # RRF no requiere normalizar scores entre sistemas diferentes
 ```

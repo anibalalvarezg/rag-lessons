@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Anexo B: Anatomía de un prompt RAG — Guía de RAG</title><meta name="description" content="Las 4 partes de un prompt RAG: rol, regla de grounding, contexto inyectado, e instrucción de citación. Por qué cada una reduce alucinaciones."><meta name="keywords" content="prompt engineering, RAG prompt, grounding, citación, system prompt"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://rag-lessons.netlify.app/lessons/anexo-prompt-rag/"><meta property="og:type" content="article"><meta property="og:title" content="Anexo B: Anatomía de un prompt RAG — Guía de RAG"><meta property="og:description" content="Las 4 partes de un prompt RAG: rol, regla de grounding, contexto inyectado, e instrucción de citación. Por qué cada una reduce alucinaciones."><meta property="og:url" content="https://rag-lessons.netlify.app/lessons/anexo-prompt-rag/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="Guía de RAG"><meta property="article:section" content="Anexos"><meta property="article:published_time" content="2026-07-27"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Anexo B: Anatomía de un prompt RAG — Guía de RAG"><meta name="twitter:description" content="Las 4 partes de un prompt RAG: rol, regla de grounding, contexto inyectado, e instrucción de citación. Por qué cada una reduce alucinaciones."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"Guía de RAG","description":"Guía práctica para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/_astro/BaseLayout.w6ndjUYT.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/" class="masthead">Guía de RAG</a><nav aria-label="Navegación principal"><a href="/#pilar-1">Fundamentos</a><a href="/#pilar-2">Ingesta</a><a href="/#pilar-3">Recuperación</a><a href="/#pilar-4">Agentic &amp; GraphRAG</a><a href="/#pilar-5">RAGOps</a><a href="/reference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
+  (function() {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = stored || (prefersDark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+  })();
+</script><script>
+  document.querySelector('.theme-toggle')?.addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    html.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script><script>
+  (function() {
+    let lastY = 0;
+    const header = document.querySelector('.site-header');
+    if (!header) return;
+    window.addEventListener('scroll', function() {
+      var y = window.scrollY;
+      if (y > lastY && y > 80) header.classList.add('hidden');
+      else header.classList.remove('hidden');
+      lastY = y;
+    }, { passive: true });
+  })();
+</script><main id="content"><article><header><h1>Anexo B: Anatomía de un prompt RAG</h1><p class="subtitle">Anexo B — Fundamentos</p></header><h2 id="objetivo">Objetivo</h2>
+<p>Al finalizar este anexo, podrás desarmar el prompt RAG de la Lección 1 en sus 4 partes, explicar qué alucinación previene cada una, y escribir tu propia variante con citas numeradas.</p>
+<h2 id="el-prompt-que-viste-en-la-lección-1">El prompt que viste en la Lección 1</h2>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">prompt </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ChatPromptTemplate.from_template(</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    "Responde la pregunta usando SOLO el contexto. Cita la fuente.</span><span style="color:#005CC5;--shiki-dark:#79B8FF">\n\n</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    "Contexto: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">{context}\n\n</span><span style="color:#032F62;--shiki-dark:#9ECBFF">Pregunta: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">{question}</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
+<p>Parece trivial, pero cada elemento está haciendo trabajo defensivo. Un prompt RAG de producción tiene 4 partes:</p>
+<h2 id="las-4-partes-de-un-prompt-rag">Las 4 partes de un prompt RAG</h2>
+<h3 id="1-rol-quién-es-el-modelo">1. Rol (quién es el modelo)</h3>
+<p>Ancla el tono y el dominio. Para el asistente de Acme:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>Eres el asistente interno de Acme Corp. Respondes preguntas de empleados</span></span>
+<span class="line"><span>sobre políticas de la empresa y documentación técnica.</span></span></code></pre>
+<h3 id="2-regla-de-grounding-de-dónde-puede-salir-la-respuesta">2. Regla de grounding (de dónde puede salir la respuesta)</h3>
+<p>La línea más importante del sistema: <strong>prohíbe responder desde la memoria paramétrica</strong>.</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>Responde usando SOLO el contexto proporcionado. Si el contexto no contiene</span></span>
+<span class="line"><span>la respuesta, di "No tengo información suficiente sobre eso".</span></span></code></pre>
+<div class="callout warning">
+<div class="callout-title">La mitad invisible de la regla</div>
+<p>La cláusula de escape ("si no está, dilo") es tan importante como la prohibición. Sin ella, el modelo prefiere inventar una respuesta antes que admitir ignorancia — los LLMs están entrenados para ser útiles, no para abstenerse. Esta cláusula es tu primera línea de defensa contra las alucinaciones Tipo I de la Lección 5.</p>
+</div>
+<h3 id="3-contexto-inyectado-lo-que-recuperó-el-retriever">3. Contexto inyectado (lo que recuperó el retriever)</h3>
+<p>Aquí van los chunks que recuperó tu pipeline. Es la <strong>única</strong> parte que cambia en cada request:</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">context </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "</span><span style="color:#005CC5;--shiki-dark:#79B8FF">\n\n</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.join(</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    f</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"[</span><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">i</span><span style="color:#D73A49;--shiki-dark:#F97583">+</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1}</span><span style="color:#032F62;--shiki-dark:#9ECBFF">] </span><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">doc.page_content</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#D73A49;--shiki-dark:#F97583"> for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i, doc </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> enumerate</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(docs)</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
+<p>Numerar los chunks (<code>[1]</code>, <code>[2]</code>, …) habilita la cuarta parte:</p>
+<h3 id="4-instrucción-de-citación-cómo-se-verifica">4. Instrucción de citación (cómo se verifica)</h3>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>Cita la fuente de cada afirmación con el número del chunk: [1], [2], ...</span></span></code></pre>
+<p>Las citas convierten una respuesta de “confía en mí” en una <strong>verificable</strong>: el usuario puede revisar el chunk 2 y confirmar. Además, obligar al modelo a citar lo obliga a atender al contexto.</p>
+<h2 id="el-prompt-completo-de-producción">El prompt completo de producción</h2>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_core.prompts </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ChatPromptTemplate</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">RAG_PROMPT</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ChatPromptTemplate.from_template(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"""Eres el asistente interno de Acme Corp. Respondes preguntas de empleados sobre políticas de la empresa y documentación técnica.</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Reglas:</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- Responde usando SOLO el contexto proporcionado.</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- Si el contexto no contiene la respuesta, di "No tengo información suficiente sobre eso".</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- Cita la fuente de cada afirmación con el número del chunk: [1], [2], ...</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Contexto:</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">{context}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Pregunta: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">{question}</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
+<div class="callout success">
+<div class="callout-title">Conexión con el curso</div>
+<p>Este es el prompt que evoluciona a lo largo del Proyecto Acme: en la Lección 5 lo envuelves con guardrails de salida (¿cumplió su propia regla de grounding?), y en la Lección 6 mides su <strong>faithfulness</strong> — qué tan bien respeta la regla "SOLO el contexto". Un prompt no se evalúa por cómo se lee, sino por cómo se comporta medido.</p>
+</div>
+<h2 id="práctica">Práctica</h2>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 1: Rompe tu prompt</div>
+<p>Usa el pipeline de la Lección 1 con el corpus Acme y experimenta:</p>
+<ul>
+<li>Quita la regla de grounding y haz una pregunta fuera del corpus — ¿alucina?</li>
+<li>Quita la cláusula de escape y pregunta algo que el contexto no cubre — ¿admite ignorancia o inventa?</li>
+<li>Restaura el prompt completo y repite — ¿se abstiene correctamente?</li>
+</ul>
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 2: Citas verificables</div>
+<p>Modifica el pipeline para que:</p>
+<ul>
+<li>Los chunks se numeren al inyectarse en el contexto</li>
+<li>La respuesta incluya citas [1], [2] por afirmación</li>
+<li>Imprimas junto a la respuesta el texto exacto de cada chunk citado</li>
+</ul>
+</div>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Qué hace la regla &quot;responde usando SOLO el contexto&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Hace que el modelo responda más rápido siempre</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Prohíbe al modelo usar su memoria paramétrica como fuente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Reduce el costo de tokens de cada llamada</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Mejora la calidad de los embeddings del corpus</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Qué debería hacer el modelo cuando el contexto no contiene la respuesta?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Responder con su conocimiento general del tema</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Decir explícitamente que no tiene información suficiente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Reformular la pregunta del usuario automáticamente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Buscar la respuesta en internet en tiempo real</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Por qué pedir citas numeradas como [1], [2] en la respuesta?</p><div class="quiz-options"><button class="quiz-option" data-correct="true" data-quiz-option type="button">Para que el usuario pueda verificar cada afirmación contra la fuente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Para que el texto generado se vea más profesional</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Para reducir la latencia total de la generación</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Para mejorar el ranking de los chunks recuperados</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/anexo-tokens-embeddings">← Anexo A: Tokens, vectores y similitud de coseno</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">Guía de RAG · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>Guía de RAG · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+  (function() {
+    const btn = document.querySelector('.back-to-top');
+    if (!btn) return;
+    window.addEventListener('scroll', function() {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+    btn.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+</script></body></html>

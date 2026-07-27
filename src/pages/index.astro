@@ -10,6 +10,7 @@ const pillars = [
   { id: 'pilar-3', title: 'Recuperación Avanzada', filter: 'pilar-3' },
   { id: 'pilar-4', title: 'RAGOps y Evaluación', filter: 'pilar-4' },
   { id: 'pilar-5', title: 'Agentic RAG y GraphRAG', filter: 'pilar-5' },
+  { id: 'anexo', title: 'Anexos', filter: 'anexo' },
 ];
 ---
 <BaseLayout
@@ -20,11 +21,12 @@ const pillars = [
   <main id="content">
     <div class="hero">
       <h1>Guía sencilla de RAG</h1>
-      <p class="lead">De la teoría a la implementación. 9 lecciones para construir sistemas RAG que funcionan en producción.</p>
+      <p class="lead">De la teoría a la implementación. 10 lecciones para construir un solo sistema RAG que funciona en producción: el asistente interno de Acme Corp.</p>
       <div class="meta">
-        <span>9 lecciones</span>
+        <span>10 lecciones</span>
+        <span>2 anexos</span>
         <span>5 pilares</span>
-        <span>19 términos</span>
+        <span>21 términos</span>
         <span>15+ fuentes</span>
       </div>
     </div>
@@ -56,7 +58,7 @@ const pillars = [
       <div class="resources-grid">
         <div class="resource-item">
           <h3>Glosario</h3>
-          <p><a href={`${base}reference/glossary`}>19 términos clave</a> del curso, de chunking a GraphRAG.</p>
+          <p><a href={`${base}reference/glossary`}>21 términos clave</a> del curso, de chunking a GraphRAG.</p>
         </div>
         <div class="resource-item">
           <h3>Repositorio</h3>

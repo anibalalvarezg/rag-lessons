@@ -73,6 +73,13 @@ quizzes:
 
 Al finalizar, sabrás medir la calidad de un sistema RAG usando el RAG Triad, implementar evaluación con LLM-as-a-judge, configurar RAGAS, y construir un pipeline de evaluación continua para CI/CD.
 
+**Prerequisitos:** [Lección 5](/rag-lessons/lessons/guardrails-and-hallucinations) — la detección online y la evaluación offline son dos caras de la misma moneda.
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Tu dataset de evaluación debe cubrir los dos documentos del corpus Acme: preguntas de políticas (<code>politicas.pdf</code>, Lecciones 1-3) y preguntas técnicas (<code>manual-tecnico.pdf</code>, Lecciones 4-5). El ejemplo "¿Cuál es el timeout default?" es la misma consulta que verificaste con grounding check y SGI en la Lección 5 — aquí la mides sistemáticamente con RAGAS. Si el grounding check de la L5 es el detector en vivo, RAGAS es el examen oficial antes de cada deploy.</p>
+</div>
+
 ## El RAG Triad: 3 relaciones, 3 métricas
 
 El framework diagnóstico más útil para RAG mide 3 relaciones entre los componentes del sistema:
@@ -92,7 +99,7 @@ El framework diagnóstico más útil para RAG mide 3 relaciones entre los compon
 
 Mide qué proporción de afirmaciones de la respuesta están soportadas por el contexto recuperado. Es tu herramienta principal contra hallucinations.
 
-```
+```python
 # Fórmula de Faithfulness (RAGAS)
 faithfulness = claims_supported / total_claims
 
@@ -116,7 +123,7 @@ faithfulness = claims_supported / total_claims
 
 Mide qué proporción del contexto recuperado es realmente útil para responder la pregunta. Penaliza información redundante o irrelevante.
 
-```
+```text
 # Fórmula de Context Relevance (RAGAS)
 # LLM extrae oraciones "cruciales" del contexto
 context_relevance = |extracted_sentences| / |total_sentences|
@@ -133,7 +140,7 @@ context_relevance = |extracted_sentences| / |total_sentences|
 
 Mide si la respuesta realmente responde la pregunta. Penaliza respuestas incompletas, redundantes o tangenciales.
 
-```
+```python
 # Método de RAGAS: ingeniería inversa de preguntas
 # 1. Dada la respuesta, generar N preguntas que podría responder
 generated_questions = llm.generate_questions(answer, n=3)
@@ -157,7 +164,7 @@ answer_relevance = mean(cosine_sim(q_original, q_generated))
 Las métricas BLEU y ROUGE miden overlap de tokens — no capturan equivalencia semántica. El paradigma actual usa un LLM como juez para evaluar calidad semántica.
 
 ### Cómo funciona
-```
+```python
 # Patrón básico de LLM-as-Judge
 judge_prompt = f"""
 Evalúa si la respuesta está soportada por el contexto.
@@ -186,17 +193,29 @@ Output: JSON con lista de veredictos y score de faithfulness.
 
 ### Implementación con RAGAS
 
-```
+```python
 from ragas import evaluate
 from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
 from datasets import Dataset
 
-# Preparar dataset de evaluación
+# Preparar dataset de evaluación (corpus Acme: políticas + manual técnico)
 eval_data = Dataset.from_dict({
-    "question": ["¿Cuál es el timeout default?"],
-    "answer": ["El timeout default es 30 segundos"],
-    "contexts": [["El timeout se configura en settings.yaml. Default: 30s"]],
-    "ground_truth": ["30 segundos"]
+    "question": [
+        "¿Cuál es el timeout default?",                        # manual-tecnico.pdf
+        "¿Hasta cuántos días después de la compra se aceptan devoluciones?",  # politicas.pdf
+    ],
+    "answer": [
+        "El timeout default es 30 segundos",
+        "Las devoluciones se aceptan hasta 30 días después de la compra",
+    ],
+    "contexts": [
+        ["El timeout se configura en settings.yaml. Default: 30s"],
+        ["Política de devoluciones: plazo máximo de 30 días posteriores a la compra."],
+    ],
+    "ground_truth": [
+        "30 segundos",
+        "30 días",
+    ]
 })
 
 # Ejecutar evaluación
@@ -222,7 +241,7 @@ Un juez desalineado es como una brújula apuntando al norte incorrecto. La aline
 <small>Fuente: <a href="https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/faithfulness/">RAGAS Docs — Judge Alignment Process</a></small></p>
 </div>
 
-```
+```python
 # Proceso de alineación (de Ragas docs)
 # 1. Recopilar 100-200 ejemplos con juicio humano experto
 # 2. Evaluar juez baseline -> medir alineación
@@ -270,7 +289,7 @@ Para sistemas enterprise multi-turn, 8 métricas operacionales (de arxiv:2602.20
 </div>
 
 ## Evaluación continua: Pre, en, y post-production
-```
+```python
 # Pipeline de evaluación continua
 
 # 1. PRE-PRODUCTION: Eval offline con dataset curado
@@ -317,9 +336,9 @@ Las 4 métricas core asumen que el índice es confiable. Ninguna mide si el cont
 <div class="exercise-title">Ejercicio 1: Evalúa tu pipeline</div>
 <p>Usa el código de RAGAS de arriba para evaluar tu pipeline con las 4 métricas core:</p>
 <ul>
-<li>Crea un dataset de 20 preguntas con ground truth</li>
+<li>Crea un dataset de 20 preguntas con ground truth: 10 sobre <code>politicas.pdf</code> y 10 sobre <code>manual-tecnico.pdf</code></li>
 <li>Ejecuta faithfulness, answer_relevancy, context_precision, context_recall</li>
-<li>Identifica: ¿el problema está en el retriever o en el generator?</li>
+<li>Identifica: ¿el problema está en el retriever o en el generator? ¿Es peor en un documento que en otro?</li>
 </ul>
 </div>
 

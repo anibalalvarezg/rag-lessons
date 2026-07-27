@@ -26,6 +26,11 @@
   })();
 </script><main id="content"><article><header><h1>Guardrails y Detección de Alucinaciones</h1><p class="subtitle">Lección 5 — RAGOps y Evaluación</p></header><h2 id="objetivo">Objetivo</h2>
 <p>Al finalizar, sabrás cómo clasificar hallucinations en 3 tipos, implementar guardrails de entrada/salida, y construir un pipeline de detección que combine múltiples señales baratas para decidir si confiar, abstenerse o escalar.</p>
+<p><strong>Prerequisitos:</strong> <a href="/rag-lessons/lessons/hybrid-retrieval-and-reranking">Lección 4</a> — las señales de esta lección envuelven ese pipeline.</p>
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Las verificaciones de esta lección se insertan <em>después</em> del pipeline de la Lección 4 (Transform → Retrieve → Rerank → Generate): toman la <code>query</code>, los <code>chunks</code> rerankeados y la <code>response</code> generada, y deciden si la respuesta del asistente Acme se publica, se corrige o se abstiene. El ejemplo "timeout / settings.yaml / 30 segundos" es la misma consulta al <code>manual-tecnico.pdf</code> que usaste en la Lección 4 — aquí aprendes a detectar cuándo el sistema la responde mal.</p>
+</div>
 <h2 id="taxonomía-de-hallucinations-3-tipos-3-firmas">Taxonomía de hallucinations: 3 tipos, 3 firmas</h2>
 <p>No todas las hallucinations son iguales. La taxonomía de Marin (2026) identifica 3 tipos con firmas geométricas distintas:</p>
 <p><small>Fuente: <a href="https://arxiv.org/abs/2602.13224">arXiv:2602.13224 — Marin et al., “Hallucination Taxonomy for RAG” (2026)</a></small></p>
@@ -104,24 +109,24 @@
 </div>
 <h2 id="señal-1-grounding-check-la-más-fuerte-en-rag">Señal 1: Grounding Check (la más fuerte en RAG)</h2>
 <p>Dado que en RAG siempre tienes el contexto recuperado, la verificación más poderosa es simple: <strong>¿cada afirmación de la respuesta está soportada por los chunks recuperados?</strong></p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo de grounding check</span></span>
-<span class="line"><span># 1. Descomponer respuesta en afirmaciones atómicas</span></span>
-<span class="line"><span>claims = extract_claims(response)</span></span>
-<span class="line"><span># ["El timeout default es 30 segundos",</span></span>
-<span class="line"><span>#  "Se configura en settings.yaml",</span></span>
-<span class="line"><span>#  "El campo se llama network.timeout"]</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># 2. Verificar cada afirmación contra el contexto</span></span>
-<span class="line"><span>for claim in claims:</span></span>
-<span class="line"><span>    verdict = judge_model.verify(</span></span>
-<span class="line"><span>        claim=claim,</span></span>
-<span class="line"><span>        context=retrieved_chunks,</span></span>
-<span class="line"><span>        # Retorna: supported | unsupported | contradicted</span></span>
-<span class="line"><span>    )</span></span>
-<span class="line"><span>    if verdict != "supported":</span></span>
-<span class="line"><span>        flag(claim, verdict)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span># 3. Decidir acción basado en % de afirmaciones soportadas</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo de grounding check</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Descomponer respuesta en afirmaciones atómicas</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">claims </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> extract_claims(response)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># ["El timeout default es 30 segundos",</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#  "Se configura en settings.yaml",</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#  "El campo se llama network.timeout"]</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Verificar cada afirmación contra el contexto</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> claim </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> claims:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    verdict </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> judge_model.verify(</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">        claim</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">claim,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">        context</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">retrieved_chunks,</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # Retorna: supported | unsupported | contradicted</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    )</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> verdict </span><span style="color:#D73A49;--shiki-dark:#F97583">!=</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "supported"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        flag(claim, verdict)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Decidir acción basado en % de afirmaciones soportadas</span></span></code></pre>
 <ul>
 <li>
 <p><strong>Implementación:</strong> LLM-as-judge pasando contexto + respuesta + instrucciones de verificación</p>
@@ -136,20 +141,20 @@
 <h2 id="señal-2-semantic-grounding-index-sgi">Señal 2: Semantic Grounding Index (SGI)</h2>
 <p>Mide si la respuesta se movió hacia el contexto o se quedó cerca de la pregunta. Basado en geometría angular en la hiperesfera unitaria.</p>
 <p><small>Fuente: <a href="https://arxiv.org/abs/2512.13771">arXiv:2512.13771 — Semantic Grounding Index (SGI) Paper</a></small></p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># SGI = theta(response, question) / theta(response, context)</span></span>
-<span class="line"><span># SGI &gt; 1: respuesta cerca del contexto (grounded) -&gt; PASS</span></span>
-<span class="line"><span># SGI &lt; 1: respuesta cerca de la pregunta (potentially hallucinated) -&gt; FLAG</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>from groundlens import compute_sgi</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>result = compute_sgi(</span></span>
-<span class="line"><span>    question="¿Cómo configurar el timeout?",</span></span>
-<span class="line"><span>    context="El timeout se configura en settings.yaml bajo network.timeout...",</span></span>
-<span class="line"><span>    response="El timeout se configura en settings.yaml con un valor de 30s.",</span></span>
-<span class="line"><span>    model="all-MiniLM-L6-v2"  # rápido, barato</span></span>
-<span class="line"><span>)</span></span>
-<span class="line"><span># result.value = 1.35 -&gt; PASS</span></span>
-<span class="line"><span># result.flagged = False</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># SGI = theta(response, question) / theta(response, context)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># SGI &gt; 1: respuesta cerca del contexto (grounded) -&gt; PASS</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># SGI &lt; 1: respuesta cerca de la pregunta (potentially hallucinated) -&gt; FLAG</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> groundlens </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> compute_sgi</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">result </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> compute_sgi(</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    question</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"¿Cómo configurar el timeout?"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    context</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"El timeout se configura en settings.yaml bajo network.timeout..."</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    response</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"El timeout se configura en settings.yaml con un valor de 30s."</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    model</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"all-MiniLM-L6-v2"</span><span style="color:#6A737D;--shiki-dark:#6A737D">  # rápido, barato</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># result.value = 1.35 -&gt; PASS</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># result.flagged = False</span></span></code></pre>
 <table>
 <thead>
 <tr>
@@ -186,12 +191,12 @@
 </ul>
 <h2 id="señal-3-self-consistency-para-queries-sin-contexto">Señal 3: Self-Consistency (para queries sin contexto)</h2>
 <p>Cuando no hay contexto para verificar contra, genera N respuestas con temperature &gt; 0 y compara. Los hechos reales son consistentes entre muestras; los inventados varían.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Generar 3 muestras con temperature=0.7</span></span>
-<span class="line"><span>samples = [llm.generate(query, temp=0.7) for _ in range(3)]</span></span>
-<span class="line"><span># Comparar hechos clave entre muestras</span></span>
-<span class="line"><span>consistency = compare_facts(samples)</span></span>
-<span class="line"><span># Alta consistencia -&gt; probablemente correcto</span></span>
-<span class="line"><span># Baja consistencia -&gt; probablemente hallucination</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Generar 3 muestras con temperature=0.7</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">samples </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [llm.generate(query, </span><span style="color:#E36209;--shiki-dark:#FFAB70">temp</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.7</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> _ </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> range</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">3</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)]</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Comparar hechos clave entre muestras</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">consistency </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> compare_facts(samples)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Alta consistencia -&gt; probablemente correcto</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Baja consistencia -&gt; probablemente hallucination</span></span></code></pre>
 <h2 id="señal-4-token-confidence-señal-barata-ruidosa">Señal 4: Token Confidence (señal barata, ruidosa)</h2>
 <p>Los log-probabilities de tokens indican incertidumbre del modelo. Tokens con baja probabilidad frecuentemente coinciden con spans fabricados.</p>
 <ul>
@@ -289,41 +294,41 @@
 </tbody>
 </table>
 <h2 id="pipeline-completo-de-guardrails-en-producción">Pipeline completo de guardrails en producción</h2>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># HALO-inspired architecture (6 capas)</span></span>
-<span class="line"><span># Ref: arxiv.org/abs/2607.17883</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>class RAGGuardrails:</span></span>
-<span class="line"><span>    def process(self, query, user_context):</span></span>
-<span class="line"><span>        # CAPA 1: Input validation</span></span>
-<span class="line"><span>        query = self.validate_input(query)  # schema, injection, PII</span></span>
-<span class="line"><span>        if query.rejected: return self.abstain("Invalid input")</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>        # CAPA 2: Grounded retrieval</span></span>
-<span class="line"><span>        chunks = self.retrieve(query, user_context.rbac)</span></span>
-<span class="line"><span>        if not chunks: return self.abstain("No relevant context")</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>        # CAPA 3: Generation</span></span>
-<span class="line"><span>        response = self.generate(query, chunks)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>        # CAPA 4: Multi-signal verification</span></span>
-<span class="line"><span>        signals = {</span></span>
-<span class="line"><span>            "sgi": compute_sgi(query, chunks, response),        # ~10ms</span></span>
-<span class="line"><span>            "grounding": self.grounding_check(query, chunks, response),  # ~400ms</span></span>
-<span class="line"><span>            "confidence": self.token_confidence(response),       # free</span></span>
-<span class="line"><span>        }</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>        # CAPA 5: Decision funnel</span></span>
-<span class="line"><span>        risk = self.assess_risk(signals, query.stakes)</span></span>
-<span class="line"><span>        if risk == "high" and signals["grounding"].unsupported &gt; 0.2:</span></span>
-<span class="line"><span>            return self.retry_or_abstain(query, chunks)</span></span>
-<span class="line"><span>        elif risk == "medium" and signals["sgi"].flagged:</span></span>
-<span class="line"><span>            return self.add_disclaimer(response)</span></span>
-<span class="line"><span>        else:</span></span>
-<span class="line"><span>            return self.accept(response)</span></span>
-<span class="line"><span></span></span>
-<span class="line"><span>        # CAPA 6: Logging + continuous oversight</span></span>
-<span class="line"><span>        self.log(query, response, signals, decision)</span></span>
-<span class="line"><span>        self.monitor_drift(signals)</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># HALO-inspired architecture (6 capas)</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Ref: arxiv.org/abs/2607.17883</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> RAGGuardrails</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> process</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(self, query, user_context):</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 1: Input validation</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        query </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.validate_input(query)  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># schema, injection, PII</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> query.rejected: </span><span style="color:#D73A49;--shiki-dark:#F97583">return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.abstain(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"Invalid input"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 2: Grounded retrieval</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        chunks </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.retrieve(query, user_context.rbac)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#D73A49;--shiki-dark:#F97583"> not</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> chunks: </span><span style="color:#D73A49;--shiki-dark:#F97583">return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.abstain(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"No relevant context"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 3: Generation</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        response </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.generate(query, chunks)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 4: Multi-signal verification</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        signals </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">            "sgi"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: compute_sgi(query, chunks, response),        </span><span style="color:#6A737D;--shiki-dark:#6A737D"># ~10ms</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">            "grounding"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.grounding_check(query, chunks, response),  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># ~400ms</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">            "confidence"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.token_confidence(response),       </span><span style="color:#6A737D;--shiki-dark:#6A737D"># free</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 5: Decision funnel</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        risk </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.assess_risk(signals, query.stakes)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> risk </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "high"</span><span style="color:#D73A49;--shiki-dark:#F97583"> and</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> signals[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"grounding"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">].unsupported </span><span style="color:#D73A49;--shiki-dark:#F97583">&gt;</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 0.2</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">            return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.retry_or_abstain(query, chunks)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        elif</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> risk </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "medium"</span><span style="color:#D73A49;--shiki-dark:#F97583"> and</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> signals[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"sgi"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">].flagged:</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">            return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.add_disclaimer(response)</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        else</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">            return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.accept(response)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 6: Logging + continuous oversight</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">        self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.log(query, response, signals, decision)</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">        self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.monitor_drift(signals)</span></span></code></pre>
 <div class="callout success">
 <div class="callout-title">El principio fundamental</div>
 <p>"Zero hallucination" no es una propiedad del modelo — es una propiedad del sistema. Los LLMs son, por construcción, capaces de generar texto no soportado. Ninguna cantidad de escala elimina esta posibilidad. El sistema debe contener la falla, no eliminarla.</p>

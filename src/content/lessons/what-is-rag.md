@@ -4,7 +4,7 @@ subtitle: "Lección 1 — Fundamentos del pipeline RAG"
 pillar: fundamentos
 pillarName: "Fundamentos"
 lessonNum: 1
-description: "Lección introductoria: qué es RAG, pipeline de 4 pasos, cuándo usar RAG vs long-context vs fine-tuning, los 4 pilares de producción."
+description: "Lección introductoria: qué es RAG, pipeline de 4 pasos, cuándo usar RAG vs long-context vs fine-tuning, los 5 pilares de producción."
 keywords: "RAG, Retrieval Augmented Generation, pipeline, long-context, fine-tuning, LLM"
 ogSection: "Fundamentos"
 pubDate: "2026-07-24"
@@ -49,7 +49,14 @@ quizzes:
 
 ## Objetivo
 
-Al finalizar esta lección, podrás explicar qué es RAG, por qué es necesario, y cuáles son los 4 pilares que separan un demo de un sistema en producción.
+Al finalizar esta lección, podrás explicar qué es RAG, por qué es necesario, y cuáles son los 5 pilares que separan un demo de un sistema en producción.
+
+**Prerequisitos:** [Lección 0 — Tu entorno RAG en 30 minutos](/rag-lessons/lessons/setup-entorno). Si los términos "token" o "similitud de coseno" son nuevos para ti, lee primero el [Anexo A](/rag-lessons/lessons/anexo-tokens-embeddings).
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — el hilo conductor</div>
+<p>Todo el código de este curso construye un solo sistema: el <strong>asistente RAG interno de Acme Corp</strong>. Su corpus: <code>politicas.pdf</code> (RRHH), <code>manual-tecnico.pdf</code> (operaciones) y <code>reporte-financiero.pdf</code> (finanzas). En esta lección indexas el primer documento (<code>politicas.pdf</code>) en la colección <code>acme_docs</code> que reutilizarás hasta la Lección 9.</p>
+</div>
 
 ## El problema que RAG resuelve
 
@@ -138,8 +145,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # --- Camino offline: Indexing ---
 
-# 1. Parsing — extraer texto de un PDF
-loader = PyPDFLoader("politicas.pdf")
+# 1. Parsing — extraer texto de un PDF (corpus Acme: políticas de RRHH)
+loader = PyPDFLoader("corpus/politicas.pdf")
 documents = loader.load()
 
 # 2. Chunking — dividir en fragmentos manejables
@@ -155,8 +162,8 @@ embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=1536)
 vectorstore = PGVector.from_documents(
     documents=chunks,
     embedding=embeddings,
-    connection_string="postgresql://user:pass@localhost:5432/rag",
-    collection_name="politicas",
+    connection_string="postgresql://rag:rag@localhost:5432/rag",  # Docker de la Lección 0
+    collection_name="acme_docs",  # la colección de todo el curso
 )
 
 # --- Camino online: Query ---
@@ -180,7 +187,7 @@ print(responder("¿Cuál es la política de devoluciones?"))
 
 <div class="callout warning">
 <div class="callout-title">Esto es un demo</div>
-<p>No tienes credenciales ni una base de datos corriendo todavía — este código es para leerlo e identificar los 4 componentes. En la siguiente lección implementarás cada uno en detalle. Observa las 4 funciones clave: <code>loader.load()</code> (parse), <code>splitter.split_documents()</code> (chunk), <code>PGVector.from_documents()</code> (embed + store) y <code>retriever.invoke()</code> (retrieve). El LLM (<code>ChatOpenAI</code>) hace la generación al final.</p>
+<p>Si completaste la Lección 0, este código corre tal cual contra tu Postgres en Docker. Es un pipeline mínimo: en las siguientes lecciones reemplazarás cada componente por su versión de producción. Observa las 4 funciones clave: <code>loader.load()</code> (parse), <code>splitter.split_documents()</code> (chunk), <code>PGVector.from_documents()</code> (embed + store) y <code>retriever.invoke()</code> (retrieve). El LLM (<code>ChatOpenAI</code>) hace la generación al final. El prompt se desarma pieza por pieza en el <a href="/rag-lessons/lessons/anexo-prompt-rag">Anexo B</a>.</p>
 </div>
 
 ## Práctica

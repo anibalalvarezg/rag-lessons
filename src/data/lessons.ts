@@ -10,6 +10,15 @@ export interface LessonMeta {
 
 export const lessons: LessonMeta[] = [
   {
+    slug: 'setup-entorno',
+    title: 'Tu entorno RAG en 30 minutos',
+    desc: 'Setup completo: venv, dependencias, API key, pgvector con Docker, y tu primer embedding real.',
+    pillar: 'pilar-1',
+    pillarName: 'Fundamentos',
+    lessonNum: 0,
+    url: '/rag-lessons/lessons/setup-entorno',
+  },
+  {
     slug: 'what-is-rag',
     title: 'Qué es RAG y por qué lo necesitas',
     desc: 'Pipeline de 4 pasos, cuándo usar RAG vs long-context vs fine-tuning, los 5 pilares de producción.',
@@ -90,10 +99,30 @@ export const lessons: LessonMeta[] = [
     lessonNum: 9,
     url: '/rag-lessons/lessons/graphrag',
   },
+  {
+    slug: 'anexo-tokens-embeddings',
+    title: 'Anexo A: Tokens, vectores y similitud de coseno',
+    desc: 'Qué es un token (tiktoken), qué es un vector, y coseno con numpy puro. Intuición mínima previa a L1-L3.',
+    pillar: 'anexo',
+    pillarName: 'Anexos',
+    lessonNum: 10,
+    url: '/rag-lessons/lessons/anexo-tokens-embeddings',
+  },
+  {
+    slug: 'anexo-prompt-rag',
+    title: 'Anexo B: Anatomía de un prompt RAG',
+    desc: 'Las 4 partes de un prompt RAG: rol, grounding, contexto inyectado, citación. Por qué cada una reduce alucinaciones.',
+    pillar: 'anexo',
+    pillarName: 'Anexos',
+    lessonNum: 11,
+    url: '/rag-lessons/lessons/anexo-prompt-rag',
+  },
 ];
 
 export const glossaryTerms = [
   { term: 'RAG', def: 'Retrieval-Augmented Generation. Técnica que combina recuperación de documentos externos con generación de texto por LLM para reducir alucinaciones y actualizar conocimiento.' },
+  { term: 'Token', def: 'Unidad de texto que procesa un LLM (~4 caracteres). En español, 1 token ≈ 0.7-0.8 palabras; 512 tokens ≈ 350-400 palabras.' },
+  { term: 'Similitud de coseno', def: 'Métrica que mide el ángulo entre dos vectores ignorando su longitud. Rango -1 a 1; es la métrica estándar de retrieval en RAG.' },
   { term: 'Chunking', def: 'Proceso de dividir documentos largos en fragmentos más pequeños para su indexación y recuperación.' },
   { term: 'Embedding', def: 'Representación vectorial densa de texto que captura significado semántico en un espacio multidimensional.' },
   { term: 'Vector Store', def: 'Base de datos optimizada para almacenar y buscar vectores de embeddings por similitud.' },

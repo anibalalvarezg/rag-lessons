@@ -62,6 +62,13 @@ quizzes:
 
 Al finalizar, sabrás por qué text-only RAG falla con documentos visuales, conocerás las 3 arquitecturas de Multimodal RAG, y sabrás elegir los modelos correctos (CLIP, SigLIP, ColPali) para tu caso de uso.
 
+**Prerequisitos:** [Lección 3](/rag-lessons/lessons/embeddings-and-vector-stores) — los conceptos de embedding y vector store son los mismos, solo cambia la modalidad.
+
+<div class="callout info">
+<div class="callout-title">🧵 Proyecto Acme — De dónde viene este código</div>
+<p>Llega el tercer documento del corpus: <code>reporte-financiero.pdf</code>, lleno de tablas y charts que tu pipeline de texto (Lecciones 1-3) destruiría al parsearlo. En esta lección agregas un índice visual paralelo al <code>acme_docs</code> textual, y el generador pasa de <code>gpt-4o-mini</code> (solo texto) a un VLM que ve las páginas recuperadas. El routing del Ejercicio 3 de la Lección 7 decide qué queries necesitan este índice visual.</p>
+</div>
+
 ## El problema: RAG de texto pierde información visual
 
 Los documentos empresariales contienen charts, tablas, diagramas y fotos que text-only RAG *descarta silenciosamente*. Un pipeline de OCR convierte una tabla compleja a texto plano y pierde la estructura. Un chart se convierte en cero contexto útil.
@@ -77,7 +84,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ## Las 3 arquitecturas de producción
 
 ### 1. Caption-and-Index (la más simple)
-```
+```python
 # Flujo:
 # 1. Extraer imágenes del PDF/documento
 # 2. Caption cada imagen con un VLM
@@ -90,7 +97,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ```
 
 ### 2. Unified Vision Embeddings (el punto medio)
-```
+```python
 # Flujo:
 # 1. Embeber imágenes Y texto en el mismo espacio vectorial
 # 2. Buscar con cosine similarity cross-modal
@@ -103,8 +110,34 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 # - Nomic Embed Multimodal: 3B/7B, self-hosted
 ```
 
-### 3. Page-as-Image con Late Interaction (la más precisa)
+Implementación con SigLIP (open source, corre local):
+
+```python
+# pip install sentence-transformers pillow
+from sentence_transformers import SentenceTransformer
+from PIL import Image
+import numpy as np
+
+model = SentenceTransformer("google/siglip-so400m-patch14-384")
+
+# 1. Embeber imágenes y texto en el mismo espacio
+images = [Image.open(f"reporte_pagina_{i}.png") for i in range(1, 6)]
+image_vectors = model.encode(images, normalize_embeddings=True)
+
+queries = ["gráfico de ingresos del tercer trimestre", "tabla de gastos operativos"]
+query_vectors = model.encode(queries, normalize_embeddings=True)
+
+# 2. Búsqueda cross-modal con similitud de coseno (ya normalizados: producto punto)
+scores = np.dot(query_vectors, image_vectors.T)
+top_page = scores[0].argmax()  # página más relevante para la query 0
+
+# 3. Esa página (como imagen) va al VLM para generar la respuesta
 ```
+
+Este es el código al que se refiere el Ejercicio 1 de práctica.
+
+### 3. Page-as-Image con Late Interaction (la más precisa)
+```python
 # Flujo:
 # 1. Renderizar cada página del PDF como imagen (DPI alto)
 # 2. ColPali/ColQwen produce embeddings multi-vector por página
@@ -138,7 +171,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ## Parsing de documentos: la capa de ingesta
 
 ### El patrón de 3 niveles para tablas
-```
+```python
 # Production pattern para extraer tablas de PDFs:
 # Nivel 1: pdfplumber (rápido, rule-based)
 #   -> Si columnas consistentes y <15% celdas vacías -> usar
@@ -168,7 +201,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 
 En vez de forzar todas las modalidades en un espacio vectorial (que causa "modality gap"), UniversalRAG predice qué modalidad necesita la query y busca en el corpus especializado:
 
-```
+```python
 # 7 pathways de routing:
 # None -> no necesita retrieval
 # Paragraph -> texto nivel párrafo
@@ -230,19 +263,19 @@ Una vez recuperada la evidencia multimodal, el generador debe ser un Vision-Lang
 <div class="exercise-title">Ejercicio 1: Image RAG con SigLIP</div>
 <p>Usa el código de SigLIP de arriba como base:</p>
 <ul>
-<li>Embebe un conjunto de imágenes con SigLIP</li>
-<li>Indexa en un vector store</li>
-<li>Busca imágenes por query de texto</li>
-<li>Genera respuestas con un VLM que recuperó las imágenes</li>
+<li>Embebe las páginas de <code>reporte-financiero.pdf</code> renderizadas como imágenes</li>
+<li>Indexa los vectores en tu pgvector de la Lección 0 (nueva colección <code>acme_images</code>)</li>
+<li>Busca con 3 queries de texto y verifica que recupera la página correcta</li>
+<li>Pasa la imagen ganadora a un VLM para generar la respuesta</li>
 </ul>
 </div>
 
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 2: PDF como imágenes</div>
-<p>Construye un pipeline que:</p>
+<p>Construye un pipeline sobre <code>reporte-financiero.pdf</code> que:</p>
 <ul>
-<li>Renderice cada página de un PDF como imagen</li>
+<li>Renderice cada página del PDF como imagen (PyMuPDF, DPI >= 150)</li>
 <li>Embeba con ColPali o SigLIP</li>
 <li>Recupere las páginas más relevantes</li>
 <li>Pase las imágenes de página a GPT-4o para generar respuesta</li>
@@ -252,11 +285,11 @@ Una vez recuperada la evidencia multimodal, el generador debe ser un Vision-Lang
 
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Table extraction</div>
-<p>Extrae tablas de un PDF financiero:</p>
+<p>Extrae las tablas de <code>reporte-financiero.pdf</code>:</p>
 <ul>
 <li>Intenta con pdfplumber primero</li>
 <li>Si falla, usa Docling</li>
 <li>Para las 5% más difíciles, usa VLM extraction</li>
-<li>Almacena como Markdown + imagen de tabla</li>
+<li>Almacena como Markdown + imagen de tabla, e indexa el Markdown en <code>acme_docs</code> con la estrategia de la Lección 2</li>
 </ul>
 </div>

@@ -338,30 +338,4 @@ app = workflow.compile()
 <li>Max 10 tool calls por sesion</li>
 <li>Circuit breaker: si 3 tool calls consecutivos fallan, abortar</li>
 </ul>
-<p>## Verifica tu comprension</p>
-<p><p>1. Que patron de agente deberias usar como default?</p></p>
-<p>Multi-agent swarm</p>
-<p>Supervisor-worker</p>
-<p>ReAct (single-agent)</p>
-<p>Graph orchestration</p>
-<p><p>2. Que hace el Sufficient Context Agent de Google?</p></p>
-<p>Genera la respuesta final</p>
-<p>Identifica que informacion falta y da feedback especifico para re-buscar</p>
-<p>Califica documentos como relevant/irrelevant</p>
-<p>Decide que data source usar</p>
-<p><p>3. Que porcentaje de fallos en agentes viene de problemas de diseno, no del modelo?</p></p>
-<p>10%</p>
-<p>25%</p>
-<p>41.77%</p>
-<p>60%</p>
-<p><p>4. Que es "context poisoning"?</p></p>
-<p>El contexto es demasiado largo</p>
-<p>Un error entra al contexto y se usa como ground truth en pasos subsiguientes</p>
-<p>El agente elige el wrong tool</p>
-<p>Nueva info contradice info existente</p>
-<p><p>5. Cuando justificas multi-agent sobre single-agent?</p></p>
-<p>Siempre, es mas avanzado</p>
-<p>Cuando tienes mas de 3 tools</p>
-<p>Cuando midas un failure mode que un solo agente no pueda resolver</p>
-<p>Cuando el LLM es demasiado lento</p>
 </div>

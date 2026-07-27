@@ -365,30 +365,4 @@ El LLM extrae "IBM", "International Business Machines", "IBM Corp" como entidade
 <li>Graph traversal para relaciones multi-hop</li>
 <li>Merge de resultados con RRF</li>
 </ul>
-<p>## Verifica tu comprension</p>
-<p><p>1. Que tipo de pregunta resuelve Global Search que baseline RAG no puede?</p></p>
-<p>"Que es la relatividad?"</p>
-<p>"Cuales son los 5 temas principales del corpus?"</p>
-<p>"Quien descubrio la penicilina?"</p>
-<p>"Cual es la capital de Francia?"</p>
-<p><p>2. Que algoritmo usa GraphRAG para community detection?</p></p>
-<p>PageRank</p>
-<p>Leiden (clustering jerarquico)</p>
-<p>k-means</p>
-<p>DBSCAN</p>
-<p><p>3. Cuanto reduce Dynamic Community Selection el costo vs Global Search estatico?</p></p>
-<p>25%</p>
-<p>50%</p>
-<p>77%</p>
-<p>90%</p>
-<p><p>4. Que metodo de busqueda es el mas costoso?</p></p>
-<p>Basic Search</p>
-<p>Local Search</p>
-<p>Global Search</p>
-<p>DRIFT Search (global + multiples locals)</p>
-<p><p>5. Que es entity resolution y por que es critica?</p></p>
-<p>Extraer entidades del texto</p>
-<p>Fusionar variantes de la misma entidad (IBM, "International Business Machines")</p>
-<p>Eliminar entidades irrelevantes</p>
-<p>Asignar embeddings a entidades</p>
 </div>

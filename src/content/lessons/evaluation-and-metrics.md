@@ -346,30 +346,4 @@ Las 4 metricas core asumen que el indice es confiable. Ninguna mide si el conten
 <li>Retorna exit code != 0 si cualquier metrica falla</li>
 <li>Wire it a tu pipeline de deploy</li>
 </ul>
-<p>## Verifica tu comprension</p>
-<p><p>1. Cual es la metrica mas critica para detectar hallucinations en RAG?</p></p>
-<p>Answer Relevance</p>
-<p>Faithfulness</p>
-<p>Context Precision</p>
-<p>MRR</p>
-<p><p>2. Baja context precision indica un problema con...</p></p>
-<p>El LLM generator</p>
-<p>El retriever (chunks irrelevantes o demasiado grandes)</p>
-<p>La pregunta del usuario</p>
-<p>El embedding model</p>
-<p><p>3. Como mide RAGAS Answer Relevance sin ground truth?</p></p>
-<p>Compara con la respuesta de referencia</p>
-<p>Genera N preguntas desde la respuesta y mide similaridad con la pregunta original</p>
-<p>Usa cosine similarity entre respuesta y contexto</p>
-<p>Pide al LLM que de un score del 1 al 10</p>
-<p><p>4. Un sistema con faithfulness 0.95 puede dar respuestas incorrectas. Por que?</p></p>
-<p>Porque faithfulness no es una metrica confiable</p>
-<p>Porque el contexto recuperado puede estar obsoleto o ser incorrecto business-mente</p>
-<p>Porque el LLM hallucina de todas formas</p>
-<p>Porque faithfulness solo mide longitud de la respuesta</p>
-<p><p>5. Que porcentaje de alineacion con juicio humano deberia tener un juez LLM?</p></p>
-<p>50% (azar)</p>
-<p>70% (aceptable)</p>
-<p>&gt;85% (produccion)</p>
-<p>100% (necesario)</p>
 </div>

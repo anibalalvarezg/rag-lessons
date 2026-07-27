@@ -242,25 +242,4 @@ prompt="Responde usando SOLO el contexto proporcionado. Cita fuentes."
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Cadena completa</div>
 <p>Construye el pipeline completo: Query Rewrite -> Hybrid Search -> Rerank -> Generate. Mide latencia por etapa.</p>
-<p>## Verifica tu comprension</p>
-<p><p>1. Por que un reranker es mas preciso que un bi-encoder?</p></p>
-<p>Porque es un modelo mas grande</p>
-<p>Porque lee query y documento juntos con atencion completa</p>
-<p>Porque usa BM25 en lugar de embeddings</p>
-<p>Porque opera sobre todo el corpus</p>
-<p><p>2. Que arregla HyDE?</p></p>
-<p>Chunks mal divididos</p>
-<p>Gap de vocabulario entre la pregunta y los documentos</p>
-<p>Embeddings de baja calidad</p>
-<p>El LLM alucina informacion</p>
-<p><p>3. Cual es el orden correcto del pipeline de produccion?</p></p>
-<p>Retrieve -> Transform -> Rerank -> Generate</p>
-<p>Transform -> Retrieve -> Rerank -> Generate</p>
-<p>Rerank -> Retrieve -> Transform -> Generate</p>
-<p>Transform -> Rerank -> Retrieve -> Generate</p>
-<p><p>4. Cuando usar Query Decomposition?</p></p>
-<p>Siempre, mejora todo tipo de queries</p>
-<p>Solo con queries ambiguas</p>
-<p>Cuando la pregunta requiere informacion de multiples documentos</p>
-<p>Cuando el corpus es muy grande</p>
 </div>

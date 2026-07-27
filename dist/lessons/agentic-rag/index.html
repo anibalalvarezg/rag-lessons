@@ -429,32 +429,6 @@
 <li>Max 10 tool calls por sesion</li>
 <li>Circuit breaker: si 3 tool calls consecutivos fallan, abortar</li>
 </ul>
-<p>## Verifica tu comprension</p>
-<p><p>1. Que patron de agente deberias usar como default?</p></p>
-<p>Multi-agent swarm</p>
-<p>Supervisor-worker</p>
-<p>ReAct (single-agent)</p>
-<p>Graph orchestration</p>
-<p><p>2. Que hace el Sufficient Context Agent de Google?</p></p>
-<p>Genera la respuesta final</p>
-<p>Identifica que informacion falta y da feedback especifico para re-buscar</p>
-<p>Califica documentos como relevant/irrelevant</p>
-<p>Decide que data source usar</p>
-<p><p>3. Que porcentaje de fallos en agentes viene de problemas de diseno, no del modelo?</p></p>
-<p>10%</p>
-<p>25%</p>
-<p>41.77%</p>
-<p>60%</p>
-<p><p>4. Que es "context poisoning"?</p></p>
-<p>El contexto es demasiado largo</p>
-<p>Un error entra al contexto y se usa como ground truth en pasos subsiguientes</p>
-<p>El agente elige el wrong tool</p>
-<p>Nueva info contradice info existente</p>
-<p><p>5. Cuando justificas multi-agent sobre single-agent?</p></p>
-<p>Siempre, es mas avanzado</p>
-<p>Cuando tienes mas de 3 tools</p>
-<p>Cuando midas un failure mode que un solo agente no pueda resolver</p>
-<p>Cuando el LLM es demasiado lento</p>
 </div>
 <section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Que patron de agente deberias usar como default?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Multi-agent swarm</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Supervisor-worker</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">ReAct (single-agent)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Graph orchestration</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Que hace el Sufficient Context Agent de Google?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Genera la respuesta final</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Identifica que informacion falta y da feedback especifico para re-buscar</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Califica documentos como relevant/irrelevant</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Decide que data source usar</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Que porcentaje de fallos en agentes viene de problemas de diseno, no del modelo?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">10%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">25%</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">41.77%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">60%</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Que es &quot;context poisoning&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El contexto es demasiado largo</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Un error entra al contexto y se usa como ground truth en pasos subsiguientes</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El agente elige el wrong tool</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Nueva info contradice info existente</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">Cuando justificas multi-agent sobre single-agent?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, es mas avanzado</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando tienes mas de 3 tools</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando midas un failure mode que un solo agente no pueda resolver</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando el LLM es demasiado lento</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/evaluation-and-metrics">← Evaluación y Métricas</a><a href="/lessons/multimodal-rag">Multimodal RAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {

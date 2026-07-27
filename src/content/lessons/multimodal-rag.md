@@ -259,25 +259,4 @@ Una vez recuperada la evidencia multimodal, el generador debe ser un Vision-Lang
 <li>Para las 5% mas dificiles, usa VLM extraction</li>
 <li>Almacena como Markdown + imagen de tabla</li>
 </ul>
-<p>## Verifica tu comprension</p>
-<p><p>1. Por que ColPali supera a CLIP/SigLIP en document retrieval?</p></p>
-<p>Porque es un modelo mas grande</p>
-<p>Porque usa late interaction (multi-vector) que captura layout, charts, y texto a nivel de patch</p>
-<p>Porque fue entrenado en mas datos</p>
-<p>Porque usa OCR mejorado</p>
-<p><p>2. Que es "modality gap"?</p></p>
-<p>Diferencia de velocidad entre modalidades</p>
-<p>Inputs se agrupan por modalidad en vez de relevancia semantica en el espacio de embeddings</p>
-<p>Falta de modelos para una modalidad</p>
-<p>Diferencia de costo entre modalidades</p>
-<p><p>3. Cual es el patron de 3 niveles para extraer tablas de PDFs?</p></p>
-<p>OCR -> NER -> Embedding</p>
-<p>pdfplumber (rapido) -> Docling (neural) -> VLM (fallback)</p>
-<p>CLIP -> SigLIP -> ColPali</p>
-<p>Chunking -> Reranking -> Generation</p>
-<p><p>4. Cuando deberias empezar con text-only RAG en vez de multimodal?</p></p>
-<p>Nunca, multimodal siempre es mejor</p>
-<p>Cuando tu corpus es puro texto, las tablas son simples, o el presupuesto es limitado</p>
-<p>Solo para prototipos</p>
-<p>Cuando usas GraphRAG</p>
 </div>

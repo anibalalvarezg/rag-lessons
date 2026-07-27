@@ -364,32 +364,6 @@
 <li>Graph traversal para relaciones multi-hop</li>
 <li>Merge de resultados con RRF</li>
 </ul>
-<p>## Verifica tu comprension</p>
-<p><p>1. Que tipo de pregunta resuelve Global Search que baseline RAG no puede?</p></p>
-<p>"Que es la relatividad?"</p>
-<p>"Cuales son los 5 temas principales del corpus?"</p>
-<p>"Quien descubrio la penicilina?"</p>
-<p>"Cual es la capital de Francia?"</p>
-<p><p>2. Que algoritmo usa GraphRAG para community detection?</p></p>
-<p>PageRank</p>
-<p>Leiden (clustering jerarquico)</p>
-<p>k-means</p>
-<p>DBSCAN</p>
-<p><p>3. Cuanto reduce Dynamic Community Selection el costo vs Global Search estatico?</p></p>
-<p>25%</p>
-<p>50%</p>
-<p>77%</p>
-<p>90%</p>
-<p><p>4. Que metodo de busqueda es el mas costoso?</p></p>
-<p>Basic Search</p>
-<p>Local Search</p>
-<p>Global Search</p>
-<p>DRIFT Search (global + multiples locals)</p>
-<p><p>5. Que es entity resolution y por que es critica?</p></p>
-<p>Extraer entidades del texto</p>
-<p>Fusionar variantes de la misma entidad (IBM, "International Business Machines")</p>
-<p>Eliminar entidades irrelevantes</p>
-<p>Asignar embeddings a entidades</p>
 </div>
 <section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Que tipo de pregunta resuelve Global Search que baseline RAG no puede?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;Que es la relatividad?&quot;</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">&quot;Cuales son los 5 temas principales del corpus?&quot;</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;Quien descubrio la penicilina?&quot;</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">&quot;Cual es la capital de Francia?&quot;</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Que algoritmo usa GraphRAG para community detection?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">PageRank</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Leiden (clustering jerarquico)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">k-means</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">DBSCAN</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Cuanto reduce Dynamic Community Selection el costo vs Global Search estatico?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">25%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">50%</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">77%</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">90%</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Que metodo de busqueda es el mas costoso?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Basic Search</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Local Search</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Global Search</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">DRIFT Search (global + multiples locals)</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">Que es entity resolution y por que es critica?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Extraer entidades del texto</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Fusionar variantes de la misma entidad (IBM, &quot;International Business Machines&quot;)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Eliminar entidades irrelevantes</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Asignar embeddings a entidades</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/multimodal-rag">← Multimodal RAG</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {

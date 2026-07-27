@@ -236,27 +236,6 @@
 <div class="exercise">
 <div class="exercise-title">Ejercicio 3: Cadena completa</div>
 <p>Construye el pipeline completo: Query Rewrite -> Hybrid Search -> Rerank -> Generate. Mide latencia por etapa.</p>
-<p>## Verifica tu comprension</p>
-<p><p>1. Por que un reranker es mas preciso que un bi-encoder?</p></p>
-<p>Porque es un modelo mas grande</p>
-<p>Porque lee query y documento juntos con atencion completa</p>
-<p>Porque usa BM25 en lugar de embeddings</p>
-<p>Porque opera sobre todo el corpus</p>
-<p><p>2. Que arregla HyDE?</p></p>
-<p>Chunks mal divididos</p>
-<p>Gap de vocabulario entre la pregunta y los documentos</p>
-<p>Embeddings de baja calidad</p>
-<p>El LLM alucina informacion</p>
-<p><p>3. Cual es el orden correcto del pipeline de produccion?</p></p>
-<p>Retrieve -> Transform -> Rerank -> Generate</p>
-<p>Transform -> Retrieve -> Rerank -> Generate</p>
-<p>Rerank -> Retrieve -> Transform -> Generate</p>
-<p>Transform -> Rerank -> Retrieve -> Generate</p>
-<p><p>4. Cuando usar Query Decomposition?</p></p>
-<p>Siempre, mejora todo tipo de queries</p>
-<p>Solo con queries ambiguas</p>
-<p>Cuando la pregunta requiere informacion de multiples documentos</p>
-<p>Cuando el corpus es muy grande</p>
 </div>
 <section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Por que un reranker es mas preciso que un bi-encoder?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque es un modelo mas grande</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque lee query y documento juntos con atencion completa</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque usa BM25 en lugar de embeddings</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque opera sobre todo el corpus</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Que arregla HyDE?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Chunks mal divididos</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Gap de vocabulario entre la pregunta y los documentos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Embeddings de baja calidad</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El LLM alucina informacion</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Cual es el orden correcto del pipeline de produccion?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Retrieve -&gt; Transform -&gt; Rerank -&gt; Generate</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Transform -&gt; Retrieve -&gt; Rerank -&gt; Generate</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Rerank -&gt; Retrieve -&gt; Transform -&gt; Generate</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Transform -&gt; Rerank -&gt; Retrieve -&gt; Generate</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Cuando usar Query Decomposition?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, mejora todo tipo de queries</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo con queries ambiguas</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Cuando la pregunta requiere informacion de multiples documentos</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando el corpus es muy grande</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/embeddings-and-vector-stores">← Embeddings y Vector Stores</a><a href="/lessons/guardrails-and-hallucinations">Guardrails y Detección de Alucinaciones →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {

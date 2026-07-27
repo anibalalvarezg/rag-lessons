@@ -361,32 +361,6 @@
 <li>Retorna exit code != 0 si cualquier metrica falla</li>
 <li>Wire it a tu pipeline de deploy</li>
 </ul>
-<p>## Verifica tu comprension</p>
-<p><p>1. Cual es la metrica mas critica para detectar hallucinations en RAG?</p></p>
-<p>Answer Relevance</p>
-<p>Faithfulness</p>
-<p>Context Precision</p>
-<p>MRR</p>
-<p><p>2. Baja context precision indica un problema con...</p></p>
-<p>El LLM generator</p>
-<p>El retriever (chunks irrelevantes o demasiado grandes)</p>
-<p>La pregunta del usuario</p>
-<p>El embedding model</p>
-<p><p>3. Como mide RAGAS Answer Relevance sin ground truth?</p></p>
-<p>Compara con la respuesta de referencia</p>
-<p>Genera N preguntas desde la respuesta y mide similaridad con la pregunta original</p>
-<p>Usa cosine similarity entre respuesta y contexto</p>
-<p>Pide al LLM que de un score del 1 al 10</p>
-<p><p>4. Un sistema con faithfulness 0.95 puede dar respuestas incorrectas. Por que?</p></p>
-<p>Porque faithfulness no es una metrica confiable</p>
-<p>Porque el contexto recuperado puede estar obsoleto o ser incorrecto business-mente</p>
-<p>Porque el LLM hallucina de todas formas</p>
-<p>Porque faithfulness solo mide longitud de la respuesta</p>
-<p><p>5. Que porcentaje de alineacion con juicio humano deberia tener un juez LLM?</p></p>
-<p>50% (azar)</p>
-<p>70% (aceptable)</p>
-<p>&gt;85% (produccion)</p>
-<p>100% (necesario)</p>
 </div>
 <section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Cual es la metrica mas critica para detectar hallucinations en RAG?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Answer Relevance</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Faithfulness</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Context Precision</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">MRR</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Baja context precision indica un problema con...</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El LLM generator</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">El retriever (chunks irrelevantes o demasiado grandes)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">La pregunta del usuario</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El embedding model</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Como mide RAGAS Answer Relevance sin ground truth?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Compara con la respuesta de referencia</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Genera N preguntas desde la respuesta y mide similaridad con la pregunta original</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Usa cosine similarity entre respuesta y contexto</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Pide al LLM que de un score del 1 al 10</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Un sistema con faithfulness 0.95 puede dar respuestas incorrectas. Por que?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque faithfulness no es una metrica confiable</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque el contexto recuperado puede estar obsoleto o ser incorrecto business-mente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque el LLM hallucina de todas formas</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque faithfulness solo mide longitud de la respuesta</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">Que porcentaje de alineacion con juicio humano deberia tener un juez LLM?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">50% (azar)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">70% (aceptable)</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">&gt;85% (produccion)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">100% (necesario)</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/guardrails-and-hallucinations">← Guardrails y Detección de Alucinaciones</a><a href="/lessons/agentic-rag">Agentic RAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {

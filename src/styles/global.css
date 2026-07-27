@@ -39,6 +39,7 @@
   --sp-2: 0.5rem;
   --sp-3: 0.75rem;
   --sp-4: 1rem;
+  --sp-5: 1.25rem;
   --sp-6: 1.5rem;
   --sp-8: 2rem;
   --sp-12: 3rem;
@@ -173,6 +174,7 @@ body {
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
+  transition: transform 0.3s ease-out;
   background: oklch(from var(--bg) l c h / 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -185,6 +187,10 @@ body {
   color: var(--text);
   text-decoration: none;
   letter-spacing: -0.01em;
+}
+
+.site-header.hidden {
+  transform: translateY(-100%);
 }
 
 .site-header .masthead:hover { color: var(--anchor); }
@@ -501,7 +507,11 @@ article p { margin-bottom: var(--sp-4); }
 article strong { font-weight: 700; color: var(--text); }
 
 /* Links in article text */
-article p a {
+article a {
+  color: var(--anchor-dark);
+}
+
+article p a, article li a, article td a, article .callout a {
   text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
@@ -509,7 +519,7 @@ article p a {
   transition: text-decoration-color 150ms ease-out;
 }
 
-article p a:hover {
+article p a:hover, article li a:hover, article td a:hover, article .callout a:hover {
   text-decoration-color: var(--anchor-dark);
 }
 
@@ -534,6 +544,20 @@ pre {
 }
 
 pre code { background: none; padding: 0; color: var(--text); }
+
+/* Override Shiki inline background in dark mode — foreground uses --shiki-dark via color-scheme */
+:root[data-theme="dark"] { color-scheme: dark; }
+:root[data-theme="dark"] pre.astro-code {
+  background-color: var(--code-bg) !important;
+}
+:root:not([data-theme]) {
+  @media (prefers-color-scheme: dark) {
+    & { color-scheme: dark; }
+    & pre.astro-code {
+      background-color: var(--code-bg) !important;
+    }
+  }
+}
 
 /* Callouts */
 .callout {

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Guardrails y Hallucinations: Cuando confiar y cuando abstenerse — RAG Production</title><meta name="description" content="Taxonomía de alucinaciones (3 tipos: Type I, II, III), 4 señales de detección, HALO, 41.77% fallas de agentes."><meta name="keywords" content="guardrails, alucinaciones, hallucination detection, HALO, MAST, RAG safety"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:type" content="article"><meta property="og:title" content="Guardrails y Hallucinations: Cuando confiar y cuando abstenerse — RAG Production"><meta property="og:description" content="Taxonomía de alucinaciones (3 tipos: Type I, II, III), 4 señales de detección, HALO, 41.77% fallas de agentes."><meta property="og:url" content="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="RAGOps"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Guardrails y Hallucinations: Cuando confiar y cuando abstenerse — RAG Production"><meta name="twitter:description" content="Taxonomía de alucinaciones (3 tipos: Type I, II, III), 4 señales de detección, HALO, 41.77% fallas de agentes."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/rag-lessons/_astro/BaseLayout.CO1NMu_x.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/rag-lessons" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/rag-lessons#pilar-1">Fundamentos</a><a href="/rag-lessons#pilar-2">Ingesta</a><a href="/rag-lessons#pilar-3">Recuperación</a><a href="/rag-lessons#pilar-4">Agentic &amp; GraphRAG</a><a href="/rag-lessons#pilar-5">RAGOps</a><a href="/rag-lessonsreference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Guardrails y Detección de Alucinaciones — RAG Production</title><meta name="description" content="Taxonomía de alucinaciones (3 tipos), 4 señales de detección, HALO, 41.77% fallas de agentes."><meta name="keywords" content="guardrails, hallucinations, alucinaciones, HALO, factuality, faithfulness"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://rag-lessons.netlify.app/lessons/guardrails-and-hallucinations/"><meta property="og:type" content="article"><meta property="og:title" content="Guardrails y Detección de Alucinaciones — RAG Production"><meta property="og:description" content="Taxonomía de alucinaciones (3 tipos), 4 señales de detección, HALO, 41.77% fallas de agentes."><meta property="og:url" content="https://rag-lessons.netlify.app/lessons/guardrails-and-hallucinations/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="RAGOps y Evaluación"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Guardrails y Detección de Alucinaciones — RAG Production"><meta name="twitter:description" content="Taxonomía de alucinaciones (3 tipos), 4 señales de detección, HALO, 41.77% fallas de agentes."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/_astro/BaseLayout.w6ndjUYT.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/#pilar-1">Fundamentos</a><a href="/#pilar-2">Ingesta</a><a href="/#pilar-3">Recuperación</a><a href="/#pilar-4">Agentic &amp; GraphRAG</a><a href="/#pilar-5">RAGOps</a><a href="/reference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
   (function() {
     const stored = localStorage.getItem('theme');
     const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
@@ -12,11 +12,23 @@
     html.dataset.theme = next;
     localStorage.setItem('theme', next);
   });
-</script><article id="content"><header><h1>Guardrails y Hallucinations: Cuando confiar y cuando abstenerse</h1><p class="subtitle">Lección 5 — Pilar 4: RAGOps</p></header><p>import Callout from ‘../../components/Callout.astro’;
-import Exercise from ‘../../components/Exercise.astro’;</p>
+</script><script>
+  (function() {
+    let lastY = 0;
+    const header = document.querySelector('.site-header');
+    if (!header) return;
+    window.addEventListener('scroll', function() {
+      var y = window.scrollY;
+      if (y > lastY && y > 80) header.classList.add('hidden');
+      else header.classList.remove('hidden');
+      lastY = y;
+    }, { passive: true });
+  })();
+</script><main id="content"><article><header><h1>Guardrails y Detección de Alucinaciones</h1><p class="subtitle">Lección 5 — RAGOps y Evaluación</p></header><h2 id="objetivo">Objetivo</h2>
+<p>Al finalizar, sabras como clasificar hallucinations en 3 tipos, implementar guardrails de entrada/salida, y construir un pipeline de deteccion que combine multiples senales baratas para decidir si confiar, abstenerse o escalar.</p>
 <h2 id="taxonomia-de-hallucinations-3-tipos-3-firmas">Taxonomia de hallucinations: 3 tipos, 3 firmas</h2>
-<p>No todas las hallucinations son iguales. La taxonomy de Marin (2026) identifica 3 tipos con firmas geometricas distintas:
-<small>Fuente: arXiv:2602.13224 — Marin et al., “Hallucination Taxonomy for RAG” (2026)</small></p>
+<p>No todas las hallucinations son iguales. La taxonomy de Marin (2026) identifica 3 tipos con firmas geometricas distintas:</p>
+<p><small>Fuente: <a href="https://arxiv.org/abs/2602.13224">arXiv:2602.13224 — Marin et al., “Hallucination Taxonomy for RAG” (2026)</a></small></p>
 <table>
 <thead>
 <tr>
@@ -32,90 +44,112 @@ import Exercise from ‘../../components/Exercise.astro’;</p>
 <td><strong>Tip I</strong></td>
 <td>Unfaithfulness (query-proximate)</td>
 <td>El modelo ignora el contexto recuperado y genera desde memoria parametrica</td>
-<td>SI — SGI (AUC 0.80-0.95)</td>
+<td>SI SGI (AUC 0.80-0.95)</td>
 <td>El usuario pregunta sobre el contrato X, el LLM responde con informacion generica del dominio ignorando los chunks</td>
 </tr>
 <tr>
 <td><strong>Tip II</strong></td>
 <td>Confabulation</td>
 <td>El modelo inventa contenido que cae fuera de la region de plausibilidad</td>
-<td>SI — DGI (AUC 0.85-0.99)</td>
+<td>SI DGI (AUC 0.85-0.99)</td>
 <td>Pregunta sobre CRISPR, el LLM describe “protein-folding correction” en lugar de DNA cleavage</td>
 </tr>
 <tr>
 <td><strong>Tip III</strong></td>
 <td>Factual error within frame</td>
 <td>Error factual dentro del marco conceptual correcto</td>
-<td>NO — geometricamente invisible</td>
+<td>NO geometricamente invisible</td>
 <td>“El sol causa estaciones por su distancia” vs “por inclinacion del eje” — misma region del espacio de embeddings</td>
 </tr>
 </tbody>
 </table>
-<Callout type="warning" title="La ilusion semantica">
-Los embeddings capturan semantica superficial (vocabulario, topicalidad) pero NO capturan verdad. Dos afirmaciones sobre el mismo tema ocupan la misma region del espacio de embeddings, sean correctas o no. Los metodos basados en embeddings fallan 100% en HaluEval y 88% en RAGTruth contra modelos RLHF. Solo el razonamiento (LLM-as-judge) puede detectar Tipo III.
-</Callout>
+<div class="callout warning">
+<div class="callout-title">La ilusion semantica</div>
+<p>Los embeddings capturan semantica superficial (vocabulario, topicalidad) pero NO capturan verdad. Dos afirmaciones sobre el mismo tema ocupan la misma region del espacio de embeddings, sean correctas o no. Los metodos basados en embeddings fallan 100% en HaluEval y 88% en RAGTruth contra modelos RLHF. Solo el razonamiento (LLM-as-judge) puede detectar Tipo III.</p>
+</div>
 <h2 id="guardrails-defensa-en-capas">Guardrails: Defensa en capas</h2>
 <p>Un guardrail es un control estructurado que valida input y output en cada etapa del pipeline. No es un solo check — es un funnel de multiples senales.</p>
 <h3 id="1-input-guardrails-antes-del-retrieval">1. Input Guardrails (antes del retrieval)</h3>
 <ul>
-<li><strong>Validacion de schema:</strong> Verifica que el input del usuario sea del tipo esperado (formato, longitud, campos requeridos)</li>
-<li><strong>Deteccion de prompt injection:</strong> Patron de regex + LLM classifier para detectar intentos de override</li>
-<li><strong>Clasificacion de dominio:</strong> Redirige queries fuera del ambito del sistema</li>
-<li><strong>Filtros de PII:</strong> Detecta y redacta datos sensibles antes de procesar</li>
+<li>
+<p><strong>Validacion de schema:</strong> Verifica que el input del usuario sea del tipo esperado (formato, longitud, campos requeridos)</p>
+</li>
+<li>
+<p><strong>Deteccion de prompt injection:</strong> Patron de regex + LLM classifier para detectar intentos de override</p>
+</li>
+<li>
+<p><strong>Clasificacion de dominio:</strong> Redirige queries fuera del ambito del sistema</p>
+</li>
+<li>
+<p><strong>Filtros de PII:</strong> Detecta y redacta datos sensibles antes de procesar</p>
+</li>
 </ul>
 <h3 id="2-retrieval-guardrails-durante-la-busqueda">2. Retrieval Guardrails (durante la busqueda)</h3>
 <ul>
-<li><strong>Relevance threshold:</strong> No pasar al LLM chunks con score bajo un umbral</li>
-<li><strong>Metadata filters:</strong> RBAC — solo acceder a fuentes autorizadas para el usuario</li>
-<li><strong>Deduplicacion:</strong> Evitar que el contexto contenga informacion contradictoria</li>
+<li>
+<p><strong>Relevance threshold:</strong> No pasar al LLM chunks con score bajo un umbral</p>
+</li>
+<li>
+<p><strong>Metadata filters:</strong> RBAC — solo acceder a fuentes autorizadas para el usuario</p>
+</li>
+<li>
+<p><strong>Deduplicacion:</strong> Evitar que el contexto contenga informacion contradictoria</p>
+</li>
 </ul>
 <h3 id="3-output-guardrails-despues-de-la-generacion">3. Output Guardrails (despues de la generacion)</h3>
 <p>Aqui es donde ocurre la deteccion de hallucinations. El patron practico es un funnel de coste:</p>
-<Callout type="info" title="El funnel de deteccion">
-Ejecuta el signal barato en TODAS las requests. Solo ejecuta el check caro cuando el signal barato detecta ruido o el request es high-stakes.
-</Callout>
+<div class="callout info">
+<div class="callout-title">El funnel de deteccion</div>
+<p>Ejecuta el signal barato en TODAS las requests. Solo ejecuta el check caro cuando el signal barato detecta ruido o el request es high-stakes.</p>
+</div>
 <h2 id="signal-1-grounding-check-el-mas-fuerte-en-rag">Signal 1: Grounding Check (el mas fuerte en RAG)</h2>
 <p>Dado que en RAG siempre tienes el contexto recuperado, la verificacion mas poderosa es simple: <strong>cada afirmacion de la respuesta esta soportada por los chunks recuperados?</strong></p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Flujo de grounding check</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Descomponer respuesta en afirmaciones atomicas</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">claims </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> extract_claims(response)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># ["El timeout default es 30 segundos",</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#  "Se configura en settings.yaml",</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#  "El campo se llama network.timeout"]</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Verificar cada afirmacion contra el contexto</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> claim </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> claims:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    verdict </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> judge_model.verify(</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">        claim</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">claim,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">        context</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">retrieved_chunks,</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # Retorna: supported | unsupported | contradicted</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    )</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> verdict </span><span style="color:#D73A49;--shiki-dark:#F97583">!=</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "supported"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        flag(claim, verdict)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Decidir accion basado en % de afirmaciones soportadas</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Flujo de grounding check</span></span>
+<span class="line"><span># 1. Descomponer respuesta en afirmaciones atomicas</span></span>
+<span class="line"><span>claims = extract_claims(response)</span></span>
+<span class="line"><span># ["El timeout default es 30 segundos",</span></span>
+<span class="line"><span>#  "Se configura en settings.yaml",</span></span>
+<span class="line"><span>#  "El campo se llama network.timeout"]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 2. Verificar cada afirmacion contra el contexto</span></span>
+<span class="line"><span>for claim in claims:</span></span>
+<span class="line"><span>verdict = judge_model.verify(</span></span>
+<span class="line"><span>claim=claim,</span></span>
+<span class="line"><span>context=retrieved_chunks,</span></span>
+<span class="line"><span># Retorna: supported | unsupported | contradicted</span></span>
+<span class="line"><span>)</span></span>
+<span class="line"><span>if verdict != "supported":</span></span>
+<span class="line"><span>flag(claim, verdict)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 3. Decidir accion basado en % de afirmaciones soportadas</span></span></code></pre>
 <ul>
-<li><strong>Implementacion:</strong> LLM-as-judge pasando contexto + respuesta + instrucciones de verificacion</li>
-<li><strong>Costo:</strong> +1 LLM call (~200-600ms)</li>
-<li><strong>Limitacion:</strong> El juez tambien puede hallucinar. Mantener el check enfocado (una afirmacion a la vez, output estructurado)</li>
+<li>
+<p><strong>Implementacion:</strong> LLM-as-judge pasando contexto + respuesta + instrucciones de verificacion</p>
+</li>
+<li>
+<p><strong>Costo:</strong> +1 LLM call (~200-600ms)</p>
+</li>
+<li>
+<p><strong>Limitacion:</strong> El juez tambien puede hallucinar. Mantener el check enfocado (una afirmacion a la vez, output estructurado)</p>
+</li>
 </ul>
 <h2 id="signal-2-semantic-grounding-index-sgi">Signal 2: Semantic Grounding Index (SGI)</h2>
-<p>Mide si la respuesta se movio hacia el contexto o se quedo cerca de la pregunta. Basado en geometria angular en el hiperesfera unitario.
-<small>Fuente: arXiv:2512.13771 — Semantic Grounding Index (SGI) Paper</small></p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># SGI = theta(response, question) / theta(response, context)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># SGI &gt; 1: respuesta cerca del contexto (grounded) -&gt; PASS</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># SGI &lt; 1: respuesta cerca de la pregunta (potentially hallucinated) -&gt; FLAG</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> groundlens </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> compute_sgi</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">result </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> compute_sgi(</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    question</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"Como configurar el timeout?"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    context</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"El timeout se configura en settings.yaml bajo network.timeout..."</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    response</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"El timeout se configura en settings.yaml con un valor de 30s."</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    model</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"all-MiniLM-L6-v2"</span><span style="color:#6A737D;--shiki-dark:#6A737D">  # rapido, barato</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># result.value = 1.35 -&gt; PASS</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># result.flagged = False</span></span></code></pre>
+<p>Mide si la respuesta se movio hacia el contexto o se quedo cerca de la pregunta. Basado en geometria angular en el hiperesfera unitario.</p>
+<p><small>Fuente: <a href="https://arxiv.org/abs/2512.13771">arXiv:2512.13771 — Semantic Grounding Index (SGI) Paper</a></small></p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># SGI = theta(response, question) / theta(response, context)</span></span>
+<span class="line"><span># SGI &gt; 1: respuesta cerca del contexto (grounded) -&gt; PASS</span></span>
+<span class="line"><span># SGI &lt; 1: respuesta cerca de la pregunta (potentially hallucinated) -&gt; FLAG</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>from groundlens import compute_sgi</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>result = compute_sgi(</span></span>
+<span class="line"><span>question="Como configurar el timeout?",</span></span>
+<span class="line"><span>context="El timeout se configura en settings.yaml bajo network.timeout...",</span></span>
+<span class="line"><span>response="El timeout se configura en settings.yaml con un valor de 30s.",</span></span>
+<span class="line"><span>model="all-MiniLM-L6-v2"  # rapido, barato</span></span>
+<span class="line"><span>)</span></span>
+<span class="line"><span># result.value = 1.35 -&gt; PASS</span></span>
+<span class="line"><span># result.flagged = False</span></span></code></pre>
 <table>
 <thead>
 <tr>
@@ -143,22 +177,30 @@ Ejecuta el signal barato en TODAS las requests. Solo ejecuta el check caro cuand
 </tbody>
 </table>
 <ul>
-<li><strong>Ventaja:</strong> Single embedding call, ~10ms, zero LLM cost</li>
-<li><strong>Limitacion:</strong> Detecta Tipo I (unfaithfulness) pero NO Tipo III (factual errors within frame). No mide correctness, solo engagement con el contexto</li>
+<li>
+<p><strong>Ventaja:</strong> Single embedding call, ~10ms, zero LLM cost</p>
+</li>
+<li>
+<p><strong>Limitacion:</strong> Detecta Tipo I (unfaithfulness) pero NO Tipo III (factual errors within frame). No mide correctness, solo engagement con el contexto</p>
+</li>
 </ul>
 <h2 id="signal-3-self-consistency-para-queries-sin-contexto">Signal 3: Self-Consistency (para queries sin contexto)</h2>
 <p>Cuando no hay contexto para verificar contra, genera N respuestas con temperature &gt; 0 y compara. Los hechos reales son consistentes entre muestras; los inventados varian.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Generar 3 muestras con temperature=0.7</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">samples </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [llm.generate(query, </span><span style="color:#E36209;--shiki-dark:#FFAB70">temp</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0.7</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> _ </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> range</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">3</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)]</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Comparar hechos clave entre muestras</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">consistency </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> compare_facts(samples)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Alta consistencia -&gt; probablemente correcto</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Baja consistencia -&gt; probablemente hallucination</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Generar 3 muestras con temperature=0.7</span></span>
+<span class="line"><span>samples = [llm.generate(query, temp=0.7) for _ in range(3)]</span></span>
+<span class="line"><span># Comparar hechos clave entre muestras</span></span>
+<span class="line"><span>consistency = compare_facts(samples)</span></span>
+<span class="line"><span># Alta consistencia -&gt; probablemente correcto</span></span>
+<span class="line"><span># Baja consistencia -&gt; probablemente hallucination</span></span></code></pre>
 <h2 id="signal-4-token-confidence-signal-barato-ruidoso">Signal 4: Token Confidence (signal barato, ruidoso)</h2>
 <p>Los log-probabilities de tokens indican incertidumbre del modelo. Tokens con baja probabilidad frecuentemente coinciden con spans fabricados.</p>
 <ul>
-<li><strong>Ventaja:</strong> Gratis si el modelo expose logprobs</li>
-<li><strong>Limitacion:</strong> Noisy — un modelo puede ser confidentemente incorrecto. Usar como pre-filter, nunca como unico gate</li>
+<li>
+<p><strong>Ventaja:</strong> Gratis si el modelo expose logprobs</p>
+</li>
+<li>
+<p><strong>Limitacion:</strong> Noisy — un modelo puede ser confidentemente incorrecto. Usar como pre-filter, nunca como unico gate</p>
+</li>
 </ul>
 <h2 id="estrategias-de-respuesta-que-hacer-cuando-detectas-una-hallucination">Estrategias de respuesta: Que hacer cuando detectas una hallucination</h2>
 <table>
@@ -247,73 +289,101 @@ Ejecuta el signal barato en TODAS las requests. Solo ejecuta el check caro cuand
 </tbody>
 </table>
 <h2 id="pipeline-completo-de-guardrails-en-produccion">Pipeline completo de guardrails en produccion</h2>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># HALO-inspired architecture (6 capas)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Ref: arxiv.org/abs/2607.17883</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">class</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> RAGGuardrails</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> process</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(self, query, user_context):</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 1: Input validation</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        query </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.validate_input(query)  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># schema, injection, PII</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> query.rejected: </span><span style="color:#D73A49;--shiki-dark:#F97583">return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.abstain(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"Invalid input"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 2: Grounded retrieval</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        chunks </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.retrieve(query, user_context.rbac)</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#D73A49;--shiki-dark:#F97583"> not</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> chunks: </span><span style="color:#D73A49;--shiki-dark:#F97583">return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.abstain(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"No relevant context"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 3: Generation</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        response </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.generate(query, chunks)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 4: Multi-signal verification</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        signals </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">            "sgi"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: compute_sgi(query, chunks, response),        </span><span style="color:#6A737D;--shiki-dark:#6A737D"># ~10ms</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">            "grounding"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.grounding_check(query, chunks, response),  </span><span style="color:#6A737D;--shiki-dark:#6A737D"># ~400ms</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">            "confidence"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.token_confidence(response),       </span><span style="color:#6A737D;--shiki-dark:#6A737D"># free</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        }</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 5: Decision funnel</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        risk </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.assess_risk(signals, query.stakes)</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> risk </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "high"</span><span style="color:#D73A49;--shiki-dark:#F97583"> and</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> signals[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"grounding"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">].unsupported </span><span style="color:#D73A49;--shiki-dark:#F97583">&gt;</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 0.2</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">            return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.retry_or_abstain(query, chunks)</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        elif</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> risk </span><span style="color:#D73A49;--shiki-dark:#F97583">==</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> "medium"</span><span style="color:#D73A49;--shiki-dark:#F97583"> and</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> signals[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"sgi"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">].flagged:</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">            return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.add_disclaimer(response)</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        else</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">            return</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.accept(response)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">        # CAPA 6: Logging + continuous oversight</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">        self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.log(query, response, signals, decision)</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">        self</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.monitor_drift(signals)</span></span></code></pre>
-<Callout type="success" title="El principio fundamental">
-"Zero hallucination" no es una propiedad del modelo — es una propiedad del sistema. Los LLMs son, por construccion, capaces de generar texto no soportado. Ninguna cantidad de escala elimina esta posibilidad. El sistema debe contener la falla, no eliminarla.
-</Callout>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># HALO-inspired architecture (6 capas)</span></span>
+<span class="line"><span># Ref: arxiv.org/abs/2607.17883</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>class RAGGuardrails:</span></span>
+<span class="line"><span>def process(self, query, user_context):</span></span>
+<span class="line"><span># CAPA 1: Input validation</span></span>
+<span class="line"><span>query = self.validate_input(query)  # schema, injection, PII</span></span>
+<span class="line"><span>if query.rejected: return self.abstain("Invalid input")</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># CAPA 2: Grounded retrieval</span></span>
+<span class="line"><span>chunks = self.retrieve(query, user_context.rbac)</span></span>
+<span class="line"><span>if not chunks: return self.abstain("No relevant context")</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># CAPA 3: Generation</span></span>
+<span class="line"><span>response = self.generate(query, chunks)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># CAPA 4: Multi-signal verification</span></span>
+<span class="line"><span>signals = {</span></span>
+<span class="line"><span>"sgi": compute_sgi(query, chunks, response),        # ~10ms</span></span>
+<span class="line"><span>"grounding": self.grounding_check(query, chunks, response),  # ~400ms</span></span>
+<span class="line"><span>"confidence": self.token_confidence(response),       # free</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># CAPA 5: Decision funnel</span></span>
+<span class="line"><span>risk = self.assess_risk(signals, query.stakes)</span></span>
+<span class="line"><span>if risk == "high" and signals["grounding"].unsupported &gt; 0.2:</span></span>
+<span class="line"><span>return self.retry_or_abstain(query, chunks)</span></span>
+<span class="line"><span>elif risk == "medium" and signals["sgi"].flagged:</span></span>
+<span class="line"><span>return self.add_disclaimer(response)</span></span>
+<span class="line"><span>else:</span></span>
+<span class="line"><span>return self.accept(response)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># CAPA 6: Logging + continuous oversight</span></span>
+<span class="line"><span>self.log(query, response, signals, decision)</span></span>
+<span class="line"><span>self.monitor_drift(signals)</span></span></code></pre>
+<div class="callout success">
+<div class="callout-title">El principio fundamental</div>
+<p>"Zero hallucination" no es una propiedad del modelo — es una propiedad del sistema. Los LLMs son, por construccion, capaces de generar texto no soportado. Ninguna cantidad de escala elimina esta posibilidad. El sistema debe contener la falla, no eliminarla.</p>
+</div>
 <h2 id="practica">Practica</h2>
-<Exercise title="Ejercicio 1: Grounding check">
-Usando el pipeline del Capitulo 1, implementa un grounding check que:
+<div class="exercise">
+<div class="exercise-title">Ejercicio 1: Grounding check</div>
+<p>Usando el pipeline del Capitulo 1, implementa un grounding check que:</p>
 <ul>
 <li>Descomponga la respuesta en afirmaciones atomicas</li>
 <li>Verifique cada una contra los chunks recuperados</li>
-<li>Reporte % de afirmaciones soportadas vs no soportadas
-</Exercise>
-</li>
+<li>Reporte % de afirmaciones soportadas vs no soportadas</li>
 </ul>
-<Exercise title="Ejercicio 2: SGI como pre-filter">
-Instala `groundlens` y usa SGI como filtro rapido antes del grounding check completo:
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 2: SGI como pre-filter</div>
+<p>Instala <code>groundlens</code> y usa SGI como filtro rapido antes del grounding check completo:</p>
 <ul>
-<li>SGI &gt;= 1.20: aceptar directo (sin LLM call extra)</li>
-<li>0.95 &lt;= SGI &lt; 1.20: ejecutar grounding check completo</li>
-<li>SGI &lt; 0.95: abstenerse o re-retrieve
-</Exercise>
-</li>
+<li>SGI >= 1.20: aceptar directo (sin LLM call extra)</li>
+<li>0.95 <= SGI < 1.20: ejecutar grounding check completo</li>
+<li>SGI < 0.95: abstenerse o re-retrieve</li>
 </ul>
-<Exercise title="Ejercicio 3: Taxonomia en accion">
-Genera 3 tipos de hallucination intencionales:
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 3: Taxonomia en accion</div>
+<p>Genera 3 tipos de hallucination intencionales:</p>
 <ul>
 <li>Tipo I: Ignora el contexto y responde de memoria</li>
 <li>Tipo II: Inventa un concepto que no existe en el corpus</li>
-<li>Tipo III: Cambia un dato numerico (30s -&gt; 60s) pero mantiene el marco</li>
+<li>Tipo III: Cambia un dato numerico (30s -> 60s) pero mantiene el marco</li>
 </ul>
-<p>Mide que senales detectan cada tipo. Confirma que Tipo III escapa a SGI y embeddings.
-</Exercise></p>
-<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Qué tipo de hallucination NO es detectable por metodos geometricos/embeddings?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Tipo I: Unfaithfulness</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Tipo II: Confabulation</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Tipo III: Factual error within frame</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Todos son detectables</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Cuál es el signal de deteccion MAS fuerte en RAG?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Token confidence scores</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Grounding check (verificar cada claim contra el contexto)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Self-consistency con multi-sampling</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cosine similarity entre respuesta y contexto</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Por qué los metodos basados en embeddings fallan contra modelos RLHF?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque los embeddings son de baja calidad</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque RLHF cambia el espacio de embeddings</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque RLHF produce hallucinations semanticamente plausibles que preservan similaridad con la fuente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque los embeddings no soportan texto largo</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">En el funnel de deteccion, que senal se ejecuta en TODAS las requests?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Grounding check completo (LLM-as-judge)</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Signal barato (SGI, token confidence) como pre-filter</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Self-consistency con 3 muestras</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Ninguna, solo en high-stakes</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">¿Qué es &#39;semantic laziness&#39;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El modelo responde muy lento</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Las hallucinations se quedan angularmente cerca de la pregunta en vez de moverse hacia el contexto</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El embedding model es demasiado simple</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El retrieval retorna chunks irrelevantes</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/rag-lessonslessons/hybrid-retrieval-and-reranking">← Hybrid Retrieval y Reranking: La capa que separa un demo de produccion</a><a href="/rag-lessonslessons/evaluation-and-metrics">Evaluacion y Metricas: Como saber si tu RAG realmente funciona →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+<p>Mide que senales detectan cada tipo. Confirma que Tipo III escapa a SGI y embeddings.</p>
+<p>## Verifica tu comprension</p>
+<p><p>1. Que tipo de hallucination NO es detectable por metodos geometricos/embeddings?</p></p>
+<p>Tipo I: Unfaithfulness</p>
+<p>Tipo II: Confabulation</p>
+<p>Tipo III: Factual error within frame</p>
+<p>Todos son detectables</p>
+<p><p>2. Cual es el signal de deteccion MAS fuerte en RAG?</p></p>
+<p>Token confidence scores</p>
+<p>Grounding check (verificar cada claim contra el contexto)</p>
+<p>Self-consistency con multi-sampling</p>
+<p>Cosine similarity entre respuesta y contexto</p>
+<p><p>3. Por que los metodos basados en embeddings fallan contra modelos RLHF?</p></p>
+<p>Porque los embeddings son de baja calidad</p>
+<p>Porque RLHF cambia el espacio de embeddings</p>
+<p>Porque RLHF produce hallucinations semanticamente plausibles que preservan similaridad con la fuente</p>
+<p>Porque los embeddings no soportan texto largo</p>
+<p><p>4. En el funnel de deteccion, que senal se ejecuta en TODAS las requests?</p></p>
+<p>Grounding check completo (LLM-as-judge)</p>
+<p>Signal barato (SGI, token confidence) como pre-filter</p>
+<p>Self-consistency con 3 muestras</p>
+<p>Ninguna, solo en high-stakes</p>
+<p><p>5. Que es "semantic laziness"?</p></p>
+<p>El modelo responde muy lento</p>
+<p>Las hallucinations se quedan angularmente cerca de la pregunta en vez de moverse hacia el contexto</p>
+<p>El embedding model es demasiado simple</p>
+<p>El retrieval retorna chunks irrelevantes</p>
+</div>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Que tipo de hallucination NO es detectable por metodos geometricos/embeddings?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Tipo I: Unfaithfulness</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Tipo II: Confabulation</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Tipo III: Factual error within frame</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Todos son detectables</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Cual es el signal de deteccion MAS fuerte en RAG?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Token confidence scores</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Grounding check (verificar cada claim contra el contexto)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Self-consistency con multi-sampling</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cosine similarity entre respuesta y contexto</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Por que los metodos basados en embeddings fallan contra modelos RLHF?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque los embeddings son de baja calidad</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque RLHF cambia el espacio de embeddings</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque RLHF produce hallucinations semanticamente plausibles que preservan similaridad con la fuente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque los embeddings no soportan texto largo</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">En el funnel de deteccion, que senal se ejecuta en TODAS las requests?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Grounding check completo (LLM-as-judge)</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Signal barato (SGI, token confidence) como pre-filter</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Self-consistency con 3 muestras</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Ninguna, solo en high-stakes</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">Que es &quot;semantic laziness&quot;?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El modelo responde muy lento</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Las hallucinations se quedan angularmente cerca de la pregunta en vez de moverse hacia el contexto</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El embedding model es demasiado simple</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El retrieval retorna chunks irrelevantes</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/hybrid-retrieval-and-reranking">← Hybrid Retrieval y Reranking</a><a href="/lessons/evaluation-and-metrics">Evaluación y Métricas →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {
     const btn = document.querySelector('.back-to-top');
     if (!btn) return;

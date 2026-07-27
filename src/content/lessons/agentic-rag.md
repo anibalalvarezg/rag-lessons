@@ -1,16 +1,17 @@
 ---
-title: "Agentic RAG: Cuando el retrieval piensa, actua y se autocorrige"
-subtitle: "Lección 7 — Pilar 3: Agentic RAG y GraphRAG"
+title: "Agentic RAG"
+subtitle: "Lección 7 — Agentic RAG y GraphRAG"
 pillar: agentic
-pillarName: "Agentic"
+pillarName: "Agentic RAG y GraphRAG"
 lessonNum: 7
-description: "ReAct, Self-Corrective RAG, MA-RAG, 8 patrones de arquitectura, 5-agentes Google (+34% factuality), Sufficient Context Agent."
-keywords: "agentic RAG, ReAct, self-corrective RAG, MA-RAG, multi-agent, Google Sufficient Context"
-ogSection: "RAGOps"
+description: "ReAct, Self-Corrective RAG, MA-RAG, 8 patrones de arquitectura, 5-agentes Google (+34% factuality)."
+keywords: "agentic RAG, ReAct, Self-Correcting, MA-RAG, tool use"
+ogSection: "Agentic RAG y GraphRAG"
 pubDate: "2026-07-24"
 quizzes:
+
   - id: "q1"
-    question: "¿Qué patron de agente deberias usar como default?"
+    question: "Que patron de agente deberias usar como default?"
     options:
       - text: "Multi-agent swarm"
         correct: false
@@ -21,7 +22,7 @@ quizzes:
       - text: "Graph orchestration"
         correct: false
   - id: "q2"
-    question: "¿Qué hace el Sufficient Context Agent de Google?"
+    question: "Que hace el Sufficient Context Agent de Google?"
     options:
       - text: "Genera la respuesta final"
         correct: false
@@ -32,7 +33,7 @@ quizzes:
       - text: "Decide que data source usar"
         correct: false
   - id: "q3"
-    question: "¿Qué porcentaje de fallos en agentes viene de problemas de diseno, no del modelo?"
+    question: "Que porcentaje de fallos en agentes viene de problemas de diseno, no del modelo?"
     options:
       - text: "10%"
         correct: false
@@ -43,7 +44,7 @@ quizzes:
       - text: "60%"
         correct: false
   - id: "q4"
-    question: "¿Qué es 'context poisoning'?"
+    question: "Que es \"context poisoning\"?"
     options:
       - text: "El contexto es demasiado largo"
         correct: false
@@ -54,7 +55,7 @@ quizzes:
       - text: "Nueva info contradice info existente"
         correct: false
   - id: "q5"
-    question: "¿Cuándo justificas multi-agent sobre single-agent?"
+    question: "Cuando justificas multi-agent sobre single-agent?"
     options:
       - text: "Siempre, es mas avanzado"
         correct: false
@@ -64,17 +65,20 @@ quizzes:
         correct: true
       - text: "Cuando el LLM es demasiado lento"
         correct: false
+
 ---
 
-import Callout from '../../components/Callout.astro';
-import Exercise from '../../components/Exercise.astro';
+
+## Objetivo
+
+Al finalizar, entenderas los patrones de agentes RAG (ReAct, self-corrective, multi-agent), sabras cuando escalar de un solo agente a multiples, y conoceras los frameworks de produccion (LangGraph, LlamaIndex, CrewAI).
 
 ## De RAG vanilla a Agentic RAG
 
 RAG vanilla es un pipeline lineal: retrieve -> generate. Agentic RAG agrega razonamiento iterativo: el sistema decide *cuando* buscar, *como* reformular, y *cuando* dejar de buscar.
 
 | Aspecto | RAG vanilla | Agentic RAG |
-|---------|-------------|-------------|
+| --- | --- | --- |
 | Flujo | Lineal (una pasada) | Ciclico (loops de razonamiento) |
 | Decisiones | Ninguna | Cuando buscar, que reformular, cuando parar |
 | Self-correction | No | Si — re-escribe queries, recalifica docs |
@@ -85,36 +89,37 @@ RAG vanilla es un pipeline lineal: retrieve -> generate. Agentic RAG agrega razo
 
 El patron fundamental de agentes. El LLM alterna entre razonamiento (thought), accion (action), y observacion (observation) en un loop hasta completar la tarea.
 
-```python
+```
 # El loop ReAct
 while not task_complete:
-    # THINK: Razona sobre el estado actual
-    thought = llm.reason(
-        question=query,
-        context=current_context,
-        history=previous_steps
-    )
-    # "Necesito buscar informacion sobre X antes de responder"
+# THINK: Razona sobre el estado actual
+thought = llm.reason(
+question=query,
+context=current_context,
+history=previous_steps
+)
+# "Necesito buscar informacion sobre X antes de responder"
 
-    # ACT: Ejecuta una tool call
-    observation = tool.execute(thought.action)
-    # Retrieval de docs, web search, API call, etc.
+# ACT: Ejecuta una tool call
+observation = tool.execute(thought.action)
+# Retrieval de docs, web search, API call, etc.
 
-    # OBSERVE: Procesa el resultado
-    current_context.append(observation)
-    # Si la respuesta es suficiente -> termina
-    # Si no -> repite el ciclo
+# OBSERVE: Procesa el resultado
+current_context.append(observation)
+# Si la respuesta es suficiente -> termina
+# Si no -> repite el ciclo
 ```
 
-<Callout type="info" title="Por que ReAct funciona">
-Interleaving reasoning con action mantiene al agente grounded. Un approach solo de razonamiento puede derivar en conocimiento interno. Un approach solo de accion carece de sintesis. ReAct combina ambos.
-</Callout>
+<div class="callout info">
+<div class="callout-title">Por que ReAct funciona</div>
+<p>Interleaving reasoning con action mantiene al agente grounded. Un approach solo de razonamiento puede derivar en conocimiento interno. Un approach solo de accion carece de sintesis. ReAct combina ambos.</p>
+</div>
 
 ## Self-Corrective RAG: El pipeline que se arregla solo
 
 El patron mas importante en Agentic RAG. Agrega nodos de verificacion que permiten al sistema re-intentar cuando la calidad es baja.
 
-```python
+```
 # Flujo de Self-Corrective RAG (LangGraph)
 #
 # [Start] -> [Retrieve] -> [Grade Documents]
@@ -135,9 +140,8 @@ El patron mas importante en Agentic RAG. Agrega nodos de verificacion que permit
 ```
 
 ### Nodos del pipeline
-
 | Nodo | Que hace | Herramienta |
-|------|----------|-------------|
+| --- | --- | --- |
 | **Retrieve** | Busca documentos del vector store | Vector store + embeddings |
 | **Grade Documents** | LLM califica relevancia de cada doc | Binary classifier LLM |
 | **Rewrite Query** | Reformula la pregunta para mejor retrieval | LLM prompt |
@@ -148,27 +152,27 @@ El patron mas importante en Agentic RAG. Agrega nodos de verificacion que permit
 
 Un router clasifica la query y la dirige al retriever apropiado. Evita buscar en vector store cuando la query requiere datos en tiempo real, o viceversa.
 
-```python
+```
 # Router pattern
 class RouteQuery(BaseModel):
-    datasource: Literal["vectorstore", "web_search", "direct_response"]
-    reasoning: str
+datasource: Literal["vectorstore", "web_search", "direct_response"]
+reasoning: str
 
 # Clasificacion
 router = llm.with_structured_output(RouteQuery)
 result = router.invoke([
-    {"role": "system", "content": """Clasifica la query:
-    - vectorstore: preguntas sobre documentos internos
-    - web_search: eventos actuales, datos en tiempo real
-    - direct_response: conocimiento general"""},
-    {"role": "user", "content": query}
+{"role": "system", "content": """Clasifica la query:
+- vectorstore: preguntas sobre documentos internos
+- web_search: eventos actuales, datos en tiempo real
+- direct_response: conocimiento general"""},
+{"role": "user", "content": query}
 ])
 
 # Fan-out paralelo (multi-source)
 if result.datasource == "vectorstore":
-    docs = vector_retriever.invoke(query)
+docs = vector_retriever.invoke(query)
 elif result.datasource == "web_search":
-    docs = web_search.invoke(query)
+docs = web_search.invoke(query)
 ```
 
 ## Multi-Agent RAG: Especializacion y coordinacion
@@ -176,13 +180,12 @@ elif result.datasource == "web_search":
 Cuando un solo agente no puede manejar la complejidad, se decomponen roles en agentes especializados que colaboran.
 
 ### Arquitectura tipica de Google Agentic RAG
-
-```python
+```
 # 5 agentes especializados (Google Enterprise Agent Platform)
 #
 # 1. Orchestrator: Evalua la complejidad, delega
 # 2. Planner: Mapea rutas de informacion
-#    "Pregunta sobre budget AND timeline -> 
+#    "Pregunta sobre budget AND timeline ->
 #     primero finance DB, luego project management logs"
 # 3. Query Rewriter: Transforma la query en sub-queries
 #    "Que pasa con Project X?" ->
@@ -195,15 +198,16 @@ Cuando un solo agente no puede manejar la complejidad, se decomponen roles en ag
 #    - Si falta info -> feedback especifico -> re-search
 ```
 
-<Callout type="success" title="El Sufficient Context Agent (innovacion clave)">
-No solo dice "no tengo suficiente info". Genera feedback especifico: "Encontraste meds y diet, pero falta allergies. Busca por 'rashes' o 'adverse events'". Esto permite al sistema recuperar la informacion faltante en vez de abstenerse prematuramente. +34% en factuality vs vanilla RAG.
-<small>Fuente: Google Research Blog — Agentic RAG with Sufficient Context Agent (Jun 2026)</small>
-</Callout>
+<div class="callout success">
+<div class="callout-title">El Sufficient Context Agent (innovacion clave)</div>
+<p>No solo dice "no tengo suficiente info". Genera feedback especifico: "Encontraste meds y diet, pero falta allergies. Busca por 'rashes' o 'adverse events'". Esto permite al sistema recuperar la informacion faltante en vez de abstenerse prematuramente. +34% en factuality vs vanilla RAG.
+
+<small>Fuente: <a href="https://research.google/blog/unlocking-dependable-responses-with-gemini-enterprise-agent-platforms-agentic-rag/">Google Research Blog — Agentic RAG with Sufficient Context Agent (Jun 2026)</a></small></p>
+</div>
 
 ### MA-RAG: 4 agentes colaborativos
-
 | Agente | Responsabilidad |
-|--------|-----------------|
+| --- | --- |
 | **Planner** | Descompone la query en sub-tareas con CoT |
 | **Step Definer** | Genera sub-queries ejecutables para cada paso |
 | **Extractor** | Filtra y agrega evidencia de los docs recuperados |
@@ -212,11 +216,12 @@ No solo dice "no tengo suficiente info". Genera feedback especifico: "Encontrast
 ## 8 patrones de arquitectura de agentes
 
 La taxonomy de 2026 organiza los patrones en 4 cuadrantes:
-<small>Fuente: 8 Agent Architecture Patterns Taxonomy (Digital Applied, 2026)</small>
+
+<small>Fuente: [8 Agent Architecture Patterns Taxonomy (Digital Applied, 2026)](https://www.digitalapplied.com/blog/agent-architecture-patterns-taxonomy-2026)</small>
 
 | # | Patron | Cuando usar | Produccion? |
-|---|--------|-------------|-------------|
-| 1 | **ReAct** | Default general-purpose, <30 steps | Si |
+| --- | --- | --- | --- |
+| 1 | **ReAct** | Default general-purpose, &lt;30 steps | Si |
 | 2 | **Reflexion** | Failure modes repetidos (+30% latencia, +10-30% quality) | Si |
 | 3 | **Plan-and-Execute** | Planning es bottleneck, tareas pre-decomponibles | Si |
 | 4 | **Supervisor-Worker** | Decomposicion clara de tareas, roles especializados | Si |
@@ -225,25 +230,27 @@ La taxonomy de 2026 organiza los patrones en 4 cuadrantes:
 | 7 | **Graph Orchestration** | Control flow condicional, observabilidad | Si |
 | 8 | **Swarm/Blackboard** | Exploratorio, research-mode | No |
 
-<Callout type="warning" title="La regla de oro: empieza simple">
-**Empieza con ReAct (single-agent). Escala a multi-agent solo cuando midas un failure mode que un solo agente no pueda resolver.** El 41.77% de los fallos en agentes vienen de problemas de especificacion y diseno de sistema, no de limitaciones del modelo. Multi-agent agrega 2-5x de overhead de coordinacion.
-<small>Fuente: arXiv:2503.13657 — MAST: Multi-Agent System Failure Taxonomy (Cemri et al., 2025)</small>
-</Callout>
+<div class="callout warning">
+<div class="callout-title">La regla de oro: empieza simple</div>
+<p><strong>Empieza con ReAct (single-agent). Escala a multi-agent solo cuando midas un failure mode que un solo agente no pueda resolver.</strong> El 41.77% de los fallos en agentes vienen de problemas de especificacion y diseno de sistema, no de limitaciones del modelo. Multi-agent agrega 2-5x de overhead de coordinacion.
+
+<small>Fuente: <a href="https://arxiv.org/abs/2503.13657">arXiv:2503.13657 — MAST: Multi-Agent System Failure Taxonomy (Cemri et al., 2025)</a></small></p>
+</div>
 
 ## Por que los agentes fallan en produccion
 
 | Failure Mode | Que pasa | Solucion |
-|--------------|----------|----------|
+| --- | --- | --- |
 | **Context Poisoning** | Un error entra al contexto y se referencian repetidamente | Validacion de outputs, grounding checks |
 | **Context Distraction** | Contexto crece tanto que el modelo ignora training | Context compression, ventanas limitadas |
-| **Context Confusion** | Info superflua causa que el modelo elija wrong tool | Limitar tools a <20, mejor routing |
+| **Context Confusion** | Info superflua causa que el modelo elija wrong tool | Limitar tools a &lt;20, mejor routing |
 | **Context Clash** | Nueva info contradice info existente | Deduplicacion, conflict resolution |
 | **Runaway Loops** | El agente nunca decide parar | Bounded execution (max steps) |
 
 ## Frameworks de produccion
 
 | Framework | Fuerza | Mejor para |
-|-----------|--------|------------|
+| --- | --- | --- |
 | **LangGraph** | Graph orchestration, state machines | Workflows condicionales, observabilidad |
 | **LlamaIndex** | Query transforms, routers, sub-questions | RAG avanzado, multi-source retrieval |
 | **CrewAI** | Role-based multi-agent | Equipos de agentes con roles definidos |
@@ -252,33 +259,33 @@ La taxonomy de 2026 organiza los patrones en 4 cuadrantes:
 
 ## Implementacion con LangGraph
 
-```python
+```
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Literal
 
 class GraphState(TypedDict):
-    question: str
-    documents: list
-    generation: str
-    relevance: str
+question: str
+documents: list
+generation: str
+relevance: str
 
 # Definir nodos
 def retrieve(state):
-    docs = retriever.invoke(state["question"])
-    return {"documents": docs}
+docs = retriever.invoke(state["question"])
+return {"documents": docs}
 
 def grade_documents(state):
-    scores = [llm.grade(doc, state["question"]) for doc in state["documents"]]
-    relevant = [doc for doc, score in zip(state["documents"], scores) if score == "relevant"]
-    return {"documents": relevant, "relevance": "relevant" if relevant else "irrelevant"}
+scores = [llm.grade(doc, state["question"]) for doc in state["documents"]]
+relevant = [doc for doc, score in zip(state["documents"], scores) if score == "relevant"]
+return {"documents": relevant, "relevance": "relevant" if relevant else "irrelevant"}
 
 def rewrite_query(state):
-    new_query = llm.rewrite(state["question"])
-    return {"question": new_query}
+new_query = llm.rewrite(state["question"])
+return {"question": new_query}
 
 def generate(state):
-    answer = llm.generate(state["question"], state["documents"])
-    return {"generation": answer}
+answer = llm.generate(state["question"], state["documents"])
+return {"generation": answer}
 
 # Construir el grafo
 workflow = StateGraph(GraphState)
@@ -298,29 +305,63 @@ app = workflow.compile()
 
 ## Practica
 
-<Exercise title="Ejercicio 1: Self-corrective RAG">
-Construye un pipeline con LangGraph que:
 
-- Recupere documentos
-- Los califique con un LLM (relevant/irrelevant)
-- Si son irrelevantes, re-escriba la query (max 3 reintentos)
-- Genere la respuesta final
-</Exercise>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 1: Self-corrective RAG</div>
+<p>Construye un pipeline con LangGraph que:</p>
+<ul>
+<li>Recupere documentos</li>
+<li>Los califique con un LLM (relevant/irrelevant)</li>
+<li>Si son irrelevantes, re-escriba la query (max 3 reintentos)</li>
+<li>Genere la respuesta final</li>
+</ul>
+</div>
 
-<Exercise title="Ejercicio 2: Multi-source router">
-Crea un router que dirija queries a:
 
-- Vector store (documentos internos)
-- Web search (eventos actuales)
-- Direct LLM (conocimiento general)
+<div class="exercise">
+<div class="exercise-title">Ejercicio 2: Multi-source router</div>
+<p>Crea un router que dirija queries a:</p>
+<ul>
+<li>Vector store (documentos internos)</li>
+<li>Web search (eventos actuales)</li>
+<li>Direct LLM (conocimiento general)</li>
+</ul>
+<p>Usa <code>Send</code> de LangGraph para ejecucion paralela cuando aplique.</p>
+</div>
 
-Usa `Send` de LangGraph para ejecucion paralela cuando aplique.
-</Exercise>
 
-<Exercise title="Ejercicio 3: Bounded execution">
-Agrega guardrails al agente:
-
-- Max 5 iteraciones del loop ReAct
-- Max 10 tool calls por sesion
-- Circuit breaker: si 3 tool calls consecutivos fallan, abortar
-</Exercise>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 3: Bounded execution</div>
+<p>Agrega guardrails al agente:</p>
+<ul>
+<li>Max 5 iteraciones del loop ReAct</li>
+<li>Max 10 tool calls por sesion</li>
+<li>Circuit breaker: si 3 tool calls consecutivos fallan, abortar</li>
+</ul>
+<p>## Verifica tu comprension</p>
+<p><p>1. Que patron de agente deberias usar como default?</p></p>
+<p>Multi-agent swarm</p>
+<p>Supervisor-worker</p>
+<p>ReAct (single-agent)</p>
+<p>Graph orchestration</p>
+<p><p>2. Que hace el Sufficient Context Agent de Google?</p></p>
+<p>Genera la respuesta final</p>
+<p>Identifica que informacion falta y da feedback especifico para re-buscar</p>
+<p>Califica documentos como relevant/irrelevant</p>
+<p>Decide que data source usar</p>
+<p><p>3. Que porcentaje de fallos en agentes viene de problemas de diseno, no del modelo?</p></p>
+<p>10%</p>
+<p>25%</p>
+<p>41.77%</p>
+<p>60%</p>
+<p><p>4. Que es "context poisoning"?</p></p>
+<p>El contexto es demasiado largo</p>
+<p>Un error entra al contexto y se usa como ground truth en pasos subsiguientes</p>
+<p>El agente elige el wrong tool</p>
+<p>Nueva info contradice info existente</p>
+<p><p>5. Cuando justificas multi-agent sobre single-agent?</p></p>
+<p>Siempre, es mas avanzado</p>
+<p>Cuando tienes mas de 3 tools</p>
+<p>Cuando midas un failure mode que un solo agente no pueda resolver</p>
+<p>Cuando el LLM es demasiado lento</p>
+</div>

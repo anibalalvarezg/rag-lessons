@@ -17,7 +17,7 @@ interface Props {
 const {
   title,
   description,
-  canonical = 'https://anibalalvarezg.github.io/rag-lessons/',
+  canonical = Astro.url.href,
   ogType = 'website',
   articleSection,
   pubDate,

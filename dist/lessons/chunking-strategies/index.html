@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Estrategias de Chunking: El cuello de botella silencioso — RAG Production</title><meta name="description" content="El dilema chunk-size, 4 estrategias de chunking, Contextual Retrieval de Anthropic (-49% fallos), benchmarkVecta 2026."><meta name="keywords" content="chunking, chunk size, contextual retrieval, embeddings, RAG, LangChain"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:type" content="article"><meta property="og:title" content="Estrategias de Chunking: El cuello de botella silencioso — RAG Production"><meta property="og:description" content="El dilema chunk-size, 4 estrategias de chunking, Contextual Retrieval de Anthropic (-49% fallos), benchmarkVecta 2026."><meta property="og:url" content="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="Ingesta"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Estrategias de Chunking: El cuello de botella silencioso — RAG Production"><meta name="twitter:description" content="El dilema chunk-size, 4 estrategias de chunking, Contextual Retrieval de Anthropic (-49% fallos), benchmarkVecta 2026."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/rag-lessons/_astro/BaseLayout.CO1NMu_x.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/rag-lessons" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/rag-lessons#pilar-1">Fundamentos</a><a href="/rag-lessons#pilar-2">Ingesta</a><a href="/rag-lessons#pilar-3">Recuperación</a><a href="/rag-lessons#pilar-4">Agentic &amp; GraphRAG</a><a href="/rag-lessons#pilar-5">RAGOps</a><a href="/rag-lessonsreference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Estrategias de Chunking — RAG Production</title><meta name="description" content="El dilema chunk-size, 4 estrategias, Contextual Retrieval (-49% fallos), árbol de decisión."><meta name="keywords" content="chunking, chunk size, overlap, Contextual Retrieval, semantic splitting"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://rag-lessons.netlify.app/lessons/chunking-strategies/"><meta property="og:type" content="article"><meta property="og:title" content="Estrategias de Chunking — RAG Production"><meta property="og:description" content="El dilema chunk-size, 4 estrategias, Contextual Retrieval (-49% fallos), árbol de decisión."><meta property="og:url" content="https://rag-lessons.netlify.app/lessons/chunking-strategies/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="Ingesta y Segmentación"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Estrategias de Chunking — RAG Production"><meta name="twitter:description" content="El dilema chunk-size, 4 estrategias, Contextual Retrieval (-49% fallos), árbol de decisión."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/_astro/BaseLayout.w6ndjUYT.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/#pilar-1">Fundamentos</a><a href="/#pilar-2">Ingesta</a><a href="/#pilar-3">Recuperación</a><a href="/#pilar-4">Agentic &amp; GraphRAG</a><a href="/#pilar-5">RAGOps</a><a href="/reference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
   (function() {
     const stored = localStorage.getItem('theme');
     const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
@@ -12,134 +12,192 @@
     html.dataset.theme = next;
     localStorage.setItem('theme', next);
   });
-</script><article id="content"><header><h1>Estrategias de Chunking: El cuello de botella silencioso</h1><p class="subtitle">Lección 2 — Pilar 1: Ingesta y Segmentación</p></header><p>import Callout from ‘../../components/Callout.astro’;
-import Exercise from ‘../../components/Exercise.astro’;</p>
+</script><script>
+  (function() {
+    let lastY = 0;
+    const header = document.querySelector('.site-header');
+    if (!header) return;
+    window.addEventListener('scroll', function() {
+      var y = window.scrollY;
+      if (y > lastY && y > 80) header.classList.add('hidden');
+      else header.classList.remove('hidden');
+      lastY = y;
+    }, { passive: true });
+  })();
+</script><main id="content"><article><header><h1>Estrategias de Chunking</h1><p class="subtitle">Lección 2 — Ingesta y Segmentación</p></header><h2 id="objetivo">Objetivo</h2>
+<p>Al finalizar esta lección, podrás elegir la estrategia de chunking correcta para tu corpus, implementar parent-child chunking, y justificar cada decisión de tamaño de chunk con datos.</p>
 <h2 id="el-dilema-del-tamaño-de-chunk">El dilema del tamaño de chunk</h2>
 <p>Todo sistema RAG enfrenta la misma tensión:</p>
 <ul>
-<li><strong>Chunks pequeños (100-300 tokens):</strong> Embeddings precisos, retrieval preciso. Pero el LLM no tiene contexto suficiente para generar una respuesta completa.</li>
-<li><strong>Chunks grandes (1000-2000 tokens):</strong> Contexto rico para generación. Pero el embedding se promedia sobre demasiados conceptos, y la señal de retrieval se diluye.</li>
+<li>
+<p><strong>Chunks pequeños (100-300 tokens):</strong> Embeddings precisos, retrieval preciso. Pero el LLM no tiene contexto suficiente para generar una respuesta completa.</p>
+</li>
+<li>
+<p><strong>Chunks grandes (1000-2000 tokens):</strong> Contexto rico para generación. Pero el embedding se promedia sobre demasiados conceptos, y la señal de retrieval se diluye.</p>
+</li>
 </ul>
-<Callout type="info" title="Dato clave de producción">
-El tamaño de chunk mueve las métricas más que la elección del algoritmo. En benchmarks de 2026, la diferencia entre 256 y 512 tokens fue mayor que la diferencia entre recursive y semantic chunking.
-<small>Fuente: Vecta Benchmark (Feb 2026) — 7 estrategias, 50 papers academicos</small>
-</Callout>
+<div class="callout info">
+<div class="callout-title">Dato clave de producción</div>
+<p>El tamaño de chunk mueve las métricas más que la elección del algoritmo. En benchmarks de 2026, la diferencia entre 256 y 512 tokens fue mayor que la diferencia entre recursive y semantic chunking.
+<p><small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — 7 estrategias, 50 papers academicos</a></small></p></p>
+</div>
 <h2 id="las-estrategias-principales">Las estrategias principales</h2>
 <h3 id="1-fixed-size-tamaño-fijo">1. Fixed-size (Tamaño fijo)</h3>
 <p>Corta cada N tokens, opcionalmente con overlap. Es rápido, predecible, y “tonto”.</p>
 <ul>
-<li><strong>Cuándo usarlo:</strong> FAQs, catálogos de productos, contenido uniforme y corto</li>
-<li><strong>Cuándo NO:</strong> Documentos con estructura, código, tablas, contenido mixto</li>
-<li><strong>Configuración típica:</strong> 512 tokens, overlap 50-64 tokens (10-15%)</li>
+<li>
+<p><strong>Cuándo usarlo:</strong> FAQs, catálogos de productos, contenido uniforme y corto</p>
+</li>
+<li>
+<p><strong>Cuándo NO:</strong> Documentos con estructura, código, tablas, contenido mixto</p>
+</li>
+<li>
+<p><strong>Configuración típica:</strong> 512 tokens, overlap 50-64 tokens (10-15%)</p>
+</li>
 </ul>
 <h3 id="2-recursive-character-splitting-el-default-recomendado">2. Recursive character splitting (El default recomendado)</h3>
 <p>Intenta dividir en la frontera más grande disponible (párrafos), y si el chunk sigue siendo muy grande, recursa a oraciones, luego palabras. Respeta la estructura cuando puede.</p>
-<Callout type="success" title="El default de producción 2026">
-`chunk_size=512`, `chunk_overlap=64`, separadores en orden: párrafo → línea → oración → palabra. En benchmarks de 50 papers académicos, recursive 512 obtuvo 69% de accuracy vs 54% de semantic chunking.
-<small>Fuente: Vecta Benchmark (Feb 2026) — Recursive 512: 69% accuracy, Semantic: 54% accuracy</small>
-</Callout>
+<div class="callout success">
+<div class="callout-title">El default de producción 2026</div>
+<p><code>chunk_size=512</code>, <code>chunk_overlap=64</code>, separadores en orden: párrafo → línea → oración → palabra. En benchmarks de 50 papers académicos, recursive 512 obtuvo 69% de accuracy vs 54% de semantic chunking.
+<p><small>Fuente: <a href="https://www.runvecta.com/blog/we-benchmarked-7-chunking-strategies-most-advice-was-wrong">Vecta Benchmark (Feb 2026) — Recursive 512: 69% accuracy, Semantic: 54% accuracy</a></small></p></p>
+</div>
 <p>Configuración de LangChain:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_text_splitters </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">splitter </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter(</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    chunk_size</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">512</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    chunk_overlap</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">64</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    separators</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#005CC5;--shiki-dark:#79B8FF">\n\n</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#005CC5;--shiki-dark:#79B8FF">\n</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">". "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">" "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">""</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>from langchain_text_splitters import RecursiveCharacterTextSplitter</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>splitter = RecursiveCharacterTextSplitter(</span></span>
+<span class="line"><span>chunk_size=512,</span></span>
+<span class="line"><span>chunk_overlap=64,</span></span>
+<span class="line"><span>separators=["\n\n", "\n", ". ", " ", ""]</span></span>
+<span class="line"><span>)</span></span></code></pre>
 <h3 id="3-semantic-chunking-división-semántica">3. Semantic chunking (División semántica)</h3>
 <p>Embedda cada oración, mide similitud coseno entre oraciones adyacentes, y crea un boundary cuando la similitud cae por debajo de un threshold. Respeta cambios de tema, no estructura.</p>
 <ul>
-<li><strong>Cuándo usarlo:</strong> Prosa larga sin headers claros, transcripciones, documentos donde el formato no refleja la estructura semántica</li>
-<li><strong>Cuándo NO:</strong> Documentos bien estructurados (Markdown, HTML), cuando el presupuesto de embedding es limitado</li>
-<li><strong>Costo:</strong> ~4x más embedding que recursive (una llamada por oración)</li>
+<li>
+<p><strong>Cuándo usarlo:</strong> Prosa larga sin headers claros, transcripciones, documentos donde el formato no refleja la estructura semántica</p>
+</li>
+<li>
+<p><strong>Cuándo NO:</strong> Documentos bien estructurados (Markdown, HTML), cuando el presupuesto de embedding es limitado</p>
+</li>
+<li>
+<p><strong>Costo:</strong> ~4x más embedding que recursive (una llamada por oración)</p>
+</li>
 </ul>
 <p>Implementación conceptual:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">def</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> semantic_chunk</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(text, threshold_percentile</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">95</span><span style="color:#24292E;--shiki-dark:#E1E4E8">):</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    sentences </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> split_into_sentences(text)</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    embeddings </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [embed(s) </span><span style="color:#D73A49;--shiki-dark:#F97583">for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> s </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> sentences]</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    </span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    chunks </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> []</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    current </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [sentences[</span><span style="color:#005CC5;--shiki-dark:#79B8FF">0</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]]</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    </span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> range</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">len</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(sentences)):</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        sim </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> cosine_sim(embeddings[i</span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], embeddings[i])</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        distances.append(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#D73A49;--shiki-dark:#F97583"> -</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> sim)</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    </span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    threshold </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> percentile(distances, threshold_percentile)</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    </span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    for</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> i </span><span style="color:#D73A49;--shiki-dark:#F97583">in</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> range</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">len</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(sentences)):</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">        dist </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 1</span><span style="color:#D73A49;--shiki-dark:#F97583"> -</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> cosine_sim(embeddings[i</span><span style="color:#D73A49;--shiki-dark:#F97583">-</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1</span><span style="color:#24292E;--shiki-dark:#E1E4E8">], embeddings[i])</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> dist </span><span style="color:#D73A49;--shiki-dark:#F97583">&gt;</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> threshold:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            chunks.append(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">" "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.join(current))</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            current </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [sentences[i]]</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">        else</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">            current.append(sentences[i])</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    </span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    chunks.append(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">" "</span><span style="color:#24292E;--shiki-dark:#E1E4E8">.join(current))</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> chunks</span></span></code></pre>
-<Callout type="warning" title="Problema conocido con defaults">
-LangChain's `SemanticChunker` con threshold al percentil 95 produce chunks de solo 43 tokens en promedio en textos académicos. Casi siempre necesitas subir el threshold a 99 o ajustar el `min_chunk_size`.
-</Callout>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>def semantic_chunk(text, threshold_percentile=95):</span></span>
+<span class="line"><span>sentences = split_into_sentences(text)</span></span>
+<span class="line"><span>embeddings = [embed(s) for s in sentences]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>chunks = []</span></span>
+<span class="line"><span>current = [sentences[0]]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>for i in range(1, len(sentences)):</span></span>
+<span class="line"><span>sim = cosine_sim(embeddings[i-1], embeddings[i])</span></span>
+<span class="line"><span>distances.append(1 - sim)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>threshold = percentile(distances, threshold_percentile)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>for i in range(1, len(sentences)):</span></span>
+<span class="line"><span>dist = 1 - cosine_sim(embeddings[i-1], embeddings[i])</span></span>
+<span class="line"><span>if dist &gt; threshold:</span></span>
+<span class="line"><span>chunks.append(" ".join(current))</span></span>
+<span class="line"><span>current = [sentences[i]]</span></span>
+<span class="line"><span>else:</span></span>
+<span class="line"><span>current.append(sentences[i])</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>chunks.append(" ".join(current))</span></span>
+<span class="line"><span>return chunks</span></span></code></pre>
+<div class="callout warning">
+<div class="callout-title">Problema conocido con defaults</div>
+<p>LangChain's <code>SemanticChunker</code> con threshold al percentil 95 produce chunks de solo 43 tokens en promedio en textos académicos. Casi siempre necesitas subir el threshold a 99 o ajustar el <code>min_chunk_size</code>.</p>
+</div>
 <h3 id="4-parent-child-chunking-el-patrón-de-producción">4. Parent-child chunking (El patrón de producción)</h3>
 <p>Resuelve el dilema del tamaño desacoplando retrieval de generación:</p>
 <ul>
-<li><strong>Child chunks (100-300 tokens):</strong> Se embeben y buscan. Son precisos y topicamente enfocados.</li>
-<li><strong>Parent chunks (1000-2000 tokens):</strong> Se leen por el LLM. Dan contexto rico.</li>
+<li>
+<p><strong>Child chunks (100-300 tokens):</strong> Se embeben y buscan. Son precisos y topicamente enfocados.</p>
+</li>
+<li>
+<p><strong>Parent chunks (1000-2000 tokens):</strong> Se leen por el LLM. Dan contexto rico.</p>
+</li>
 </ul>
 <p><strong>El flujo:</strong></p>
 <ol>
-<li>Usuario hace una pregunta</li>
-<li>Se busca en los child chunks (preciso)</li>
-<li>Se recupera el parent chunk del child ganador (contexto rico)</li>
-<li>Se deduplican parents (varios children pueden apuntar al mismo parent)</li>
-<li>El LLM recibe los parents, no los children</li>
+<li>
+<p>Usuario hace una pregunta</p>
+</li>
+<li>
+<p>Se busca en los child chunks (preciso)</p>
+</li>
+<li>
+<p>Se recupera el parent chunk del child ganador (contexto rico)</p>
+</li>
+<li>
+<p>Se deduplican parents (varios children pueden apuntar al mismo parent)</p>
+</li>
+<li>
+<p>El LLM recibe los parents, no los children</p>
+</li>
 </ol>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># LangChain ParentDocumentRetriever</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Nota: en LangChain v1+, ParentDocumentRetriever se migro a langchain-classic</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># pip install langchain-classic</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_classic.retrievers </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ParentDocumentRetriever</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> langchain_classic.storage </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> InMemoryStore</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">child_splitter </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter(</span><span style="color:#E36209;--shiki-dark:#FFAB70">chunk_size</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">250</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">parent_splitter </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> RecursiveCharacterTextSplitter(</span><span style="color:#E36209;--shiki-dark:#FFAB70">chunk_size</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">1500</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">retriever </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ParentDocumentRetriever(</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    vectorstore</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">vectorstore,      </span><span style="color:#6A737D;--shiki-dark:#6A737D"># children embeddings</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    docstore</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">InMemoryStore(),      </span><span style="color:#6A737D;--shiki-dark:#6A737D"># parent texts</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    child_splitter</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">child_splitter,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    parent_splitter</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">parent_splitter,</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span></code></pre>
-<Callout type="success" title="Impacto medido">
-Parent-child retrieval mejora típicamente: +10-20% en faithfulness, +5-15% en answer relevance. La ganancia en faithfulness es la más grande porque el LLM no necesita "adivinar" el contexto faltante.
-</Callout>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># LangChain ParentDocumentRetriever</span></span>
+<span class="line"><span># Nota: en LangChain v1+, ParentDocumentRetriever se migro a langchain-classic</span></span>
+<span class="line"><span># pip install langchain-classic</span></span>
+<span class="line"><span>from langchain_classic.retrievers import ParentDocumentRetriever</span></span>
+<span class="line"><span>from langchain_classic.storage import InMemoryStore</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>child_splitter = RecursiveCharacterTextSplitter(chunk_size=250)</span></span>
+<span class="line"><span>parent_splitter = RecursiveCharacterTextSplitter(chunk_size=1500)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>retriever = ParentDocumentRetriever(</span></span>
+<span class="line"><span>vectorstore=vectorstore,      # children embeddings</span></span>
+<span class="line"><span>docstore=InMemoryStore(),      # parent texts</span></span>
+<span class="line"><span>child_splitter=child_splitter,</span></span>
+<span class="line"><span>parent_splitter=parent_splitter,</span></span>
+<span class="line"><span>)</span></span></code></pre>
+<div class="callout success">
+<div class="callout-title">Impacto medido</div>
+<p>Parent-child retrieval mejora típicamente: +10-20% en faithfulness, +5-15% en answer relevance. La ganancia en faithfulness es la más grande porque el LLM no necesita "adivinar" el contexto faltante.</p>
+</div>
 <h2 id="y-las-tablas">¿Y las tablas?</h2>
 <p>Las tablas necesitan tratamiento especial. El chunking de texto plano las destruye. Estrategia recomendada:</p>
 <ol>
-<li>Extraer tablas por separado</li>
-<li>Generar un resumen en lenguaje natural de cada tabla (usando un LLM local)</li>
-<li>Embeber tanto los datos crudos de la tabla como el resumen</li>
+<li>
+<p>Extraer tablas por separado</p>
+</li>
+<li>
+<p>Generar un resumen en lenguaje natural de cada tabla (usando un LLM local)</p>
+</li>
+<li>
+<p>Embeber tanto los datos crudos de la tabla como el resumen</p>
+</li>
 </ol>
 <h2 id="contextual-retrieval-anthropic">Contextual Retrieval (Anthropic)</h2>
 <p>Antes de embeber cada chunk, prepender un resumen generado por LLM:</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Prompt para contextual retrieval</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">context_prompt </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#D73A49;--shiki-dark:#F97583"> f</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Here is the full document:</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">full_document</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Here is one chunk:</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">chunk</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Write a 50-100 token context that situates this chunk in the document.</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">context </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.generate(context_prompt)</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">chunk_with_context </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#D73A49;--shiki-dark:#F97583"> f</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">context</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}\n\n{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">chunk</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Prompt para contextual retrieval</span></span>
+<span class="line"><span>context_prompt = f"""</span></span>
+<span class="line"><span>Here is the full document:</span></span>
+<span class="line"><span>{full_document}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Here is one chunk:</span></span>
+<span class="line"><span>{chunk}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Write a 50-100 token context that situates this chunk in the document.</span></span>
+<span class="line"><span>"""</span></span>
+<span class="line"><span>context = llm.generate(context_prompt)</span></span>
+<span class="line"><span>chunk_with_context = f"{context}\n\n{chunk}"</span></span></code></pre>
 <p><strong>Resultados reportados:</strong></p>
 <ul>
-<li>49% reducción en fallos de retrieval (solo contextual embedding)</li>
-<li>67% con reranker encima</li>
-<li>Costo: ~$1.02 por millón de tokens de documentos fuente</li>
+<li>
+<p>49% reducción en fallos de retrieval (solo contextual embedding)</p>
+</li>
+<li>
+<p>67% con reranker encima</p>
+</li>
+<li>
+<p>Costo: ~$1.02 por millón de tokens de documentos fuente</p>
+</li>
 </ul>
-<p><small>Fuente: Anthropic Engineering Blog — Contextual Retrieval (Sep 2024)</small></p>
+<p><small>Fuente: <a href="https://www.anthropic.com/engineering/contextual-retrieval">Anthropic Engineering Blog — Contextual Retrieval (Sep 2024)</a></small></p>
 <h2 id="matriz-de-decisión">Matriz de decisión</h2>
 <table>
 <thead>
@@ -178,35 +236,37 @@ Parent-child retrieval mejora típicamente: +10-20% en faithfulness, +5-15% en a
 </tbody>
 </table>
 <h2 id="práctica">Práctica</h2>
-<Exercise title="Ejercicio 1: Analiza el chunking del repo">
-Abre `chapter2/parse-pdf.ipynb` del repositorio hands-on-rag. Identifica:
+<div class="exercise">
+<div class="exercise-title">Ejercicio 1: Analiza el chunking del repo</div>
+<p>Abre <code>chapter2/parse-pdf.ipynb</code> del repositorio hands-on-rag. Identifica:</p>
 <ul>
 <li>¿Qué tamaño de chunk se usa?</li>
 <li>¿Qué estrategia de división?</li>
-<li>¿Qué overlap se configuró?
-</Exercise>
-</li>
+<li>¿Qué overlap se configuró?</li>
 </ul>
-<Exercise title="Ejercicio 2: Implementa parent-child">
-Usando el código del Capítulo 2 como base, modifica el pipeline para usar parent-child chunking:
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 2: Implementa parent-child</div>
+<p>Usando el código del Capítulo 2 como base, modifica el pipeline para usar parent-child chunking:</p>
 <ul>
 <li>Child chunks: 250 tokens</li>
 <li>Parent chunks: 1500 tokens</li>
 <li>Embedda solo los children</li>
 <li>Al recuperar, retorna el parent</li>
 </ul>
-<p><strong>Pista:</strong> Mira <code>ParentDocumentRetriever</code> de LangChain.
-</Exercise></p>
-<Exercise title="Ejercicio 3: Compara estrategias">
-Crea un mini-eval con 5 preguntas sobre el documento del Capítulo 1 (Alice in Wonderland). Ejecuta el pipeline 3 veces:
+<p><strong>Pista:</strong> Mira <code>ParentDocumentRetriever</code> de LangChain.</p>
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 3: Compara estrategias</div>
+<p>Crea un mini-eval con 5 preguntas sobre el documento del Capítulo 1 (Alice in Wonderland). Ejecuta el pipeline 3 veces:</p>
 <ul>
 <li>Recursive 512 sin overlap</li>
 <li>Recursive 512 con overlap 64</li>
 <li>Semantic chunking (percentil 95)</li>
 </ul>
-<p>Compara: ¿cuántos de los top-3 chunks contienen la respuesta correcta?
-</Exercise></p>
-<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Por qué el tamaño de chunk importa más que el algoritmo?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque el algoritmo es siempre el mismo</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque un chunk de 256 vs 512 tokens cambia la señal del embedding más que recursive vs semantic</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque los LLMs solo funcionan con ciertos tamaños</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">No importa, ambos factores son igual de relevantes</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Cuál es el patrón de parent-child chunking?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Embeddar ambos parents y children, buscar en ambos</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Buscar en children pequeños, retornar parents grandes al LLM</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Embeber parents grandes, buscar en ellos, retornar children</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Un solo tamaño de chunk que sirve para todo</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Cuándo SÍ vale la pena semantic chunking?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, es mejor que recursive</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo con documentos Markdown bien formateados</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Prosa larga sin formato, transcripciones, cuando los boundaries semánticos no coinciden con la estructura</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando el presupuesto de embedding es muy bajo</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">¿Qué reduce más los fallos de retrieval según Anthropic?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cambiar el embedding model</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Aumentar el chunk size a 2048</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Contextual Retrieval: prepender un resumen del documento antes de embeber cada chunk</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Usar semantic chunking en lugar de recursive</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/rag-lessonslessons/what-is-rag">← ¿Qué es RAG y por qué lo necesitas en producción?</a><a href="/rag-lessonslessons/embeddings-and-vector-stores">Embeddings y Vector Stores: La capa que determina tu calidad →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+<p>Compara: ¿cuántos de los top-3 chunks contienen la respuesta correcta?</p>
+</div>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Por qué el tamaño de chunk importa más que el algoritmo?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque el algoritmo es siempre el mismo</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque un chunk de 256 vs 512 tokens cambia la señal del embedding más que recursive vs semantic</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque los LLMs solo funcionan con ciertos tamaños</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">No importa, ambos factores son igual de relevantes</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">¿Cuál es el patrón de parent-child chunking?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Embeddar ambos parents y children, buscar en ambos</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Buscar en children pequeños, retornar parents grandes al LLM</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Embeber parents grandes, buscar en ellos, retornar children</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Un solo tamaño de chunk que sirve para todo</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Cuándo SÍ vale la pena semantic chunking?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Siempre, es mejor que recursive</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Solo con documentos Markdown bien formateados</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Prosa larga sin formato, transcripciones, cuando los boundaries semánticos no coinciden con la estructura</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cuando el presupuesto de embedding es muy bajo</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">¿Qué reduce más los fallos de retrieval según Anthropic?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Cambiar el embedding model</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Aumentar el chunk size a 2048</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Contextual Retrieval: prepender un resumen del documento antes de embeber cada chunk</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Usar semantic chunking en lugar de recursive</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/what-is-rag">← ¿Qué es RAG y por qué lo necesitas en producción?</a><a href="/lessons/embeddings-and-vector-stores">Embeddings y Vector Stores →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {
     const btn = document.querySelector('.back-to-top');
     if (!btn) return;

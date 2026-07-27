@@ -1,16 +1,17 @@
 ---
-title: "Multimodal RAG: Mas alla del texto — imagenes, tablas, audio y video"
-subtitle: "Lección 8 — Pilar 3: Agentic RAG y GraphRAG"
+title: "Multimodal RAG"
+subtitle: "Lección 8 — Agentic RAG y GraphRAG"
 pillar: agentic
-pillarName: "Agentic"
+pillarName: "Agentic RAG y GraphRAG"
 lessonNum: 8
-description: "SigLIP, ColPali/ColQwen2, extracción de tablas con pdfplumber/Docling, UniversalRAG, modality-aware routing."
-keywords: "multimodal RAG, SigLIP, ColPali, ColQwen2, table extraction, UniversalRAG"
-ogSection: "RAGOps"
+description: "SigLIP, ColPali/ColQwen2, extracción de tablas, UniversalRAG, modality-aware routing."
+keywords: "multimodal, SigLIP, ColPali, ColQwen2, tables, vision"
+ogSection: "Agentic RAG y GraphRAG"
 pubDate: "2026-07-24"
 quizzes:
+
   - id: "q1"
-    question: "¿Por qué ColPali supera a CLIP/SigLIP en document retrieval?"
+    question: "Por que ColPali supera a CLIP/SigLIP en document retrieval?"
     options:
       - text: "Porque es un modelo mas grande"
         correct: false
@@ -21,7 +22,7 @@ quizzes:
       - text: "Porque usa OCR mejorado"
         correct: false
   - id: "q2"
-    question: "¿Qué es 'modality gap'?"
+    question: "Que es \"modality gap\"?"
     options:
       - text: "Diferencia de velocidad entre modalidades"
         correct: false
@@ -32,7 +33,7 @@ quizzes:
       - text: "Diferencia de costo entre modalidades"
         correct: false
   - id: "q3"
-    question: "¿Cuál es el patron de 3 niveles para extraer tablas de PDFs?"
+    question: "Cual es el patron de 3 niveles para extraer tablas de PDFs?"
     options:
       - text: "OCR -> NER -> Embedding"
         correct: false
@@ -43,7 +44,7 @@ quizzes:
       - text: "Chunking -> Reranking -> Generation"
         correct: false
   - id: "q4"
-    question: "¿Cuándo deberias empezar con text-only RAG en vez de multimodal?"
+    question: "Cuando deberias empezar con text-only RAG en vez de multimodal?"
     options:
       - text: "Nunca, multimodal siempre es mejor"
         correct: false
@@ -53,17 +54,20 @@ quizzes:
         correct: false
       - text: "Cuando usas GraphRAG"
         correct: false
+
 ---
 
-import Callout from '../../components/Callout.astro';
-import Exercise from '../../components/Exercise.astro';
+
+## Objetivo
+
+Al finalizar, sabras porque text-only RAG falla con documentos visuales, conoceras las 3 arquitecturas de Multimodal RAG, y sabras elegir los modelos correctos (CLIP, SigLIP, ColPali) para tu caso de uso.
 
 ## El problema: RAG de texto pierde informacion visual
 
 Los documentos empresariales contienen charts, tablas, diagramas y fotos que text-only RAG *descarta silenciosamente*. Un pipeline de OCR convierte una tabla compleja a texto plano y pierde la estructura. Un chart se convierte en cero contexto util.
 
 | Aspecto | Text-Only RAG | Multimodal RAG |
-|---------|---------------|----------------|
+| --- | --- | --- |
 | Inputs | Solo texto | Texto, imagen, video, audio, PDF |
 | Evidencia preservada | Pasajes de texto | Frames, paginas, regiones, segmentos de audio |
 | Embedding model | Text encoder (BGE, E5) | CLIP, SigLIP, ColPali, ImageBind |
@@ -73,8 +77,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ## Las 3 arquitecturas de produccion
 
 ### 1. Caption-and-Index (la mas simple)
-
-```python
+```
 # Flujo:
 # 1. Extraer imagenes del PDF/documento
 # 2. Caption cada imagen con un VLM
@@ -87,8 +90,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ```
 
 ### 2. Unified Vision Embeddings (el punto medio)
-
-```python
+```
 # Flujo:
 # 1. Embeber imagenes Y texto en el mismo espacio vectorial
 # 2. Buscar con cosine similarity cross-modal
@@ -102,8 +104,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ```
 
 ### 3. Page-as-Image con Late Interaction (la mas precisa)
-
-```python
+```
 # Flujo:
 # 1. Renderizar cada pagina del PDF como imagen (DPI alto)
 # 2. ColPali/ColQwen produce embeddings multi-vector por pagina
@@ -116,14 +117,15 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 # Desventaja: 100-1000x mas vectores por pagina
 ```
 
-<Callout type="info" title="El patron de produccion recomendado">
-**Hybrid late-fusion:** Indice paralelo de texto + imagen. BM25 + dense para texto, ColPali para imagenes. Reranking cross-modal. VLM como generador final. Flexible, mejor recall en corpus mixtos.
-</Callout>
+<div class="callout info">
+<div class="callout-title">El patron de produccion recomendado</div>
+<p><strong>Hybrid late-fusion:</strong> Indice paralelo de texto + imagen. BM25 + dense para texto, ColPali para imagenes. Reranking cross-modal. VLM como generador final. Flexible, mejor recall en corpus mixtos.</p>
+</div>
 
 ## Modelos de embedding visual: landscape 2026
 
 | Modelo | Tipo | Dim | Mejor para |
-|--------|------|-----|------------|
+| --- | --- | --- | --- |
 | **CLIP ViT-L/14** | Dense (single vector) | 768 | General purpose, imagenes naturales |
 | **SigLIP 2 So400m** | Dense | 1152 | Mejor accuracy-speed, multilingue, documentos |
 | **ColPali v1.3** | Late interaction (multi-vector) | 128xN | Documentos visuales, tablas, forms |
@@ -136,8 +138,7 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ## Parsing de documentos: la capa de ingestion
 
 ### El patron de 3 niveles para tablas
-
-```python
+```
 # Production pattern para extraer tablas de PDFs:
 # Nivel 1: pdfplumber (rapido, rule-based)
 #   -> Si columnas consistentes y <15% celdas vacias -> usar
@@ -156,15 +157,18 @@ Los documentos empresariales contienen charts, tablas, diagramas y fotos que tex
 ### Docling (IBM Research)
 
 - Analisis de layout con modelo DocLayNet
+
 - Extrae por tipo de region: tablas, texto, imagenes, formulas
+
 - Soporta: PDF, DOCX, PPTX, XLSX, HTML, imagenes, audio, video
+
 - Integra con LangChain, LlamaIndex, Haystack
 
 ## UniversalRAG: routing modality-aware
 
 En vez de forzar todas las modalidades en un espacio vectorial (que causa "modality gap"), UniversalRAG predice que modalidad necesita la query y busca en el corpus especializado:
 
-```python
+```
 # 7 pathways de routing:
 # None -> no necesita retrieval
 # Paragraph -> texto nivel parrafo
@@ -181,10 +185,11 @@ router = llm.predict_modality(query)
 
 results = {}
 for modality, granularity in router:
-    results[modality] = specialized_retriever[modality].search(query)
+results[modality] = specialized_retriever[modality].search(query)
 ```
 
 - **Ventaja:** Escala a nuevas modalidades sin modificar las existentes
+
 - **Resultado:** +32% sobre baselines vision-centric en enterprise datasets
 
 ## Generacion con VLMs
@@ -192,52 +197,87 @@ for modality, granularity in router:
 Una vez recuperada la evidencia multimodal, el generador debe ser un Vision-Language Model:
 
 | VLM | Costo por imagen (tokens) | Mejor para |
-|-----|---------------------------|------------|
+| --- | --- | --- |
 | **GPT-4o** | ~765 tokens (1024x1024) | Mejor costo-efectivo |
 | **Claude 3.5/4** | ~1600 tokens | Documents complejos, razonamiento |
 | **Gemini 2.5** | ~1300 tokens | Contexto largo, multi-imagen |
 | **Qwen2-VL** | Open source | Self-hosted, VPC privado |
 
-<Callout type="warning" title="Costo de imagenes en contexto">
-5 paginas de imagen pueden agregar 4K-8K tokens de input. Para documentos de 100+ paginas, el routing y priorizacion de paginas son criticos para controlar costo y latencia.
-</Callout>
+<div class="callout warning">
+<div class="callout-title">Costo de imagenes en contexto</div>
+<p>5 paginas de imagen pueden agregar 4K-8K tokens de input. Para documentos de 100+ paginas, el routing y priorizacion de paginas son criticos para controlar costo y latencia.</p>
+</div>
 
 ## Cuando NO construir Multimodal RAG
 
 - **Tu corpus es puro texto:** text-only RAG es mas barato y suficiente
+
 - **Las tablas son simples:** OCR + Markdown puede bastar
+
 - **Presupuesto limitado:** ColPali requiere GPU, VLM generation es caro
+
 - **Latencia critica:** Late interaction es 3-5x mas lento que dense retrieval
 
-<Callout type="success" title="La regla empirica">
-Si tu knowledge base contiene **mas del 20% de imagenes naturales** (fotos, diagramas, scans), construye un approach de dos torres: SigLIP para imagenes + text embedder para texto, fusion con RRF. Si es puramente paginas de documentos, usa ColPali directamente.
-</Callout>
+<div class="callout success">
+<div class="callout-title">La regla empirica</div>
+<p>Si tu knowledge base contiene <strong>mas del 20% de imagenes naturales</strong> (fotos, diagramas, scans), construye un approach de dos torres: SigLIP para imagenes + text embedder para texto, fusion con RRF. Si es puramente paginas de documentos, usa ColPali directamente.</p>
+</div>
 
 ## Practica
 
-<Exercise title="Ejercicio 1: Image RAG con SigLIP">
-Usando el notebook `image-retrieval-siglip.ipynb` del repo:
 
-- Embebe un conjunto de imagenes con SigLIP
-- Indexa en un vector store
-- Busca imagenes por query de texto
-- Genera respuestas con un VLM que recupero las imagenes
-</Exercise>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 1: Image RAG con SigLIP</div>
+<p>Usando el notebook <code>image-retrieval-siglip.ipynb</code> del repo:</p>
+<ul>
+<li>Embebe un conjunto de imagenes con SigLIP</li>
+<li>Indexa en un vector store</li>
+<li>Busca imagenes por query de texto</li>
+<li>Genera respuestas con un VLM que recupero las imagenes</li>
+</ul>
+</div>
 
-<Exercise title="Ejercicio 2: PDF como imagenes">
-Construye un pipeline que:
 
-- Renderice cada pagina de un PDF como imagen
-- Embeba con ColPali o SigLIP
-- Recupere las paginas mas relevantes
-- Pase las imagenes de pagina a GPT-4o para generar respuesta
-</Exercise>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 2: PDF como imagenes</div>
+<p>Construye un pipeline que:</p>
+<ul>
+<li>Renderice cada pagina de un PDF como imagen</li>
+<li>Embeba con ColPali o SigLIP</li>
+<li>Recupere las paginas mas relevantes</li>
+<li>Pase las imagenes de pagina a GPT-4o para generar respuesta</li>
+</ul>
+</div>
 
-<Exercise title="Ejercicio 3: Table extraction">
-Extrae tablas de un PDF financiero:
 
-- Intenta con pdfplumber primero
-- Si falla, usa Docling
-- Para las 5% mas dificiles, usa VLM extraction
-- Almacena como Markdown + imagen de tabla
-</Exercise>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 3: Table extraction</div>
+<p>Extrae tablas de un PDF financiero:</p>
+<ul>
+<li>Intenta con pdfplumber primero</li>
+<li>Si falla, usa Docling</li>
+<li>Para las 5% mas dificiles, usa VLM extraction</li>
+<li>Almacena como Markdown + imagen de tabla</li>
+</ul>
+<p>## Verifica tu comprension</p>
+<p><p>1. Por que ColPali supera a CLIP/SigLIP en document retrieval?</p></p>
+<p>Porque es un modelo mas grande</p>
+<p>Porque usa late interaction (multi-vector) que captura layout, charts, y texto a nivel de patch</p>
+<p>Porque fue entrenado en mas datos</p>
+<p>Porque usa OCR mejorado</p>
+<p><p>2. Que es "modality gap"?</p></p>
+<p>Diferencia de velocidad entre modalidades</p>
+<p>Inputs se agrupan por modalidad en vez de relevancia semantica en el espacio de embeddings</p>
+<p>Falta de modelos para una modalidad</p>
+<p>Diferencia de costo entre modalidades</p>
+<p><p>3. Cual es el patron de 3 niveles para extraer tablas de PDFs?</p></p>
+<p>OCR -> NER -> Embedding</p>
+<p>pdfplumber (rapido) -> Docling (neural) -> VLM (fallback)</p>
+<p>CLIP -> SigLIP -> ColPali</p>
+<p>Chunking -> Reranking -> Generation</p>
+<p><p>4. Cuando deberias empezar con text-only RAG en vez de multimodal?</p></p>
+<p>Nunca, multimodal siempre es mejor</p>
+<p>Cuando tu corpus es puro texto, las tablas son simples, o el presupuesto es limitado</p>
+<p>Solo para prototipos</p>
+<p>Cuando usas GraphRAG</p>
+</div>

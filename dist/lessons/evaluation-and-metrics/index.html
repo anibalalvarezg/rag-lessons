@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Evaluacion y Metricas: Como saber si tu RAG realmente funciona — RAG Production</title><meta name="description" content="RAG Triad, RAGAS, LLM-as-Judge, 8 métricas enterprise, CI/CD para RAG, benchmark de evaluación."><meta name="keywords" content="evaluación RAG, RAGAS, RAG Triad, LLM-as-Judge, métricas, CI/CD"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:type" content="article"><meta property="og:title" content="Evaluacion y Metricas: Como saber si tu RAG realmente funciona — RAG Production"><meta property="og:description" content="RAG Triad, RAGAS, LLM-as-Judge, 8 métricas enterprise, CI/CD para RAG, benchmark de evaluación."><meta property="og:url" content="https://anibalalvarezg.github.io/rag-lessons/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="RAGOps"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Evaluacion y Metricas: Como saber si tu RAG realmente funciona — RAG Production"><meta name="twitter:description" content="RAG Triad, RAGAS, LLM-as-Judge, 8 métricas enterprise, CI/CD para RAG, benchmark de evaluación."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/rag-lessons/_astro/BaseLayout.CO1NMu_x.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/rag-lessons" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/rag-lessons#pilar-1">Fundamentos</a><a href="/rag-lessons#pilar-2">Ingesta</a><a href="/rag-lessons#pilar-3">Recuperación</a><a href="/rag-lessons#pilar-4">Agentic &amp; GraphRAG</a><a href="/rag-lessons#pilar-5">RAGOps</a><a href="/rag-lessonsreference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Evaluación y Métricas — RAG Production</title><meta name="description" content="RAG Triad, RAGAS, LLM-as-Judge, 8 métricas enterprise, CI/CD para RAG."><meta name="keywords" content="evaluation, RAGAS, metrics, LLM-as-Judge, CI/CD"><meta name="author" content="Aníbal Álvarez"><meta name="robots" content="index, follow"><link rel="canonical" href="https://rag-lessons.netlify.app/lessons/evaluation-and-metrics/"><meta property="og:type" content="article"><meta property="og:title" content="Evaluación y Métricas — RAG Production"><meta property="og:description" content="RAG Triad, RAGAS, LLM-as-Judge, 8 métricas enterprise, CI/CD para RAG."><meta property="og:url" content="https://rag-lessons.netlify.app/lessons/evaluation-and-metrics/"><meta property="og:locale" content="es_AR"><meta property="og:site_name" content="RAG Production"><meta property="article:section" content="RAGOps y Evaluación"><meta property="article:published_time" content="2026-07-24"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Evaluación y Métricas — RAG Production"><meta name="twitter:description" content="RAG Triad, RAGAS, LLM-as-Judge, 8 métricas enterprise, CI/CD para RAG."><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Course","name":"RAG Production","description":"Curso de 9 lecciones para construir sistemas RAG en producción: chunking, embeddings, hybrid retrieval, reranking, guardrails, evaluación, agentic RAG, multimodal y GraphRAG.","provider":{"@type":"Person","name":"Aníbal Álvarez"},"inLanguage":"es","educationalLevel":"advanced","hasCourseInstance":{"@type":"CourseInstance","courseMode":"online","courseWorkload":"PT9H"},"about":[{"@type":"Thing","name":"Retrieval Augmented Generation"},{"@type":"Thing","name":"Large Language Models"},{"@type":"Thing","name":"Vector Databases"},{"@type":"Thing","name":"GraphRAG"}]}</script><link rel="stylesheet" href="/_astro/BaseLayout.w6ndjUYT.css"></head><body><a href="#content" class="skip-link">Saltar al contenido</a><header class="site-header"><a href="/" class="masthead">RAG Production</a><nav aria-label="Navegación principal"><a href="/#pilar-1">Fundamentos</a><a href="/#pilar-2">Ingesta</a><a href="/#pilar-3">Recuperación</a><a href="/#pilar-4">Agentic &amp; GraphRAG</a><a href="/#pilar-5">RAGOps</a><a href="/reference/glossary">Glosario</a><button class="theme-toggle" aria-label="Cambiar tema" type="button"><span class="icon-sun" aria-hidden="true">☀</span><span class="icon-moon" aria-hidden="true">☾</span></button></nav></header><script>
   (function() {
     const stored = localStorage.getItem('theme');
     const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
@@ -12,55 +12,78 @@
     html.dataset.theme = next;
     localStorage.setItem('theme', next);
   });
-</script><article id="content"><header><h1>Evaluacion y Metricas: Como saber si tu RAG realmente funciona</h1><p class="subtitle">Lección 6 — Pilar 4: RAGOps</p></header><p>import Callout from ‘../../components/Callout.astro’;
-import Exercise from ‘../../components/Exercise.astro’;</p>
+</script><script>
+  (function() {
+    let lastY = 0;
+    const header = document.querySelector('.site-header');
+    if (!header) return;
+    window.addEventListener('scroll', function() {
+      var y = window.scrollY;
+      if (y > lastY && y > 80) header.classList.add('hidden');
+      else header.classList.remove('hidden');
+      lastY = y;
+    }, { passive: true });
+  })();
+</script><main id="content"><article><header><h1>Evaluación y Métricas</h1><p class="subtitle">Lección 6 — RAGOps y Evaluación</p></header><h2 id="objetivo">Objetivo</h2>
+<p>Al finalizar, sabras medir la calidad de un sistema RAG usando el RAG Triad, implementar evaluacion con LLM-as-a-judge, configurar RAGAS, y construir un pipeline de evaluacion continua para CI/CD.</p>
 <h2 id="el-rag-triad-3-relaciones-3-metricas">El RAG Triad: 3 relaciones, 3 metricas</h2>
-<p>El framework diagnostico mas util para RAG mide 3 relaciones entre los componentes del sistema:
-<small>Fuente: arXiv:2309.15217 — RAGAS: Automated Evaluation of Retrieval Augmented Generation</small></p>
-<Callout type="info" title="Las 3 relaciones criticas">
-**1. Context Relevance** (query -> contexto): El retriever encontro chunks relevantes?
-**2. Faithfulness** (contexto -> respuesta): La respuesta esta soportada por los chunks?
-**3. Answer Relevance** (query -> respuesta): La respuesta realmente responde la pregunta?
-</Callout>
+<p>El framework diagnostico mas util para RAG mide 3 relaciones entre los componentes del sistema:</p>
+<p><small>Fuente: <a href="https://arxiv.org/abs/2309.15217">arXiv:2309.15217 — RAGAS: Automated Evaluation of Retrieval Augmented Generation</a></small></p>
+<div class="callout info">
+<div class="callout-title">Las 3 relaciones criticas</div>
+<p><strong>1. Context Relevance</strong> (query -> contexto): El retriever encontro chunks relevantes?
+<p><strong>2. Faithfulness</strong> (contexto -&gt; respuesta): La respuesta esta soportada por los chunks?</p>
+<p><strong>3. Answer Relevance</strong> (query -&gt; respuesta): La respuesta realmente responde la pregunta?</p></p>
+</div>
 <h3 id="metrica-1-faithfulness-la-mas-critica">Metrica 1: Faithfulness (la mas critica)</h3>
 <p>Mide que proporcion de afirmaciones de la respuesta estan soportadas por el contexto recuperado. Es tu herramienta principal contra hallucinations.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Formula de Faithfulness (RAGAS)</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">faithfulness </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> claims_supported </span><span style="color:#D73A49;--shiki-dark:#F97583">/</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> total_claims</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Ejemplo:</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Contexto: "Einstein nacio el 14 de marzo de 1879 en Alemania"</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Respuesta: "Einstein nacio en Alemania el 20 de marzo de 1879"</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Afirmaciones extraidas:</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   1. "Einstein nacio en Alemania" -&gt; SUPPORTED</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#   2. "Einstein nacio el 20 de marzo de 1879" -&gt; NOT SUPPORTED</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Faithfulness = 1/2 = 0.5</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Formula de Faithfulness (RAGAS)</span></span>
+<span class="line"><span>faithfulness = claims_supported / total_claims</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Ejemplo:</span></span>
+<span class="line"><span># Contexto: "Einstein nacio el 14 de marzo de 1879 en Alemania"</span></span>
+<span class="line"><span># Respuesta: "Einstein nacio en Alemania el 20 de marzo de 1879"</span></span>
+<span class="line"><span>#</span></span>
+<span class="line"><span># Afirmaciones extraidas:</span></span>
+<span class="line"><span>#   1. "Einstein nacio en Alemania" -&gt; SUPPORTED</span></span>
+<span class="line"><span>#   2. "Einstein nacio el 20 de marzo de 1879" -&gt; NOT SUPPORTED</span></span>
+<span class="line"><span># Faithfulness = 1/2 = 0.5</span></span></code></pre>
 <ul>
-<li><strong>Rango:</strong> 0.0 (nada soportado) a 1.0 (todo soportado)</li>
-<li><strong>Umbral tipico:</strong> &gt;= 0.85 para production</li>
-<li><strong>Interpretacion:</strong> 0.95 = 95% de las afirmaciones trazan al contexto recuperado. 0.6 = 40% viene de memoria parametrica o fabricacion</li>
+<li>
+<p><strong>Rango:</strong> 0.0 (nada soportado) a 1.0 (todo soportado)</p>
+</li>
+<li>
+<p><strong>Umbral tipico:</strong> &gt;= 0.85 para production</p>
+</li>
+<li>
+<p><strong>Interpretacion:</strong> 0.95 = 95% de las afirmaciones trazan al contexto recuperado. 0.6 = 40% viene de memoria parametrica o fabricacion</p>
+</li>
 </ul>
 <h3 id="metrica-2-context-relevance-precision-del-retriever">Metrica 2: Context Relevance (Precision del retriever)</h3>
 <p>Mide que proporcion del contexto recuperado es realmente util para responder la pregunta. Penaliza informacion redundante o irrelevante.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Formula de Context Relevance (RAGAS)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># LLM extrae oraciones "cruciales" del contexto</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">context_relevance </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#24292E;--shiki-dark:#E1E4E8">extracted_sentences</span><span style="color:#D73A49;--shiki-dark:#F97583">|</span><span style="color:#D73A49;--shiki-dark:#F97583"> /</span><span style="color:#D73A49;--shiki-dark:#F97583"> |</span><span style="color:#24292E;--shiki-dark:#E1E4E8">total_sentences</span><span style="color:#D73A49;--shiki-dark:#F97583">|</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Si recuperaste 10 oraciones pero solo 3 son utiles:</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Context Relevance = 3/10 = 0.3 -&gt; PROBLEMA en el retriever</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Formula de Context Relevance (RAGAS)</span></span>
+<span class="line"><span># LLM extrae oraciones "cruciales" del contexto</span></span>
+<span class="line"><span>context_relevance = |extracted_sentences| / |total_sentences|</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Si recuperaste 10 oraciones pero solo 3 son utiles:</span></span>
+<span class="line"><span># Context Relevance = 3/10 = 0.3 -&gt; PROBLEMA en el retriever</span></span></code></pre>
 <ul>
-<li><strong>Baja context relevance</strong> = chunks demasiado grandes, o embeddings mal alineados</li>
-<li><strong>Accion:</strong> Reducir chunk size, mejorar reranking, agregar metadata filters</li>
+<li>
+<p><strong>Baja context relevance</strong> = chunks demasiado grandes, o embeddings mal alineados</p>
+</li>
+<li>
+<p><strong>Accion:</strong> Reducir chunk size, mejorar reranking, agregar metadata filters</p>
+</li>
 </ul>
 <h3 id="metrica-3-answer-relevance">Metrica 3: Answer Relevance</h3>
 <p>Mide si la respuesta realmente responde la pregunta. Penaliza respuestas incompletas, redundantes o tangenciales.</p>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Metodo de RAGAS: ingenieria inversa de preguntas</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Dada la respuesta, generar N preguntas que podria responder</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">generated_questions </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> llm.generate_questions(answer, </span><span style="color:#E36209;--shiki-dark:#FFAB70">n</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#005CC5;--shiki-dark:#79B8FF">3</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># ["En que pais nacio Einstein?", "Cual es la nacionalidad de Einstein?", ...]</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Calcular similaridad coseno promedio con la pregunta original</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">answer_relevance </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> mean(cosine_sim(q_original, q_generated))</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Metodo de RAGAS: ingenieria inversa de preguntas</span></span>
+<span class="line"><span># 1. Dada la respuesta, generar N preguntas que podria responder</span></span>
+<span class="line"><span>generated_questions = llm.generate_questions(answer, n=3)</span></span>
+<span class="line"><span># ["En que pais nacio Einstein?", "Cual es la nacionalidad de Einstein?", ...]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 2. Calcular similaridad coseno promedio con la pregunta original</span></span>
+<span class="line"><span>answer_relevance = mean(cosine_sim(q_original, q_generated))</span></span></code></pre>
 <h2 id="metricas-de-retrieval-para-afinar-el-retriever">Metricas de Retrieval (para afinar el retriever)</h2>
 <table>
 <thead>
@@ -101,20 +124,20 @@ import Exercise from ‘../../components/Exercise.astro’;</p>
 <h2 id="llm-as-a-judge-el-paradigma-dominante">LLM-as-a-Judge: El paradigma dominante</h2>
 <p>Los metricos BLEU y ROUGE miden overlap de tokens — no capturan equivalencia semantica. El paradigma actual usa un LLM como juez para evaluar calidad semantica.</p>
 <h3 id="como-funciona">Como funciona</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Patron basico de LLM-as-Judge</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">judge_prompt </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#D73A49;--shiki-dark:#F97583"> f</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Evalua si la respuesta esta soportada por el contexto.</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Contexto: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">retrieved_context</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Respuesta: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">{</span><span style="color:#24292E;--shiki-dark:#E1E4E8">generated_answer</span><span style="color:#005CC5;--shiki-dark:#79B8FF">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Para cada afirmacion en la respuesta, indica si es:</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- supported: inferida del contexto</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- unsupported: no se puede inferir</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- contradicted: contradice el contexto</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Output: JSON con lista de veredictos y score de faithfulness.</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Patron basico de LLM-as-Judge</span></span>
+<span class="line"><span>judge_prompt = f"""</span></span>
+<span class="line"><span>Evalua si la respuesta esta soportada por el contexto.</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Contexto: {retrieved_context}</span></span>
+<span class="line"><span>Respuesta: {generated_answer}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Para cada afirmacion en la respuesta, indica si es:</span></span>
+<span class="line"><span>- supported: inferida del contexto</span></span>
+<span class="line"><span>- unsupported: no se puede inferir</span></span>
+<span class="line"><span>- contradicted: contradice el contexto</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>Output: JSON con lista de veredictos y score de faithfulness.</span></span>
+<span class="line"><span>"""</span></span></code></pre>
 <h3 id="frameworks-de-evaluacion">Frameworks de evaluacion</h3>
 <table>
 <thead>
@@ -159,59 +182,60 @@ import Exercise from ‘../../components/Exercise.astro’;</p>
 </tbody>
 </table>
 <h3 id="implementacion-con-ragas">Implementacion con RAGAS</h3>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ragas </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> evaluate</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> ragas.metrics </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> faithfulness, answer_relevancy, context_precision, context_recall</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">from</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> datasets </span><span style="color:#D73A49;--shiki-dark:#F97583">import</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Dataset</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Preparar dataset de evaluacion</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">eval_data </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> Dataset.from_dict({</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    "question"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"Cual es el timeout default?"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    "answer"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"El timeout default es 30 segundos"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    "contexts"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: [[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"El timeout se configura en settings.yaml. Default: 30s"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]],</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">    "ground_truth"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"30 segundos"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">]</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">})</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Ejecutar evaluacion</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">results </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> evaluate(</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    eval_data,</span></span>
-<span class="line"><span style="color:#E36209;--shiki-dark:#FFAB70">    metrics</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">[faithfulness, answer_relevancy, context_precision, context_recall]</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Resultados</span></span>
-<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">print</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(results)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># {'faithfulness': 0.95, 'answer_relevancy': 0.88,</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#  'context_precision': 0.82, 'context_recall': 0.91}</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>from ragas import evaluate</span></span>
+<span class="line"><span>from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall</span></span>
+<span class="line"><span>from datasets import Dataset</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Preparar dataset de evaluacion</span></span>
+<span class="line"><span>eval_data = Dataset.from_dict({</span></span>
+<span class="line"><span>"question": ["Cual es el timeout default?"],</span></span>
+<span class="line"><span>"answer": ["El timeout default es 30 segundos"],</span></span>
+<span class="line"><span>"contexts": [["El timeout se configura en settings.yaml. Default: 30s"]],</span></span>
+<span class="line"><span>"ground_truth": ["30 segundos"]</span></span>
+<span class="line"><span>})</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Ejecutar evaluacion</span></span>
+<span class="line"><span>results = evaluate(</span></span>
+<span class="line"><span>eval_data,</span></span>
+<span class="line"><span>metrics=[faithfulness, answer_relevancy, context_precision, context_recall]</span></span>
+<span class="line"><span>)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Resultados</span></span>
+<span class="line"><span>print(results)</span></span>
+<span class="line"><span># {'faithfulness': 0.95, 'answer_relevancy': 0.88,</span></span>
+<span class="line"><span>#  'context_precision': 0.82, 'context_recall': 0.91}</span></span></code></pre>
 <h2 id="alinear-el-juez-el-paso-que-la-mayoria-olvida">Alinear el juez: El paso que la mayoria olvida</h2>
 <p>Un juez desalineado es como una brujula apuntando al norte incorrecto. La alineacion del juez contra juicio humano experto es el fundamento de evaluacion confiable.</p>
-<Callout type="warning" title="El problema comun">
-Un juez baseline tiene ~75.6% de alineacion con expertos. Todos los falsos positivos son el juez siendo "too lenient" — deja pasar respuestas que omiten conceptos criticos. La solucion: refinar el prompt del juez con criteria especificos y reglas criticas.
-<small>Fuente: RAGAS Docs — Judge Alignment Process</small>
-</Callout>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Proceso de alineacion (de Ragas docs)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. Recopilar 100-200 ejemplos con juicio humano experto</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. Evaluar juez baseline -&gt; medir alineacion</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">alignment </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> judge.evaluate(dataset, human_labels)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># baseline: 75.6% alignment</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. Analizar errores (que tipo de falsos positivos?)</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    - El juez no detecta conceptos omitidos</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">#    - El juez es too permisivo con parciales</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. Refinar prompt con reglas especificas</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">enhanced_prompt </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#032F62;--shiki-dark:#9ECBFF"> """</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">Evalua si la respuesta cubre TODOS los conceptos clave.</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- Acepta equivalentes semanticos</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- Cuenta conceptos ausentes</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- 0 conceptos faltantes = PASS</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">- 1+ conceptos faltantes = FAIL</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">...</span></span>
-<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">"""</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 5. Re-evaluar -&gt; medir mejora</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># enhanced: 86.9% alignment (+11.3% improvement)</span></span></code></pre>
+<div class="callout warning">
+<div class="callout-title">El problema comun</div>
+<p>Un juez baseline tiene ~75.6% de alineacion con expertos. Todos los falsos positivos son el juez siendo "too lenient" — deja pasar respuestas que omiten conceptos criticos. La solucion: refinar el prompt del juez con criteria especificos y reglas criticas.
+<p><small>Fuente: <a href="https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/faithfulness/">RAGAS Docs — Judge Alignment Process</a></small></p></p>
+</div>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Proceso de alineacion (de Ragas docs)</span></span>
+<span class="line"><span># 1. Recopilar 100-200 ejemplos con juicio humano experto</span></span>
+<span class="line"><span># 2. Evaluar juez baseline -&gt; medir alineacion</span></span>
+<span class="line"><span>alignment = judge.evaluate(dataset, human_labels)</span></span>
+<span class="line"><span># baseline: 75.6% alignment</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 3. Analizar errores (que tipo de falsos positivos?)</span></span>
+<span class="line"><span>#    - El juez no detecta conceptos omitidos</span></span>
+<span class="line"><span>#    - El juez es too permisivo con parciales</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 4. Refinar prompt con reglas especificas</span></span>
+<span class="line"><span>enhanced_prompt = """</span></span>
+<span class="line"><span>Evalua si la respuesta cubre TODOS los conceptos clave.</span></span>
+<span class="line"><span>- Acepta equivalentes semanticos</span></span>
+<span class="line"><span>- Cuenta conceptos ausentes</span></span>
+<span class="line"><span>- 0 conceptos faltantes = PASS</span></span>
+<span class="line"><span>- 1+ conceptos faltantes = FAIL</span></span>
+<span class="line"><span>...</span></span>
+<span class="line"><span>"""</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 5. Re-evaluar -&gt; medir mejora</span></span>
+<span class="line"><span># enhanced: 86.9% alignment (+11.3% improvement)</span></span></code></pre>
 <h2 id="metricas-enterprise-mas-alla-del-rag-triad">Metricas enterprise: Mas alla del RAG Triad</h2>
-<p>Para sistemas enterprise multi-turn, 8 metricas operacionales (de arxiv:2602.20379):
-<small>Fuente: arXiv:2602.20379 — Case-Aware Evaluation for Enterprise RAG</small></p>
+<p>Para sistemas enterprise multi-turn, 8 metricas operacionales (de arxiv:2602.20379):</p>
+<p><small>Fuente: <a href="https://arxiv.org/abs/2602.20379">arXiv:2602.20379 — Case-Aware Evaluation for Enterprise RAG</a></small></p>
 <table>
 <thead>
 <tr>
@@ -263,71 +287,108 @@ Un juez baseline tiene ~75.6% de alineacion con expertos. Todos los falsos posit
 </tr>
 </tbody>
 </table>
-<Callout type="info" title="Por que las metricas genericas no bastan">
-En un benchmark enterprise, Llama tenia mejor faithfulness (0.84) que GPT-oss (0.58), pero GPT-oss tenia mejor Answer Type Fit y Resolution Alignment. Las metricas genericas sugirian que Llama es mejor, pero GPT-oss resolvia mejor los casos de uso reales.
-</Callout>
+<div class="callout info">
+<div class="callout-title">Por que las metricas genericas no bastan</div>
+<p>En un benchmark enterprise, Llama tenia mejor faithfulness (0.84) que GPT-oss (0.58), pero GPT-oss tenia mejor Answer Type Fit y Resolution Alignment. Las metricas genericas sugirian que Llama es mejor, pero GPT-oss resolvia mejor los casos de uso reales.</p>
+</div>
 <h2 id="evaluacion-continua-pre-en-y-post-production">Evaluacion continua: Pre, en, y post-production</h2>
-<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># Pipeline de evaluacion continua</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 1. PRE-PRODUCTION: Eval offline con dataset curado</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">eval_dataset </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> load_eval_set(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"golden_100.json"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">results </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> evaluate(eval_dataset, </span><span style="color:#E36209;--shiki-dark:#FFAB70">metrics</span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8">[faithfulness, </span><span style="color:#005CC5;--shiki-dark:#79B8FF">...</span><span style="color:#24292E;--shiki-dark:#E1E4E8">])</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 2. CI/CD: Gating en pipeline de deploy</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> results[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"faithfulness"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">&lt;</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 0.85</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    raise</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> ValueError</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"Faithfulness regression detected"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">if</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> results[</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"answer_relevancy"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">] </span><span style="color:#D73A49;--shiki-dark:#F97583">&lt;</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> 0.75</span><span style="color:#24292E;--shiki-dark:#E1E4E8">:</span></span>
-<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    raise</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> ValueError</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"Answer relevance regression detected"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 3. PRODUCTION: Sampling continuo</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># - Evaluar 5-10% de trafico real</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># - Monitor drift semanal</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># - Alertas cuando metricas caen</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># 4. POST-INCIDENT: Debugging con traces</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># LangSmith/TruLens: ver retrieved chunks + prompt + respuesta</span></span>
-<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D"># para cada request con score bajo</span></span></code></pre>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># Pipeline de evaluacion continua</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 1. PRE-PRODUCTION: Eval offline con dataset curado</span></span>
+<span class="line"><span>eval_dataset = load_eval_set("golden_100.json")</span></span>
+<span class="line"><span>results = evaluate(eval_dataset, metrics=[faithfulness, ...])</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 2. CI/CD: Gating en pipeline de deploy</span></span>
+<span class="line"><span>if results["faithfulness"] &lt; 0.85:</span></span>
+<span class="line"><span>raise ValueError("Faithfulness regression detected")</span></span>
+<span class="line"><span>if results["answer_relevancy"] &lt; 0.75:</span></span>
+<span class="line"><span>raise ValueError("Answer relevance regression detected")</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 3. PRODUCTION: Sampling continuo</span></span>
+<span class="line"><span># - Evaluar 5-10% de trafico real</span></span>
+<span class="line"><span># - Monitor drift semanal</span></span>
+<span class="line"><span># - Alertas cuando metricas caen</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 4. POST-INCIDENT: Debugging con traces</span></span>
+<span class="line"><span># LangSmith/TruLens: ver retrieved chunks + prompt + respuesta</span></span>
+<span class="line"><span># para cada request con score bajo</span></span></code></pre>
 <h2 id="el-ciego-context-trustworthiness">El ciego: Context Trustworthiness</h2>
 <p>Las 4 metricas core asumen que el indice es confiable. Ninguna mide si el contenido recuperado es correcto en sentido business.</p>
 <ul>
-<li><strong>Freshness:</strong> Cuando fue la ultima vez que se verifico este contenido?</li>
-<li><strong>Ownership:</strong> Hay un dueno responsable de mantenerlo exacto?</li>
-<li><strong>Lineage integrity:</strong> Se puede trazar a la fuente canonica?</li>
-<li><strong>Canonical alignment:</strong> Es consistente con la definicion canonica de la organizacion?</li>
+<li>
+<p><strong>Freshness:</strong> Cuando fue la ultima vez que se verifico este contenido?</p>
+</li>
+<li>
+<p><strong>Ownership:</strong> Hay un dueno responsable de mantenerlo exacto?</p>
+</li>
+<li>
+<p><strong>Lineage integrity:</strong> Se puede trazar a la fuente canonica?</p>
+</li>
+<li>
+<p><strong>Canonical alignment:</strong> Es consistente con la definicion canonica de la organizacion?</p>
+</li>
 </ul>
-<Callout type="success" title="La paradoja de faithfulness alta + respuesta incorrecta">
-Un sistema puede tener faithfulness 0.95 (la respuesta refleja fielmente lo recuperado) y aun asi estar equivocado porque el contenido recuperado esta obsoleto, inconsistente con la fuente canonica, o no alineado con definiciones organizacionales. La confianza del indice es la dimension oculta.
-</Callout>
+<div class="callout success">
+<div class="callout-title">La paradoja de faithfulness alta + respuesta incorrecta</div>
+<p>Un sistema puede tener faithfulness 0.95 (la respuesta refleja fielmente lo recuperado) y aun asi estar equivocado porque el contenido recuperado esta obsoleto, inconsistente con la fuente canonica, o no alineado con definiciones organizacionales. La confianza del indice es la dimension oculta.</p>
+</div>
 <h2 id="practica">Practica</h2>
-<Exercise title="Ejercicio 1: Evalua tu pipeline">
-Usando RAGAS, evalua el pipeline del Capitulo 1 con las 4 metricas core:
+<div class="exercise">
+<div class="exercise-title">Ejercicio 1: Evalua tu pipeline</div>
+<p>Usando RAGAS, evalua el pipeline del Capitulo 1 con las 4 metricas core:</p>
 <ul>
 <li>Crea un dataset de 20 preguntas con ground truth</li>
 <li>Ejecuta faithfulness, answer_relevancy, context_precision, context_recall</li>
-<li>Identifica: ¿el problema esta en el retriever o en el generator?
-</Exercise>
-</li>
+<li>Identifica: ¿el problema esta en el retriever o en el generator?</li>
 </ul>
-<Exercise title="Ejercicio 2: Alinea tu juez">
-Selecciona 50 respuestas, evaluadas por un experto humano (pass/fail):
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 2: Alinea tu juez</div>
+<p>Selecciona 50 respuestas, evaluadas por un experto humano (pass/fail):</p>
 <ul>
 <li>Mide alineacion del juez LLM vs humano</li>
 <li>Analiza falsos positivos (juez dice pass, humano dice fail)</li>
 <li>Refina el prompt del juez y re-mide</li>
-<li>Objetivo: &gt;85% alineacion
-</Exercise>
-</li>
+<li>Objetivo: >85% alineacion</li>
 </ul>
-<Exercise title="Ejercicio 3: CI gate">
-Integra RAGAS en un script de testing:
+</div>
+<div class="exercise">
+<div class="exercise-title">Ejercicio 3: CI gate</div>
+<p>Integra RAGAS en un script de testing:</p>
 <ul>
-<li>Define umbrales: faithfulness &gt;= 0.85, answer_relevancy &gt;= 0.75</li>
+<li>Define umbrales: faithfulness >= 0.85, answer_relevancy >= 0.75</li>
 <li>Ejecuta contra tu dataset de eval</li>
 <li>Retorna exit code != 0 si cualquier metrica falla</li>
 <li>Wire it a tu pipeline de deploy</li>
 </ul>
-</Exercise>
-<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">¿Cuál es la metrica mas critica para detectar hallucinations en RAG?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Answer Relevance</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Faithfulness</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Context Precision</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">MRR</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Baja context precision indica un problema con...</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El LLM generator</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">El retriever (chunks irrelevantes o demasiado grandes)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">La pregunta del usuario</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El embedding model</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">¿Cómo mide RAGAS Answer Relevance sin ground truth?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Compara con la respuesta de referencia</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Genera N preguntas desde la respuesta y mide similaridad con la pregunta original</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Usa cosine similarity entre respuesta y contexto</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Pide al LLM que de un score del 1 al 10</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Un sistema con faithfulness 0.95 puede dar respuestas incorrectas. ¿Por qué?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque faithfulness no es una metrica confiable</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque el contexto recuperado puede estar obsoleto o ser incorrecto business-mente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque el LLM hallucina de todas formas</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque faithfulness solo mide longitud de la respuesta</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">¿Qué porcentaje de alineacion con juicio humano deberia tener un juez LLM?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">50% (azar)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">70% (aceptable)</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">&gt;85% (produccion)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">100% (necesario)</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/rag-lessonslessons/guardrails-and-hallucinations">← Guardrails y Hallucinations: Cuando confiar y cuando abstenerse</a><a href="/rag-lessonslessons/agentic-rag">Agentic RAG: Cuando el retrieval piensa, actua y se autocorrige →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
+<p>## Verifica tu comprension</p>
+<p><p>1. Cual es la metrica mas critica para detectar hallucinations en RAG?</p></p>
+<p>Answer Relevance</p>
+<p>Faithfulness</p>
+<p>Context Precision</p>
+<p>MRR</p>
+<p><p>2. Baja context precision indica un problema con...</p></p>
+<p>El LLM generator</p>
+<p>El retriever (chunks irrelevantes o demasiado grandes)</p>
+<p>La pregunta del usuario</p>
+<p>El embedding model</p>
+<p><p>3. Como mide RAGAS Answer Relevance sin ground truth?</p></p>
+<p>Compara con la respuesta de referencia</p>
+<p>Genera N preguntas desde la respuesta y mide similaridad con la pregunta original</p>
+<p>Usa cosine similarity entre respuesta y contexto</p>
+<p>Pide al LLM que de un score del 1 al 10</p>
+<p><p>4. Un sistema con faithfulness 0.95 puede dar respuestas incorrectas. Por que?</p></p>
+<p>Porque faithfulness no es una metrica confiable</p>
+<p>Porque el contexto recuperado puede estar obsoleto o ser incorrecto business-mente</p>
+<p>Porque el LLM hallucina de todas formas</p>
+<p>Porque faithfulness solo mide longitud de la respuesta</p>
+<p><p>5. Que porcentaje de alineacion con juicio humano deberia tener un juez LLM?</p></p>
+<p>50% (azar)</p>
+<p>70% (aceptable)</p>
+<p>&gt;85% (produccion)</p>
+<p>100% (necesario)</p>
+</div>
+<section class="check"><h2>Verifica tu comprensión</h2><div class="quiz" id="q1" data-quiz><p class="quiz-question">Cual es la metrica mas critica para detectar hallucinations en RAG?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Answer Relevance</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Faithfulness</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Context Precision</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">MRR</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><script type="module">document.querySelectorAll(`[data-quiz]`).forEach(e=>{let t=e.querySelector(`[data-quiz-feedback]`),n=e.querySelectorAll(`[data-quiz-option]`),r=!1;n.forEach(e=>{e.addEventListener(`click`,()=>{if(r)return;r=!0;let i=e.getAttribute(`data-correct`)===`true`;n.forEach(e=>{e.style.pointerEvents=`none`,e.getAttribute(`data-correct`)===`true`&&e.classList.add(`correct`)}),i?(e.classList.add(`correct`),t.textContent=`Correcto.`,t.className=`quiz-feedback correct-fb`):(e.classList.add(`incorrect`),t.textContent=`Incorrecto. La respuesta correcta está resaltada en verde.`,t.className=`quiz-feedback incorrect-fb`)})})});</script><div class="quiz" id="q2" data-quiz><p class="quiz-question">Baja context precision indica un problema con...</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">El LLM generator</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">El retriever (chunks irrelevantes o demasiado grandes)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">La pregunta del usuario</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">El embedding model</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q3" data-quiz><p class="quiz-question">Como mide RAGAS Answer Relevance sin ground truth?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Compara con la respuesta de referencia</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Genera N preguntas desde la respuesta y mide similaridad con la pregunta original</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Usa cosine similarity entre respuesta y contexto</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Pide al LLM que de un score del 1 al 10</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q4" data-quiz><p class="quiz-question">Un sistema con faithfulness 0.95 puede dar respuestas incorrectas. Por que?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque faithfulness no es una metrica confiable</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">Porque el contexto recuperado puede estar obsoleto o ser incorrecto business-mente</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque el LLM hallucina de todas formas</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">Porque faithfulness solo mide longitud de la respuesta</button></div><div class="quiz-feedback" data-quiz-feedback></div></div><div class="quiz" id="q5" data-quiz><p class="quiz-question">Que porcentaje de alineacion con juicio humano deberia tener un juez LLM?</p><div class="quiz-options"><button class="quiz-option" data-correct="false" data-quiz-option type="button">50% (azar)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">70% (aceptable)</button><button class="quiz-option" data-correct="true" data-quiz-option type="button">&gt;85% (produccion)</button><button class="quiz-option" data-correct="false" data-quiz-option type="button">100% (necesario)</button></div><div class="quiz-feedback" data-quiz-feedback></div></div></section><footer class="lesson-footer"><nav><a href="/lessons/guardrails-and-hallucinations">← Guardrails y Detección de Alucinaciones</a><a href="/lessons/agentic-rag">Agentic RAG →</a></nav><p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">RAG Production · v2.0.0 · <a href="https://github.com/anibalalvarezg/rag-lessons">Código fuente</a></p></footer></article></main><footer class="site-footer"><span>RAG Production · v2.0.0</span><span>Generado con <a href="https://astro.build">Astro</a> · Basado en <a href="https://github.com/ofermend/hands-on-rag">hands-on-rag</a></span></footer><button class="back-to-top" aria-label="Volver arriba" type="button">↑</button><script>
   (function() {
     const btn = document.querySelector('.back-to-top');
     if (!btn) return;

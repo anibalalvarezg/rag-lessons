@@ -306,30 +306,4 @@ self.monitor_drift(signals)
 <li>Tipo III: Cambia un dato numerico (30s -> 60s) pero mantiene el marco</li>
 </ul>
 <p>Mide que senales detectan cada tipo. Confirma que Tipo III escapa a SGI y embeddings.</p>
-<p>## Verifica tu comprension</p>
-<p><p>1. Que tipo de hallucination NO es detectable por metodos geometricos/embeddings?</p></p>
-<p>Tipo I: Unfaithfulness</p>
-<p>Tipo II: Confabulation</p>
-<p>Tipo III: Factual error within frame</p>
-<p>Todos son detectables</p>
-<p><p>2. Cual es el signal de deteccion MAS fuerte en RAG?</p></p>
-<p>Token confidence scores</p>
-<p>Grounding check (verificar cada claim contra el contexto)</p>
-<p>Self-consistency con multi-sampling</p>
-<p>Cosine similarity entre respuesta y contexto</p>
-<p><p>3. Por que los metodos basados en embeddings fallan contra modelos RLHF?</p></p>
-<p>Porque los embeddings son de baja calidad</p>
-<p>Porque RLHF cambia el espacio de embeddings</p>
-<p>Porque RLHF produce hallucinations semanticamente plausibles que preservan similaridad con la fuente</p>
-<p>Porque los embeddings no soportan texto largo</p>
-<p><p>4. En el funnel de deteccion, que senal se ejecuta en TODAS las requests?</p></p>
-<p>Grounding check completo (LLM-as-judge)</p>
-<p>Signal barato (SGI, token confidence) como pre-filter</p>
-<p>Self-consistency con 3 muestras</p>
-<p>Ninguna, solo en high-stakes</p>
-<p><p>5. Que es "semantic laziness"?</p></p>
-<p>El modelo responde muy lento</p>
-<p>Las hallucinations se quedan angularmente cerca de la pregunta en vez de moverse hacia el contexto</p>
-<p>El embedding model es demasiado simple</p>
-<p>El retrieval retorna chunks irrelevantes</p>
 </div>
